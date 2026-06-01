@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
 import { supabase } from "../../lib/supabase";
 import TripMap from "../../components/TripMap";
 
@@ -12,6 +12,7 @@ interface Trip {
 export default function MapScreen() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     loadTrips();
@@ -19,7 +20,7 @@ export default function MapScreen() {
 
   async function loadTrips() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoaded(true); return; }
     const { data } = await supabase
       .from("trips")
       .select("id, name, status")
@@ -33,23 +34,13 @@ export default function MapScreen() {
       if (active) setSelectedTrip(active);
       else if (data[0]) setSelectedTrip(data[0]);
     }
-  }
-
-  if (!selectedTrip) {
-    return (
-      <View className="flex-1 bg-canvas items-center justify-center px-6">
-        <Text className="text-ink font-bold text-base mb-2">No trips to display</Text>
-        <Text className="text-muted font-light text-sm text-center">
-          Start a trip from the Trips tab and begin tracking to see your route here.
-        </Text>
-      </View>
-    );
+    setLoaded(true);
   }
 
   return (
     <View className="flex-1 bg-canvas">
-      {/* Trip selector */}
-      {trips.length > 1 && (
+      {/* Trip selector — only shown when trips exist */}
+      {trips.length > 0 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -61,9 +52,9 @@ export default function MapScreen() {
             <TouchableOpacity
               key={trip.id}
               onPress={() => setSelectedTrip(trip)}
-              className={`mr-4 py-3 border-b-2 ${selectedTrip.id === trip.id ? "border-primary" : "border-transparent"}`}
+              className={`mr-4 py-3 border-b-2 ${selectedTrip?.id === trip.id ? "border-primary" : "border-transparent"}`}
             >
-              <Text className={`text-xs font-bold uppercase tracking-widest ${selectedTrip.id === trip.id ? "text-primary" : "text-muted"}`}>
+              <Text className={`text-xs font-bold uppercase tracking-widest ${selectedTrip?.id === trip.id ? "text-primary" : "text-muted"}`}>
                 {trip.name}
               </Text>
             </TouchableOpacity>
@@ -71,9 +62,30 @@ export default function MapScreen() {
         </ScrollView>
       )}
 
-      {/* Map */}
-      <View className="flex-1">
-        <TripMap tripId={selectedTrip.id} />
+      {/* Map — always rendered on web, shows demo view when no trip */}
+      <View className="flex-1" style={{ position: "relative" }}>
+        {Platform.OS === "web" ? (
+          <TripMap tripId={selectedTrip?.id ?? "demo"} />
+        ) : (
+          <View className="flex-1 bg-surface-dark items-center justify-center">
+            <Text className="text-on-dark-soft text-sm font-light">Map requires a development build</Text>
+          </View>
+        )}
+
+        {/* No trips overlay — shown on top of map */}
+        {loaded && trips.length === 0 && (
+          <View style={{
+            position: "absolute", bottom: 60, left: 16, right: 16,
+            backgroundColor: "#1a2129", padding: 16,
+          }}>
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13, letterSpacing: 0.5 }}>
+              NO ACTIVE TRIP
+            </Text>
+            <Text style={{ color: "#bbbbbb", fontSize: 12, fontWeight: "300", marginTop: 4 }}>
+              Start a trip from the Trips tab to track your route here.
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
