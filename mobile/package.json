@@ -16,6 +16,7 @@
     "expo-router": "~56.2.8",
     "expo-status-bar": "~56.0.4",
     "expo-web-browser": "~56.0.5",
+    "nanoid": "^5.1.11",
     "nativewind": "^4.2.4",
     "react": "19.2.3",
     "react-dom": "^19.2.3",
