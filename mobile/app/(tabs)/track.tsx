@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 
 const INTERVALS = [
   { label: "1 min", value: 60, battery: "High drain" },
+  { label: "3 min", value: 180, battery: "Moderate" },
   { label: "5 min", value: 300, battery: "Moderate" },
   { label: "15 min", value: 900, battery: "Low drain" },
   { label: "30 min", value: 1800, battery: "Minimal" },
@@ -12,7 +13,7 @@ const INTERVALS = [
 
 export default function TrackScreen() {
   const [tracking, setTracking] = useState(false);
-  const [interval, setInterval] = useState(300); // default 5 min
+  const [interval, setInterval] = useState(180); // default 3 min (matches Garmin polling)
   const [activeTrip, setActiveTrip] = useState<{ id: string; name: string } | null>(null);
   const [pointCount, setPointCount] = useState(0);
   const [lastPing, setLastPing] = useState<Date | null>(null);
@@ -101,23 +102,23 @@ export default function TrackScreen() {
   }, []);
 
   return (
-    <ScrollView className="flex-1 bg-slate-900">
+    <ScrollView className="flex-1 bg-surface-dark">
       <View className="px-6 pt-6 pb-10">
 
         {/* Active trip indicator */}
-        <View className="bg-slate-800 rounded-xl p-4 mb-5">
-          <Text className="text-slate-400 text-xs uppercase font-bold mb-1">Active Trip</Text>
+        <View className="bg-surface-dark-elevated rounded-xl p-4 mb-5">
+          <Text className="text-on-dark-soft text-xs uppercase font-bold mb-1">Active Trip</Text>
           {activeTrip ? (
             <Text className="text-white text-base font-semibold">{activeTrip.name}</Text>
           ) : (
-            <Text className="text-slate-500 text-sm">No active trip — start one from Trips tab</Text>
+            <Text className="text-on-dark-soft text-sm">No active trip — start one from Trips tab</Text>
           )}
         </View>
 
         {/* Tracking status */}
-        <View className={`rounded-xl p-5 mb-5 items-center ${tracking ? "bg-emerald-500/20" : "bg-slate-800"}`}>
+        <View className={`rounded-xl p-5 mb-5 items-center ${tracking ? "bg-primary/20" : "bg-surface-dark-elevated"}`}>
           <View className={`w-3 h-3 rounded-full mb-3 ${tracking ? "bg-emerald-400" : "bg-slate-600"}`} />
-          <Text className={`text-lg font-bold mb-1 ${tracking ? "text-emerald-400" : "text-slate-400"}`}>
+          <Text className={`text-lg font-bold mb-1 ${tracking ? "text-emerald-400" : "text-on-dark-soft"}`}>
             {tracking ? "Tracking Active" : "Not Tracking"}
           </Text>
           {tracking && lastPing && (
@@ -130,18 +131,18 @@ export default function TrackScreen() {
         {/* Interval selector */}
         {!tracking && (
           <View className="mb-5">
-            <Text className="text-slate-400 text-xs uppercase font-bold mb-3">Update Interval</Text>
+            <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">Update Interval</Text>
             <View className="flex-row gap-2 flex-wrap">
               {INTERVALS.map((opt) => (
                 <TouchableOpacity
                   key={opt.value}
                   onPress={() => setInterval(opt.value)}
-                  className={`flex-1 rounded-xl p-3 items-center min-w-16 ${interval === opt.value ? "bg-emerald-500" : "bg-slate-800"}`}
+                  className={`flex-1 rounded-xl p-3 items-center min-w-16 ${interval === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
                 >
-                  <Text className={`font-bold text-sm ${interval === opt.value ? "text-white" : "text-slate-300"}`}>
+                  <Text className={`font-bold text-sm ${interval === opt.value ? "text-white" : "text-on-dark"}`}>
                     {opt.label}
                   </Text>
-                  <Text className={`text-xs mt-0.5 ${interval === opt.value ? "text-emerald-100" : "text-slate-500"}`}>
+                  <Text className={`text-xs mt-0.5 ${interval === opt.value ? "text-emerald-100" : "text-on-dark-soft"}`}>
                     {opt.battery}
                   </Text>
                 </TouchableOpacity>
@@ -155,7 +156,7 @@ export default function TrackScreen() {
 
         {/* Main button */}
         <TouchableOpacity
-          className={`rounded-xl py-5 items-center ${tracking ? "bg-red-500/80" : "bg-emerald-500"}`}
+          className={`rounded-xl py-5 items-center ${tracking ? "bg-red-500/80" : "bg-primary"}`}
           onPress={tracking ? stopTracking : startTracking}
         >
           <Text className="text-white font-bold text-lg">
@@ -165,7 +166,7 @@ export default function TrackScreen() {
 
         {/* Web notice */}
         {Platform.OS === "web" && (
-          <Text className="text-slate-500 text-xs text-center mt-4">
+          <Text className="text-on-dark-soft text-xs text-center mt-4">
             GPS accuracy is limited in browser. Install the app for full background tracking.
           </Text>
         )}

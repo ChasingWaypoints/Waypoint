@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
 import { supabase } from "../../lib/supabase";
@@ -31,64 +32,80 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-slate-900"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View className="flex-1 justify-center px-6">
-        {/* Logo */}
-        <View className="items-center mb-10">
-          <Text className="text-5xl mb-3">🗺️</Text>
-          <Text className="text-white text-3xl font-bold tracking-tight">Waypoint</Text>
-          <Text className="text-slate-400 text-sm mt-1">Track every adventure</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View className="flex-1 px-6 pt-16 pb-10">
+
+          {/* Brand */}
+          <View className="mb-12">
+            <Text className="text-ink text-3xl font-bold tracking-tight">Waypoint</Text>
+            <Text className="text-muted text-sm font-light mt-1">Track every adventure</Text>
+          </View>
+
+          {/* Heading */}
+          <Text className="text-ink text-2xl font-bold mb-8">Sign in</Text>
+
+          {/* Form */}
+          <View className="gap-3">
+            <View>
+              <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-1.5">Email</Text>
+              <TextInput
+                className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
+                placeholder="you@example.com"
+                placeholderTextColor="#9a9a9a"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
+            </View>
+
+            <View>
+              <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-1.5">Password</Text>
+              <TextInput
+                className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
+                placeholder="••••••••"
+                placeholderTextColor="#9a9a9a"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+              />
+            </View>
+
+            {error ? (
+              <Text className="text-error text-sm font-light">{error}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              className="bg-primary py-4 items-center mt-2"
+              onPress={handleLogin}
+              disabled={loading}
+              style={{ borderRadius: 0 }}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Sign In</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Divider */}
+          <View className="border-t border-hairline my-8" />
+
+          {/* Footer */}
+          <View className="flex-row gap-1">
+            <Text className="text-muted font-light text-sm">Don't have an account?</Text>
+            <Link href="/(auth)/signup">
+              <Text className="text-primary font-bold text-sm">Create account</Text>
+            </Link>
+          </View>
         </View>
-
-        {/* Form */}
-        <View className="gap-3">
-          <TextInput
-            className="bg-slate-800 text-white rounded-xl px-4 py-4 text-base"
-            placeholder="Email"
-            placeholderTextColor="#64748b"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-          <TextInput
-            className="bg-slate-800 text-white rounded-xl px-4 py-4 text-base"
-            placeholder="Password"
-            placeholderTextColor="#64748b"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="password"
-          />
-
-          {error ? (
-            <Text className="text-red-400 text-sm px-1">{error}</Text>
-          ) : null}
-
-          <TouchableOpacity
-            className="bg-emerald-500 rounded-xl py-4 items-center mt-2"
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white font-bold text-base">Sign In</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View className="flex-row justify-center mt-6 gap-1">
-          <Text className="text-slate-400">Don't have an account?</Text>
-          <Link href="/(auth)/signup">
-            <Text className="text-emerald-400 font-semibold">Sign up</Text>
-          </Link>
-        </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

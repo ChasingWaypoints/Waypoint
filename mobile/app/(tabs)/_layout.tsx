@@ -1,34 +1,53 @@
 import { Tabs } from "expo-router";
+import { Text } from "react-native";
+
+function TabIcon({ icon }: { icon: string }) {
+  return <Text style={{ fontSize: 18 }}>{icon}</Text>;
+}
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: "#0f172a" },
-        headerTintColor: "#fff",
-        headerTitleStyle: { fontWeight: "bold" },
-        tabBarStyle: { backgroundColor: "#0f172a", borderTopColor: "#1e293b" },
-        tabBarActiveTintColor: "#10b981",
-        tabBarInactiveTintColor: "#64748b",
+        headerStyle: { backgroundColor: "#ffffff" },
+        headerTintColor: "#262626",
+        headerTitleStyle: { fontWeight: "700", fontSize: 16, letterSpacing: 0.5 },
+        headerShadowVisible: false,
+        tabBarStyle: {
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e6e6e6",
+          borderTopWidth: 1,
+          elevation: 0,
+        },
+        tabBarActiveTintColor: "#1c69d4",
+        tabBarInactiveTintColor: "#6b6b6b",
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "Trips", tabBarLabel: "Trips", tabBarIcon: ({ color }) => <TabIcon icon="🗺️" color={color} /> }}
+        options={{
+          title: "Waypoint",
+          tabBarLabel: "TRIPS",
+          tabBarIcon: () => <TabIcon icon="🗺️" />,
+        }}
       />
       <Tabs.Screen
         name="track"
-        options={{ title: "Track", tabBarLabel: "Track", tabBarIcon: ({ color }) => <TabIcon icon="📍" color={color} /> }}
+        options={{
+          title: "Track",
+          tabBarLabel: "TRACK",
+          tabBarIcon: () => <TabIcon icon="📍" />,
+        }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ title: "Settings", tabBarLabel: "Settings", tabBarIcon: ({ color }) => <TabIcon icon="⚙️" color={color} /> }}
+        options={{
+          title: "Settings",
+          tabBarLabel: "SETTINGS",
+          tabBarIcon: () => <TabIcon icon="⚙️" />,
+        }}
       />
     </Tabs>
   );
-}
-
-function TabIcon({ icon, color }: { icon: string; color: string }) {
-  const { Text } = require("react-native");
-  return <Text style={{ fontSize: 20 }}>{icon}</Text>;
 }

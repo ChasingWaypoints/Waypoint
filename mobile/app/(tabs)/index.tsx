@@ -1,19 +1,29 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import { supabase } from "../../lib/supabase";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 
 export default function TripsScreen() {
   return (
-    <View className="flex-1 bg-slate-900 items-center justify-center px-6">
-      <Text className="text-white text-xl font-bold mb-2">Your Trips</Text>
-      <Text className="text-slate-400 text-sm text-center mb-8">
-        No trips yet. Add a device and start your first adventure.
-      </Text>
-      <TouchableOpacity
-        className="bg-emerald-500 px-6 py-3 rounded-xl"
-        onPress={() => {}}
-      >
-        <Text className="text-white font-bold">+ Start a Trip</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView className="flex-1 bg-canvas">
+      <View className="px-6 pt-6 pb-10">
+
+        {/* Section label */}
+        <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-4">Your Trips</Text>
+
+        {/* Empty state */}
+        <View className="border border-hairline p-8 items-center">
+          <Text className="text-ink text-base font-bold mb-2">No trips yet</Text>
+          <Text className="text-muted font-light text-sm text-center mb-6">
+            Add a device and start tracking your first adventure.
+          </Text>
+          <TouchableOpacity
+            className="bg-primary px-8 py-3.5 items-center"
+            style={{ borderRadius: 0 }}
+            onPress={() => {}}
+          >
+            <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Start a Trip</Text>
+          </TouchableOpacity>
+        </View>
+
+      </View>
+    </ScrollView>
   );
 }
