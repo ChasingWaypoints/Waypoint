@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 
 interface TripData {
   trip: { id: string; name: string; status: string; started_at: string; ended_at: string; share_token: string };
