@@ -33,6 +33,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="map"
+        options={{
+          title: "Map",
+          tabBarLabel: "MAP",
+          tabBarIcon: () => <TabIcon icon="🧭" />,
+        }}
+      />
+      <Tabs.Screen
         name="track"
         options={{
           title: "Track",
