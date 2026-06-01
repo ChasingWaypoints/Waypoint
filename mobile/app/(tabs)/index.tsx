@@ -4,12 +4,14 @@ import {
   Modal, TextInput, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
+import ShareSheet from "../../components/ShareSheet";
 
 interface Trip {
   id: string;
   name: string;
   status: "planning" | "active" | "completed" | "archived";
   is_public: boolean;
+  share_token: string | null;
   started_at: string | null;
   ended_at: string | null;
   created_at: string;
@@ -41,7 +43,7 @@ export default function TripsScreen() {
     if (!user) return;
     const { data } = await supabase
       .from("trips")
-      .select("id, name, status, is_public, started_at, ended_at, created_at")
+      .select("id, name, status, is_public, share_token, started_at, ended_at, created_at")
       .eq("user_id", user.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -217,6 +219,7 @@ function TripCard({ trip, onUpdateStatus, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const statusColor = STATUS_COLORS[trip.status] ?? "#9a9a9a";
 
   return (
@@ -253,9 +256,16 @@ function TripCard({ trip, onUpdateStatus, onDelete }: {
           {trip.status === "completed" && (
             <ActionButton label="Archive" onPress={() => onUpdateStatus(trip.id, "archived")} />
           )}
+          <ActionButton label="Share" onPress={() => setShowShare(true)} />
           <ActionButton label="Delete" onPress={() => onDelete(trip.id)} danger />
         </View>
       )}
+
+      <ShareSheet
+        trip={trip}
+        visible={showShare}
+        onClose={() => setShowShare(false)}
+      />
     </View>
   );
 }
