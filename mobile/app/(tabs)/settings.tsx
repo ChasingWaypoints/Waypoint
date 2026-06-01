@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 
 function SettingsRow({ label, onPress }: { label: string; onPress: () => void }) {
@@ -25,8 +26,8 @@ export default function SettingsScreen() {
         {/* Devices section */}
         <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mb-2">Devices</Text>
         <View className="border-t border-hairline">
-          <SettingsRow label="Manage Devices" onPress={() => {}} />
-          <SettingsRow label="Add New Device" onPress={() => {}} />
+          <SettingsRow label="Manage Devices" onPress={() => router.push("/settings/devices")} />
+          <SettingsRow label="Add New Device" onPress={() => router.push("/settings/add-device")} />
         </View>
 
         {/* Privacy section */}
