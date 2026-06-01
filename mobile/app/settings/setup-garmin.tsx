@@ -10,9 +10,17 @@ const STEPS = [
   { num: 4, text: 'Paste it below. Waypoint will validate and connect automatically.' },
 ];
 
+const INTERVALS = [
+  { label: "2 min", value: 2, note: "Premium plan required" },
+  { label: "3 min", value: 3, note: "Recommended" },
+  { label: "5 min", value: 5, note: "Standard" },
+  { label: "10 min", value: 10, note: "Basic" },
+];
+
 export default function SetupGarminScreen() {
   const [deviceName, setDeviceName] = useState("My Garmin inReach");
   const [feedUrl, setFeedUrl] = useState("");
+  const [pollInterval, setPollInterval] = useState(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -25,23 +33,30 @@ export default function SetupGarminScreen() {
     let url = feedUrl.trim();
     if (!url.startsWith("http")) url = `https://${url}`;
 
+    // Basic format check
+    if (!url.includes("share.garmin.com") && !url.includes("garmin.com")) {
+      setError("That doesn't look like a Garmin MapShare URL. It should contain share.garmin.com");
+      return;
+    }
+
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
-    // Call our API to validate + save
-    const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL?.replace("supabase.co", "vercel.app") ?? ""}/api/devices`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: deviceName, type: "garmin", feed_url: url }),
-      }
-    );
+    // Save directly to Supabase
+    const { error: insertError } = await supabase
+      .from("devices")
+      .insert({
+        user_id: user.id,
+        name: deviceName.trim() || "My Garmin inReach",
+        type: "garmin",
+        feed_url: url,
+        is_active: true,
+        poll_interval_minutes: pollInterval,
+      });
 
-    if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      setError(body.error ?? "Could not connect to Garmin feed. Check your MapShare URL.");
+    if (insertError) {
+      setError(insertError.message);
     } else {
       setSuccess(true);
     }
@@ -109,6 +124,30 @@ export default function SetupGarminScreen() {
               onChangeText={setDeviceName}
               style={{ borderRadius: 0 }}
             />
+          </View>
+
+          <View>
+            <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-2">Poll Interval</Text>
+            <View className="flex-row gap-2">
+              {INTERVALS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  onPress={() => setPollInterval(opt.value)}
+                  style={{
+                    flex: 1, padding: 10, borderWidth: 1, borderRadius: 0, alignItems: "center",
+                    backgroundColor: pollInterval === opt.value ? "#1c69d4" : "#fff",
+                    borderColor: pollInterval === opt.value ? "#1c69d4" : "#e6e6e6",
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: pollInterval === opt.value ? "#fff" : "#262626" }}>
+                    {opt.label}
+                  </Text>
+                  <Text style={{ fontSize: 10, fontWeight: "300", color: pollInterval === opt.value ? "#cce0ff" : "#9a9a9a", marginTop: 2 }}>
+                    {opt.note}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           <View>

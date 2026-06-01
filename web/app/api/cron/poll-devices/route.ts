@@ -3,7 +3,8 @@ import { createClient } from "../../../../lib/supabase/server";
 import { parseGarminKML } from "../../../../lib/parsers/garmin";
 import { parseSPOTXML } from "../../../../lib/parsers/spot";
 
-// Called by Upstash QStash every 10 minutes
+// Called by Upstash QStash every 2 minutes (heartbeat)
+// Each device has its own poll_interval_minutes — only polls when due
 // Also callable manually: GET /api/cron/poll-devices
 export async function GET() {
   const supabase = await createClient();
@@ -11,21 +12,30 @@ export async function GET() {
   // Get all active devices that need polling (garmin + spot only — zoleo uses webhooks)
   const { data: devices, error } = await supabase
     .from("devices")
-    .select("id, user_id, type, feed_url, feed_id, feed_password")
+    .select("id, user_id, type, feed_url, feed_id, feed_password, poll_interval_minutes, last_polled_at")
     .eq("is_active", true)
     .in("type", ["garmin", "spot"]);
 
+  // Filter to only devices that are due for a poll based on their interval
+  const now = Date.now();
+  const dueDevices = (devices ?? []).filter((d) => {
+    if (!d.last_polled_at) return true; // never polled — always due
+    const intervalMs = (d.poll_interval_minutes ?? 10) * 60 * 1000;
+    const lastPollMs = new Date(d.last_polled_at).getTime();
+    return now - lastPollMs >= intervalMs;
+  });
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!devices?.length) return NextResponse.json({ polled: 0 });
+  if (!dueDevices.length) return NextResponse.json({ polled: 0, skipped: devices?.length ?? 0 });
 
   const results = await Promise.allSettled(
-    devices.map((device) => pollDevice(supabase, device))
+    dueDevices.map((device) => pollDevice(supabase, device))
   );
 
   const succeeded = results.filter((r) => r.status === "fulfilled").length;
   const failed = results.filter((r) => r.status === "rejected").length;
 
-  return NextResponse.json({ polled: devices.length, succeeded, failed });
+  return NextResponse.json({ polled: dueDevices.length, succeeded, failed, skipped: (devices?.length ?? 0) - dueDevices.length });
 }
 
 async function pollDevice(supabase: Awaited<ReturnType<typeof createClient>>, device: {
