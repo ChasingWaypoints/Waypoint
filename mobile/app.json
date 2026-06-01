@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.chasingwaypoints.waypoint",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Waypoint needs your location to track your adventure in real time.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Waypoint uses your location in the background to keep tracking even when the app is minimized.",
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -23,7 +26,14 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.chasingwaypoints.waypoint"
+      "package": "com.chasingwaypoints.waypoint",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
