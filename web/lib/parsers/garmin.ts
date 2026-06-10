@@ -7,7 +7,7 @@ export interface TrackPoint {
   speed_kmh: number | null;
   recorded_at: string;
   message: string | null;
-  source: "garmin";
+  source: "garmin" | "spot" | "zoleo" | "phone";
 }
 
 export function parseGarminKML(xml: string): TrackPoint[] {

@@ -35,7 +35,7 @@ export function parseSPOTXML(xml: string): TrackPoint[] {
         speed_kmh: null,
         recorded_at: new Date(unixTime * 1000).toISOString(),
         message: item.messageContent || null,
-        source: "garmin", // reuse type — stored as 'spot' below
+        source: "spot",
       });
     } catch {
       continue;

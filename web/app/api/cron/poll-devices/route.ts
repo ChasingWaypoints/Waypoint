@@ -12,7 +12,7 @@ export async function GET() {
   // Get all active devices that need polling (garmin + spot only — zoleo uses webhooks)
   const { data: devices, error } = await supabase
     .from("devices")
-    .select("id, user_id, type, feed_url, feed_id, feed_password, poll_interval_minutes, last_polled_at")
+    .select("id, user_id, type, feed_url, poll_interval_minutes, last_polled_at")
     .eq("is_active", true)
     .in("type", ["garmin", "spot"]);
 
@@ -43,17 +43,16 @@ async function pollDevice(supabase: Awaited<ReturnType<typeof createClient>>, de
   user_id: string;
   type: string;
   feed_url: string | null;
-  feed_id: string | null;
-  feed_password: string | null;
 }) {
   try {
-    // Find the active trip for this device
+    // Find the user's most recently started active trip
     const { data: trip } = await supabase
       .from("trips")
       .select("id")
       .eq("user_id", device.user_id)
-      .eq("device_id", device.id)
       .eq("status", "active")
+      .order("started_at", { ascending: false })
+      .limit(1)
       .single();
 
     if (!trip) {
@@ -61,22 +60,16 @@ async function pollDevice(supabase: Awaited<ReturnType<typeof createClient>>, de
       return;
     }
 
-    // Fetch the feed
-    let xml = "";
-    if (device.type === "garmin" && device.feed_url) {
+    // Fetch the feed — both Garmin and SPOT use the stored feed_url directly
+    let rawBody = "";
+    if ((device.type === "garmin" || device.type === "spot") && device.feed_url) {
       const res = await fetch(device.feed_url, { signal: AbortSignal.timeout(10000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      xml = await res.text();
-    } else if (device.type === "spot" && device.feed_id) {
-      const password = device.feed_password ? `?feedPassword=${device.feed_password}` : "";
-      const url = `https://api.findmespot.com/spot-main-program/consumer/rest-api/device/${device.feed_id}/latest.xml${password}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      xml = await res.text();
+      rawBody = await res.text();
     }
 
     // Parse points
-    const rawPoints = device.type === "garmin" ? parseGarminKML(xml) : parseSPOTXML(xml);
+    const rawPoints = device.type === "garmin" ? parseGarminKML(rawBody) : parseSPOTXML(rawBody);
     if (!rawPoints.length) {
       await supabase.from("devices").update({ last_polled_at: new Date().toISOString(), poll_error: null }).eq("id", device.id);
       return;

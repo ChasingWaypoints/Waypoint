@@ -1,14 +1,23 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "../../../../lib/supabase/server";
+
+// Public anon client — no cookie/session handling needed for share links
+function getPublicClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 // GET /api/share/[token] — public, no auth required
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  try {
   const { token } = await params;
   const password = request.nextUrl.searchParams.get("password");
-  const supabase = await createClient();
+  const supabase = getPublicClient();
 
   const { data: trip, error } = await supabase
     .from("trips")
@@ -66,6 +75,13 @@ export async function GET(
         : null,
     },
   });
+  } catch (err) {
+    console.error("[share/token] error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
