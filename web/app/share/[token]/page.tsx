@@ -5,12 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = getSupabaseClient();
 
 interface TripData {
   trip: { id: string; name: string; status: string; started_at: string; ended_at: string; share_token: string };
