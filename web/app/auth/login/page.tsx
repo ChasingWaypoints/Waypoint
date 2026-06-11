@@ -19,12 +19,19 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("[login] result:", { session: !!data?.session, error: error?.message });
+      if (error) {
+        setError(error.message);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      console.error("[login] threw:", err);
+      setError(err instanceof Error ? err.message : "Login failed — check console");
+    } finally {
       setLoading(false);
-    } else {
-      router.push("/dashboard");
     }
   }
 
