@@ -15,6 +15,13 @@ interface Trip {
   started_at: string | null;
   ended_at: string | null;
   created_at: string;
+  device_id: string | null;
+}
+
+interface Device {
+  id: string;
+  name: string;
+  type: string;
 }
 
 type FilterTab = "active" | "recent" | "all";
@@ -26,6 +33,12 @@ const STATUS_COLORS: Record<string, string> = {
   archived:  "#9a9a9a",
 };
 
+const DEVICE_ICONS: Record<string, string> = {
+  garmin: "🛰",
+  spot:   "📡",
+  zoleo:  "🔵",
+};
+
 export default function TripsScreen() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filter, setFilter] = useState<FilterTab>("active");
@@ -35,15 +48,17 @@ export default function TripsScreen() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null); // null = Phone GPS
 
-  useEffect(() => { loadTrips(); }, []);
+  useEffect(() => { loadTrips(); loadDevices(); }, []);
 
   async function loadTrips() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data } = await supabase
       .from("trips")
-      .select("id, name, status, is_public, share_token, started_at, ended_at, created_at")
+      .select("id, name, status, is_public, share_token, started_at, ended_at, created_at, device_id")
       .eq("user_id", user.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -52,10 +67,29 @@ export default function TripsScreen() {
     setRefreshing(false);
   }
 
+  async function loadDevices() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("devices")
+      .select("id, name, type")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true });
+    if (data) setDevices(data);
+  }
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadTrips();
   }, []);
+
+  function openModal() {
+    setNewName("");
+    setSelectedDeviceId(null);
+    setCreateError("");
+    setShowModal(true);
+  }
 
   async function createTrip() {
     setCreateError("");
@@ -66,7 +100,13 @@ export default function TripsScreen() {
 
     const { data, error } = await supabase
       .from("trips")
-      .insert({ user_id: user.id, name: newName.trim(), status: "active", is_public: false })
+      .insert({
+        user_id: user.id,
+        name: newName.trim(),
+        status: "active",
+        is_public: false,
+        device_id: selectedDeviceId ?? null,
+      })
       .select()
       .single();
 
@@ -74,7 +114,6 @@ export default function TripsScreen() {
     else if (data) {
       setTrips((prev) => [data, ...prev]);
       setShowModal(false);
-      setNewName("");
     }
     setCreating(false);
   }
@@ -121,7 +160,6 @@ export default function TripsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View className="px-6 pt-5 pb-10">
-
           {loading ? (
             <ActivityIndicator color="#1c69d4" style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
@@ -137,7 +175,7 @@ export default function TripsScreen() {
               <TouchableOpacity
                 className="bg-primary px-8 py-3.5"
                 style={{ borderRadius: 0 }}
-                onPress={() => setShowModal(true)}
+                onPress={openModal}
               >
                 <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Start a Trip</Text>
               </TouchableOpacity>
@@ -148,6 +186,7 @@ export default function TripsScreen() {
                 <TripCard
                   key={trip.id}
                   trip={trip}
+                  devices={devices}
                   onUpdateStatus={updateStatus}
                   onDelete={deleteTrip}
                 />
@@ -163,7 +202,7 @@ export default function TripsScreen() {
           <TouchableOpacity
             className="bg-primary py-4 items-center mt-4"
             style={{ borderRadius: 0 }}
-            onPress={() => setShowModal(true)}
+            onPress={openModal}
           >
             <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">+ Start New Trip</Text>
           </TouchableOpacity>
@@ -175,14 +214,15 @@ export default function TripsScreen() {
         <View className="flex-1 bg-canvas px-6 pt-10">
           <View className="flex-row justify-between items-center mb-8">
             <Text className="text-ink text-xl font-bold">New Trip</Text>
-            <TouchableOpacity onPress={() => { setShowModal(false); setNewName(""); setCreateError(""); }}>
+            <TouchableOpacity onPress={() => setShowModal(false)}>
               <Text className="text-muted text-sm uppercase font-bold tracking-wider">Cancel</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Trip Name */}
           <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-1.5">Trip Name</Text>
           <TextInput
-            className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light mb-2"
+            className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light mb-6"
             placeholder="e.g. Sacramento to Tahoe"
             placeholderTextColor="#9a9a9a"
             value={newName}
@@ -191,8 +231,76 @@ export default function TripsScreen() {
             style={{ borderRadius: 0 }}
           />
 
+          {/* Tracking Source */}
+          <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-3">Tracking Source</Text>
+
+          {/* Phone GPS option */}
+          <TouchableOpacity
+            onPress={() => setSelectedDeviceId(null)}
+            style={{
+              flexDirection: "row", alignItems: "center",
+              borderWidth: 1,
+              borderColor: selectedDeviceId === null ? "#1c69d4" : "#e6e6e6",
+              backgroundColor: selectedDeviceId === null ? "#e8f0fb" : "#fff",
+              padding: 14, marginBottom: 8,
+            }}
+          >
+            <View style={{
+              width: 18, height: 18, borderRadius: 9, borderWidth: 2,
+              borderColor: selectedDeviceId === null ? "#1c69d4" : "#9a9a9a",
+              marginRight: 12, alignItems: "center", justifyContent: "center",
+            }}>
+              {selectedDeviceId === null && (
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#1c69d4" }} />
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: "#1a2129" }}>📍 Phone GPS</Text>
+              <Text style={{ fontSize: 12, color: "#6b6b6b", marginTop: 2 }}>Uses your phone's location</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Configured devices */}
+          {devices.map((device) => (
+            <TouchableOpacity
+              key={device.id}
+              onPress={() => setSelectedDeviceId(device.id)}
+              style={{
+                flexDirection: "row", alignItems: "center",
+                borderWidth: 1,
+                borderColor: selectedDeviceId === device.id ? "#1c69d4" : "#e6e6e6",
+                backgroundColor: selectedDeviceId === device.id ? "#e8f0fb" : "#fff",
+                padding: 14, marginBottom: 8,
+              }}
+            >
+              <View style={{
+                width: 18, height: 18, borderRadius: 9, borderWidth: 2,
+                borderColor: selectedDeviceId === device.id ? "#1c69d4" : "#9a9a9a",
+                marginRight: 12, alignItems: "center", justifyContent: "center",
+              }}>
+                {selectedDeviceId === device.id && (
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#1c69d4" }} />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1a2129" }}>
+                  {DEVICE_ICONS[device.type] ?? "📡"} {device.name}
+                </Text>
+                <Text style={{ fontSize: 12, color: "#6b6b6b", marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  {device.type}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {devices.length === 0 && (
+            <Text style={{ fontSize: 12, color: "#9a9a9a", marginBottom: 8, fontStyle: "italic" }}>
+              No satellite devices configured. Add one in Settings.
+            </Text>
+          )}
+
           {createError ? (
-            <Text className="text-error text-sm font-light mb-4">{createError}</Text>
+            <Text className="text-error text-sm font-light mt-2 mb-2">{createError}</Text>
           ) : null}
 
           <TouchableOpacity
@@ -204,7 +312,7 @@ export default function TripsScreen() {
             {creating ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Start Tracking</Text>
+              <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Start Trip</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -213,14 +321,16 @@ export default function TripsScreen() {
   );
 }
 
-function TripCard({ trip, onUpdateStatus, onDelete }: {
+function TripCard({ trip, devices, onUpdateStatus, onDelete }: {
   trip: Trip;
+  devices: Device[];
   onUpdateStatus: (id: string, status: string) => void;
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const statusColor = STATUS_COLORS[trip.status] ?? "#9a9a9a";
+  const linkedDevice = devices.find((d) => d.id === trip.device_id);
 
   return (
     <View className="bg-canvas border border-hairline mb-3">
@@ -232,9 +342,16 @@ function TripCard({ trip, onUpdateStatus, onDelete }: {
         <View className="flex-row items-start justify-between">
           <View className="flex-1 mr-3">
             <Text className="text-ink font-bold text-base mb-1">{trip.name}</Text>
-            <Text className="text-muted font-light text-xs">
-              {new Date(trip.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text className="text-muted font-light text-xs">
+                {new Date(trip.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </Text>
+              {linkedDevice && (
+                <Text style={{ fontSize: 10, color: "#6b6b6b" }}>
+                  · {DEVICE_ICONS[linkedDevice.type] ?? "📡"} {linkedDevice.name}
+                </Text>
+              )}
+            </View>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: statusColor }} />

@@ -45,15 +45,29 @@ async function pollDevice(supabase: Awaited<ReturnType<typeof createClient>>, de
   feed_url: string | null;
 }) {
   try {
-    // Find the user's most recently started active trip
-    const { data: trip } = await supabase
+    // Find the active trip linked to this device, or fall back to most recent active trip
+    const { data: linkedTrip } = await supabase
       .from("trips")
       .select("id")
       .eq("user_id", device.user_id)
       .eq("status", "active")
+      .eq("device_id", device.id)
       .order("started_at", { ascending: false })
       .limit(1)
       .single();
+
+    const trip = linkedTrip ?? await (async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("user_id", device.user_id)
+        .eq("status", "active")
+        .is("device_id", null)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .single();
+      return data;
+    })();
 
     if (!trip) {
       await supabase.from("devices").update({ last_polled_at: new Date().toISOString(), poll_error: "No active trip" }).eq("id", device.id);
