@@ -32,7 +32,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log("[dashboard] SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30));
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log("[dashboard] getSession:", { hasSession: !!session, user: session?.user?.email, error: error?.message });
       if (!session?.user) { window.location.href = "/auth/login"; return; }
       setUserEmail(session.user.email ?? "");
       supabase
