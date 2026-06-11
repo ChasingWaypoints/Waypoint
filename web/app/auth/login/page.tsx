@@ -25,7 +25,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       console.error("[login] threw:", err);

@@ -32,13 +32,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push("/auth/login"); return; }
-      setUserEmail(user.email ?? "");
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) { window.location.href = "/auth/login"; return; }
+      setUserEmail(session.user.email ?? "");
       supabase
         .from("trips")
         .select("id, name, status, is_public, share_token, started_at, created_at")
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .then(({ data }) => {
