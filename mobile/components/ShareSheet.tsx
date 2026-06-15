@@ -4,6 +4,13 @@ import { supabase } from "../lib/supabase";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
 
+const EXPIRY_OPTIONS = [
+  { label: "Never", hours: null },
+  { label: "24h", hours: 24 },
+  { label: "7 days", hours: 24 * 7 },
+  { label: "30 days", hours: 24 * 30 },
+] as const;
+
 interface ShareSheetProps {
   trip: { id: string; name: string; share_token: string | null; is_public: boolean };
   visible: boolean;
@@ -15,6 +22,7 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
   const [copied, setCopied] = useState(false);
   const [shareToken, setShareToken] = useState(trip.share_token);
   const [isPublic, setIsPublic] = useState(trip.is_public);
+  const [expiryHours, setExpiryHours] = useState<number | null>(null);
 
   const shareUrl = shareToken ? `${WEB_BASE}/share/${shareToken}` : null;
   const kmlUrl = shareToken ? `${WEB_BASE}/api/trips/${trip.id}/track.kml?token=${shareToken}` : null;
@@ -24,9 +32,12 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
     setMaking(true);
     const { nanoid } = await import("nanoid/non-secure");
     const token = nanoid(12);
+    const expiresAt = expiryHours
+      ? new Date(Date.now() + expiryHours * 3600 * 1000).toISOString()
+      : null;
     const { error } = await supabase
       .from("trips")
-      .update({ is_public: true, share_token: token })
+      .update({ is_public: true, share_token: token, share_expires_at: expiresAt })
       .eq("id", trip.id);
     if (!error) {
       setShareToken(token);
@@ -75,6 +86,27 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
             <Text style={{ fontSize: 13, color: "#6b6b6b", fontWeight: "300", marginBottom: 20, lineHeight: 20 }}>
               Sharing is off. Enable it to generate a public link anyone can open to follow your trip live.
             </Text>
+
+            {/* Expiry picker */}
+            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 8 }}>Link Expires</Text>
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
+              {EXPIRY_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={String(opt.hours)}
+                  onPress={() => setExpiryHours(opt.hours ?? null)}
+                  style={{
+                    flex: 1, padding: 10, alignItems: "center", borderWidth: 1,
+                    borderColor: expiryHours === (opt.hours ?? null) ? "#1c69d4" : "#e6e6e6",
+                    backgroundColor: expiryHours === (opt.hours ?? null) ? "#e8f0fb" : "#fff",
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: expiryHours === (opt.hours ?? null) ? "#1c69d4" : "#6b6b6b" }}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <TouchableOpacity
               style={{ backgroundColor: "#1c69d4", padding: 16, alignItems: "center" }}
               onPress={enableSharing}

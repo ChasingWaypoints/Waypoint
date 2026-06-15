@@ -33,7 +33,7 @@ export default function SettingsScreen() {
         {/* Privacy section */}
         <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mt-6 mb-2">Privacy</Text>
         <View className="border-t border-hairline">
-          <SettingsRow label="Privacy Zones" onPress={() => {}} />
+          <SettingsRow label="Privacy Zones" onPress={() => router.push("/settings/privacy-zones")} />
           <SettingsRow label="Export My Data" onPress={() => {}} />
         </View>
 
