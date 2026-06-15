@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import * as Location from "expo-location";
 import { supabase } from "../../lib/supabase";
 
@@ -23,8 +25,13 @@ export default function TrackScreen() {
 
   useEffect(() => {
     checkPermissions();
-    fetchActiveTrip();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchActiveTrip();
+    }, [])
+  );
 
   async function checkPermissions() {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -39,8 +46,10 @@ export default function TrackScreen() {
       .select("id, name")
       .eq("user_id", user.id)
       .eq("status", "active")
-      .single();
-    if (data) setActiveTrip(data);
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setActiveTrip(data ?? null);
   }
 
   async function sendLocation() {
