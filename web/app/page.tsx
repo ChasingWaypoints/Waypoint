@@ -182,6 +182,59 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
+      {/* Beta / Download */}
+      <section style={{ background: "#f7f7f7", borderTop: "1px solid #e6e6e6", padding: "72px 24px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 48, alignItems: "center", justifyContent: "center" }}>
+          {/* QR code */}
+          <div style={{ textAlign: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=exp://u.expo.dev/9616d6e2-8935-452e-b7a2-bdc08f95b845&color=1a2129&bgcolor=f7f7f7`}
+              alt="Scan to open in Expo Go"
+              width={180}
+              height={180}
+              style={{ border: "1px solid #e6e6e6" }}
+            />
+            <p style={{ fontSize: 11, color: "#9a9a9a", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "12px 0 0" }}>
+              Scan with Expo Go
+            </p>
+          </div>
+
+          {/* Text */}
+          <div style={{ maxWidth: 440 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: "#1c69d4", textTransform: "uppercase", margin: "0 0 10px" }}>
+              Beta — Free Early Access
+            </p>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: "#1a2129", margin: "0 0 16px", lineHeight: 1.25 }}>
+              Try the app now — no invite needed
+            </h2>
+            <p style={{ fontSize: 15, color: "#4a4a4a", fontWeight: 300, lineHeight: 1.7, margin: "0 0 24px" }}>
+              Download <strong>Expo Go</strong> on iOS or Android, then scan the QR code to launch Waypoint instantly — no App Store approval, no waiting.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <a
+                href="https://apps.apple.com/app/expo-go/id982107779"
+                target="_blank" rel="noopener noreferrer"
+                style={{ background: "#1a2129", color: "#fff", padding: "12px 20px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
+              >
+                Expo Go — iOS
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=host.exp.exponent"
+                target="_blank" rel="noopener noreferrer"
+                style={{ background: "#1a2129", color: "#fff", padding: "12px 20px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
+              >
+                Expo Go — Android
+              </a>
+            </div>
+            <p style={{ fontSize: 12, color: "#9a9a9a", fontWeight: 300, margin: "16px 0 0" }}>
+              Native App Store builds coming soon. Your data carries over.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
       <section style={{ background: "#1a2129", padding: "72px 24px", textAlign: "center" }}>
         <h2 style={{ fontSize: 32, fontWeight: 700, color: "#fff", margin: "0 0 16px" }}>
           Ready for your next adventure?

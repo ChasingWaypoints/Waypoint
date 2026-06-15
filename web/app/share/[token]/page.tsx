@@ -229,6 +229,12 @@ export default function SharePage() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <a
+            href={`/share/${token}/story`}
+            style={{ background: "transparent", color: "#bbbbbb", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+          >
+            Story
+          </a>
+          <a
             href={`${baseUrl}/api/trips/${data.trip.id}/track.kml?token=${token}`}
             style={{ background: "transparent", color: "#bbbbbb", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
           >
