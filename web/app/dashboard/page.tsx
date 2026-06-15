@@ -91,9 +91,25 @@ export default function DashboardPage() {
           <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: "48px 32px", textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>🗺️</div>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1a2129", margin: "0 0 8px" }}>No trips yet</h2>
-            <p style={{ fontSize: 14, color: "#6b6b6b", margin: "0 0 0", fontWeight: 300 }}>
-              Start your first trip in the Waypoint mobile app and it'll appear here.
+            <p style={{ fontSize: 14, color: "#6b6b6b", margin: "0 0 28px", fontWeight: 300 }}>
+              Start your first trip in the Waypoint mobile app — it'll appear here automatically.
             </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <a
+                href="https://apps.apple.com/app/expo-go/id982107779"
+                target="_blank" rel="noopener noreferrer"
+                style={{ background: "#1a2129", color: "#fff", padding: "11px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              >
+                Expo Go — iOS
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=host.exp.exponent"
+                target="_blank" rel="noopener noreferrer"
+                style={{ background: "#1a2129", color: "#fff", padding: "11px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              >
+                Expo Go — Android
+              </a>
+            </div>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#e6e6e6", border: "1px solid #e6e6e6" }}>
@@ -110,20 +126,27 @@ export default function DashboardPage() {
                     <span style={{ fontWeight: 700, color: STATUS_COLOR[trip.status] ?? "#9a9a9a", textTransform: "uppercase", letterSpacing: 0.5 }}>{trip.status}</span>
                   </p>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {trip.is_public && trip.share_token && (
-                    <a
-                      href={`/share/${trip.share_token}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ background: "#1c69d4", color: "#fff", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 0 }}
-                    >
-                      View Map ↗
-                    </a>
-                  )}
-                  {!trip.is_public && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {trip.is_public && trip.share_token ? (
+                    <>
+                      <a
+                        href={`/share/${trip.share_token}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ background: "#1c69d4", color: "#fff", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                      >
+                        Live Map ↗
+                      </a>
+                      <a
+                        href={`/share/${trip.share_token}/story`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ background: "transparent", color: "#1a2129", border: "1px solid #e6e6e6", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                      >
+                        Story ↗
+                      </a>
+                    </>
+                  ) : (
                     <span style={{ border: "1px solid #e6e6e6", color: "#9a9a9a", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                      Private
+                      Private — share via app
                     </span>
                   )}
                 </div>
