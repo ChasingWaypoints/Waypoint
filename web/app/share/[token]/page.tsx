@@ -27,6 +27,7 @@ export default function SharePage() {
   const [data, setData] = useState<TripData | null>(null);
   const [liveStats, setLiveStats] = useState<{ pointCount: number; distanceKm: number } | null>(null);
   const [error, setError] = useState("");
+  const [isExpired, setIsExpired] = useState(false);
   const [password, setPassword] = useState("");
   const [needsPassword, setNeedsPassword] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,11 @@ export default function SharePage() {
 
       if (res.status === 401 && json.error === "password_required") {
         setNeedsPassword(true);
+        setLoading(false);
+        return;
+      }
+      if (res.status === 410) {
+        setIsExpired(true);
         setLoading(false);
         return;
       }
@@ -187,6 +193,19 @@ export default function SharePage() {
       >
         VIEW TRIP
       </button>
+    </div>
+  );
+
+  if (isExpired) return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f7f7f7", fontFamily: "system-ui", padding: 24 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 8, margin: "0 0 8px" }}>Waypoint</p>
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a2129", margin: "0 0 12px" }}>This link has expired</h1>
+      <p style={{ fontSize: 14, color: "#6b6b6b", fontWeight: 300, margin: "0 0 32px", textAlign: "center", maxWidth: 320 }}>
+        The person who shared this trip set an expiry date. Ask them to generate a new share link.
+      </p>
+      <a href="/" style={{ background: "#1c69d4", color: "#fff", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}>
+        Go to Waypoint
+      </a>
     </div>
   );
 

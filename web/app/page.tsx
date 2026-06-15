@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Waypoint — GPS Tracking for Adventure Sports",
+  description:
+    "Track motorcycle tours, hikes, and off-road adventures in real time. Share live routes with a single link. Works with Garmin inReach, SPOT, ZOLEO, and phone GPS.",
+  openGraph: {
+    title: "Waypoint — GPS Tracking for Adventure Sports",
+    description:
+      "Track motorcycle tours, hikes, and off-road adventures in real time. Share live routes with a single link.",
+    url: "/",
+    type: "website",
+  },
+};
 
 const FEATURES = [
   {

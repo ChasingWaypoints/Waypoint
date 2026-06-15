@@ -21,7 +21,7 @@ export async function GET(
 
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, name, status, is_public, share_token, share_password_hash, share_expires_at, started_at, ended_at, created_at")
+    .select("id, user_id, name, status, is_public, share_token, share_password_hash, share_expires_at, started_at, ended_at, created_at")
     .eq("share_token", token)
     .eq("is_public", true)
     .is("deleted_at", null)
@@ -42,12 +42,23 @@ export async function GET(
     }
   }
 
-  // Get track points (apply privacy zone masking in future)
-  const { data: points } = await supabase
+  // Get track points
+  const { data: rawPoints } = await supabase
     .from("track_points")
     .select("lat, lng, altitude_m, speed_kmh, recorded_at, source")
     .eq("trip_id", trip.id)
     .order("recorded_at", { ascending: true });
+
+  // Load privacy zones for the trip owner and mask points inside them
+  const { data: privacyZones } = await supabase
+    .from("privacy_zones")
+    .select("lat, lng, radius_m")
+    .eq("user_id", trip.user_id);
+
+  const zones = privacyZones ?? [];
+  const points = (rawPoints ?? []).filter((p) =>
+    !zones.some((z) => haversineMeters(p.lat, p.lng, z.lat, z.lng) <= z.radius_m)
+  );
 
   // Compute basic stats
   let distance = 0;
@@ -82,6 +93,10 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  return haversine(lat1, lon1, lat2, lon2) * 1000;
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
