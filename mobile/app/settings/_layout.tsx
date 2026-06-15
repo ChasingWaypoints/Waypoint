@@ -16,6 +16,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="setup-spot" options={{ title: "SPOT Tracker" }} />
       <Stack.Screen name="setup-zoleo" options={{ title: "ZOLEO" }} />
       <Stack.Screen name="privacy-zones" options={{ title: "Privacy Zones" }} />
+      <Stack.Screen name="account" options={{ title: "Account Details" }} />
     </Stack>
   );
 }

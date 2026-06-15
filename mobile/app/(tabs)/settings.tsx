@@ -69,7 +69,7 @@ export default function SettingsScreen() {
         {/* Account section */}
         <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mt-6 mb-2">Account</Text>
         <View className="border-t border-hairline">
-          <SettingsRow label="Account Details" onPress={() => {}} />
+          <SettingsRow label="Account Details" onPress={() => router.push("/settings/account")} />
           <SettingsRow label="Delete Account" onPress={handleDeleteAccount} danger />
         </View>
 

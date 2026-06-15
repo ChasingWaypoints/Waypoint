@@ -49,6 +49,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="events"
+        options={{
+          title: "Events",
+          tabBarLabel: "EVENTS",
+          tabBarIcon: () => <TabIcon icon="🏁" />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
