@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, Modal, Share, Platform } from "react-native";
+import { View, Text, TouchableOpacity, Modal, Share, Platform, TextInput } from "react-native";
 import { supabase } from "../lib/supabase";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
@@ -23,6 +23,7 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
   const [shareToken, setShareToken] = useState(trip.share_token);
   const [isPublic, setIsPublic] = useState(trip.is_public);
   const [expiryHours, setExpiryHours] = useState<number | null>(null);
+  const [sharePassword, setSharePassword] = useState("");
 
   const shareUrl = shareToken ? `${WEB_BASE}/share/${shareToken}` : null;
   const kmlUrl = shareToken ? `${WEB_BASE}/api/trips/${trip.id}/track.kml?token=${shareToken}` : null;
@@ -37,7 +38,12 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
       : null;
     const { error } = await supabase
       .from("trips")
-      .update({ is_public: true, share_token: token, share_expires_at: expiresAt })
+      .update({
+        is_public: true,
+        share_token: token,
+        share_expires_at: expiresAt,
+        share_password_hash: sharePassword.trim() || null,
+      })
       .eq("id", trip.id);
     if (!error) {
       setShareToken(token);
@@ -106,6 +112,20 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Optional password */}
+            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 8 }}>
+              Password <Text style={{ fontWeight: "300", textTransform: "none", letterSpacing: 0 }}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: "#e6e6e6", padding: 12, fontSize: 14, color: "#262626", marginBottom: 20 }}
+              placeholder="Leave blank for no password"
+              placeholderTextColor="#c0c0c0"
+              value={sharePassword}
+              onChangeText={setSharePassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
             <TouchableOpacity
               style={{ backgroundColor: "#1c69d4", padding: 16, alignItems: "center" }}

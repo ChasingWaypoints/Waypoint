@@ -2,7 +2,9 @@ import "../global.css";
 import { useEffect, useState } from "react";
 import { Stack, router } from "expo-router";
 import { Session } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../lib/supabase";
+import { ONBOARDING_KEY } from "./(auth)/onboarding";
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -30,9 +32,16 @@ export default function RootLayout() {
     if (!initialized) return;
     if (session) {
       router.replace("/(tabs)");
-    } else {
-      router.replace("/(auth)/login");
+      return;
     }
+    // Show onboarding on first launch, login screen on subsequent launches
+    AsyncStorage.getItem(ONBOARDING_KEY).then((done) => {
+      if (done) {
+        router.replace("/(auth)/login");
+      } else {
+        router.replace("/(auth)/onboarding");
+      }
+    });
   }, [initialized, session]);
 
   return (
