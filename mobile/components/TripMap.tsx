@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Animated, Easing, StyleSheet } from "react-native";
-import MapView, { Polyline, Marker, Region } from "react-native-maps";
+import { View, Text, Animated, Easing, StyleSheet, TouchableOpacity } from "react-native";
+import Mapbox, { Camera, MapView, ShapeSource, LineLayer, PointAnnotation, MarkerView } from "@rnmapbox/maps";
 import { supabase } from "../lib/supabase";
+
+const MAP_STYLES = [
+  { id: "outdoors", label: "Terrain", url: "mapbox://styles/mapbox/outdoors-v12" },
+  { id: "satellite", label: "Satellite", url: "mapbox://styles/mapbox/satellite-streets-v12" },
+];
+
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
 interface TrackPoint {
   lat: number;
@@ -36,9 +43,10 @@ function calcStats(pts: TrackPoint[]) {
   const first = new Date(pts[0].recorded_at).getTime();
   const last = new Date(pts[pts.length - 1].recorded_at).getTime();
   const durationMin = pts.length > 1 ? Math.round((last - first) / 60000) : null;
-  const avgSpeedKmh = durationMin && durationMin > 0
-    ? Math.round((dist / (durationMin / 60)) * 10) / 10
-    : null;
+  const avgSpeedKmh =
+    durationMin && durationMin > 0
+      ? Math.round((dist / (durationMin / 60)) * 10) / 10
+      : null;
   return { distanceKm: Math.round(dist * 10) / 10, durationMin, avgSpeedKmh };
 }
 
@@ -51,11 +59,11 @@ function PulsingDot() {
       Animated.parallel([
         Animated.sequence([
           Animated.timing(scale, { toValue: 2.2, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1,   duration: 0,    useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
         ]),
         Animated.sequence([
           Animated.timing(opacity, { toValue: 0, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0.8, duration: 0,  useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.8, duration: 0, useNativeDriver: true }),
         ]),
       ])
     ).start();
@@ -71,9 +79,9 @@ function PulsingDot() {
 
 export default function TripMap({ tripId, tripStatus }: TripMapProps) {
   const [points, setPoints] = useState<TrackPoint[]>([]);
-  const [region, setRegion] = useState<Region | null>(null);
   const [stats, setStats] = useState({ distanceKm: 0, durationMin: null as number | null, avgSpeedKmh: null as number | null, count: 0 });
-  const mapRef = useRef<MapView>(null);
+  const [styleIdx, setStyleIdx] = useState(0);
+  const cameraRef = useRef<Mapbox.Camera>(null);
   const isLive = tripStatus === "active";
 
   useEffect(() => {
@@ -92,10 +100,11 @@ export default function TripMap({ tripId, tripStatus }: TripMapProps) {
           setStats({ ...calcStats(next), count: next.length });
           return next;
         });
-        mapRef.current?.animateToRegion({
-          latitude: p.lat, longitude: p.lng,
-          latitudeDelta: 0.05, longitudeDelta: 0.05,
-        }, 800);
+        cameraRef.current?.setCamera({
+          centerCoordinate: [p.lng, p.lat],
+          zoomLevel: 13,
+          animationDuration: 800,
+        });
       })
       .subscribe();
 
@@ -114,18 +123,20 @@ export default function TripMap({ tripId, tripStatus }: TripMapProps) {
     setStats({ ...calcStats(data), count: data.length });
 
     if (data.length === 1) {
-      setRegion({ latitude: data[0].lat, longitude: data[0].lng, latitudeDelta: 0.05, longitudeDelta: 0.05 });
-    } else {
-      const lats = data.map((p) => p.lat);
-      const lngs = data.map((p) => p.lng);
-      const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-      setRegion({
-        latitude: (minLat + maxLat) / 2,
-        longitude: (minLng + maxLng) / 2,
-        latitudeDelta: (maxLat - minLat) * 1.4 + 0.01,
-        longitudeDelta: (maxLng - minLng) * 1.4 + 0.01,
+      cameraRef.current?.setCamera({
+        centerCoordinate: [data[0].lng, data[0].lat],
+        zoomLevel: 13,
+        animationDuration: 500,
       });
+    } else {
+      const lngs = data.map((p) => p.lng);
+      const lats = data.map((p) => p.lat);
+      cameraRef.current?.fitBounds(
+        [Math.max(...lngs), Math.max(...lats)],
+        [Math.min(...lngs), Math.min(...lats)],
+        [60, 60, 60, 60],
+        500,
+      );
     }
   }
 
@@ -138,45 +149,59 @@ export default function TripMap({ tripId, tripStatus }: TripMapProps) {
   const latest = points[points.length - 1];
   const start = points[0];
 
-  const defaultRegion: Region = {
-    latitude: 37.7749, longitude: -122.4194,
-    latitudeDelta: 10, longitudeDelta: 10,
+  const routeGeoJSON: GeoJSON.Feature<GeoJSON.LineString> = {
+    type: "Feature",
+    geometry: { type: "LineString", coordinates: points.map((p) => [p.lng, p.lat]) },
+    properties: {},
   };
 
   return (
     <View style={{ flex: 1 }}>
       <MapView
-        ref={mapRef}
         style={{ flex: 1 }}
-        region={region ?? defaultRegion}
-        showsUserLocation={false}
-        showsCompass
-        showsScale
-        mapType="terrain"
+        styleURL={MAP_STYLES[styleIdx].url}
+        logoEnabled={false}
+        attributionEnabled={false}
       >
+        <Camera
+          ref={cameraRef}
+          defaultSettings={{ centerCoordinate: [-120, 37], zoomLevel: 5 }}
+        />
+
         {/* Route polyline */}
         {points.length > 1 && (
-          <Polyline
-            coordinates={points.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-            strokeColor="#1c69d4"
-            strokeWidth={3}
-          />
+          <ShapeSource id="route" shape={routeGeoJSON}>
+            <LineLayer
+              id="route-line"
+              style={{ lineColor: "#1c69d4", lineWidth: 3, lineJoin: "round", lineCap: "round" }}
+            />
+          </ShapeSource>
         )}
 
         {/* Start marker — green dot */}
         {start && (
-          <Marker coordinate={{ latitude: start.lat, longitude: start.lng }} anchor={{ x: 0.5, y: 0.5 }}>
+          <PointAnnotation id="start" coordinate={[start.lng, start.lat]}>
             <View style={styles.startDot} />
-          </Marker>
+          </PointAnnotation>
         )}
 
         {/* Current position — pulsing blue dot */}
         {latest && (
-          <Marker coordinate={{ latitude: latest.lat, longitude: latest.lng }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+          <MarkerView id="current" coordinate={[latest.lng, latest.lat]}>
             <PulsingDot />
-          </Marker>
+          </MarkerView>
         )}
       </MapView>
+
+      {/* Map style toggle */}
+      <TouchableOpacity
+        style={styles.styleToggle}
+        onPress={() => setStyleIdx((i) => (i + 1) % MAP_STYLES.length)}
+      >
+        <Text style={styles.styleToggleText}>
+          {MAP_STYLES[(styleIdx + 1) % MAP_STYLES.length].label}
+        </Text>
+      </TouchableOpacity>
 
       {/* Stats overlay */}
       <View style={styles.statsBar}>
@@ -215,4 +240,10 @@ const styles = StyleSheet.create({
   dotRing: { width: 14, height: 14, borderRadius: 7, backgroundColor: "rgba(28,105,212,0.5)", position: "absolute" },
   startDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#22c55e", borderWidth: 2, borderColor: "#fff" },
   liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#22c55e" },
+  styleToggle: {
+    position: "absolute", top: 12, right: 12, zIndex: 10,
+    backgroundColor: "rgba(26,33,41,0.85)",
+    paddingHorizontal: 12, paddingVertical: 7,
+  },
+  styleToggleText: { color: "#fff", fontSize: 11, fontWeight: "700", letterSpacing: 0.8 },
 });

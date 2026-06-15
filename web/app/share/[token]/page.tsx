@@ -234,8 +234,17 @@ export default function SharePage() {
           >
             Story
           </a>
+          {data.trip.status === "active" && (
+            <a
+              href={`${baseUrl}/api/share/${token}/network-link.kml`}
+              title="Open as a live-refreshing NetworkLink in Google Earth Pro"
+              style={{ background: "#1a7a1a", color: "#fff", border: "1px solid #1a7a1a", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+            >
+              🌍 GEP Live
+            </a>
+          )}
           <a
-            href={`${baseUrl}/api/trips/${data.trip.id}/track.kml?token=${token}`}
+            href={`${baseUrl}/api/share/${token}/track.kml`}
             style={{ background: "transparent", color: "#bbbbbb", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
           >
             KML ↓
