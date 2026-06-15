@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { supabase } from "../../lib/supabase";
 import TripMap from "../../components/TripMap";
 
 interface Trip {
   id: string;
   name: string;
-  status: string;
+  status: "active" | "planning" | "completed" | "archived";
 }
 
 export default function MapScreen() {
@@ -64,13 +64,10 @@ export default function MapScreen() {
 
       {/* Map — always rendered on web, shows demo view when no trip */}
       <View className="flex-1" style={{ position: "relative" }}>
-        {Platform.OS === "web" ? (
-          <TripMap tripId={selectedTrip?.id ?? "demo"} />
-        ) : (
-          <View className="flex-1 bg-surface-dark items-center justify-center">
-            <Text className="text-on-dark-soft text-sm font-light">Map requires a development build</Text>
-          </View>
-        )}
+        <TripMap
+          tripId={selectedTrip?.id ?? "demo"}
+          tripStatus={selectedTrip?.status}
+        />
 
         {/* No trips overlay — shown on top of map */}
         {loaded && trips.length === 0 && (
