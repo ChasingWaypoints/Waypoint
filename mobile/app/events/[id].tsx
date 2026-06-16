@@ -1,14 +1,19 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView, Alert,
   ActivityIndicator, Share, RefreshControl, Linking,
 } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import Mapbox, { Camera, MapView, MarkerView, ShapeSource, LineLayer } from "@rnmapbox/maps";
+import { Camera, MapView, MarkerView, ShapeSource, LineLayer } from "@rnmapbox/maps";
 import { supabase } from "../../lib/supabase";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
+// Token is already initialised in TripMap.tsx — do not call setAccessToken again
+
+// MapView only accepts Mapbox components as children — use this instead of <View> for grouping
+function MapboxFragment({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
 const RIDER_COLORS = [
   "#1c69d4", "#00aa44", "#cc3300", "#cc00aa",
@@ -161,7 +166,7 @@ export default function EventDetailScreen() {
   return (
     <View className="flex-1 bg-surface-soft">
       {/* Status bar */}
-      <View style={{ background: "#1a2129" }} className="px-5 py-3 flex-row items-center justify-between" style={{ backgroundColor: "#1a2129" }}>
+      <View style={{ backgroundColor: "#1a2129", paddingHorizontal: 20, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <View className="flex-row items-center gap-2">
           {isLive && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#22c55e" }} />}
           <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>{event.name}</Text>
@@ -232,12 +237,12 @@ export default function EventDetailScreen() {
               } catch { return null; }
             })()}
 
-            {/* Each rider's track + position marker */}
+            {/* Each rider's track + position marker — must use Fragment, not View, inside MapView */}
             {riders.map((rider, i) => {
               const color = RIDER_COLORS[i % RIDER_COLORS.length];
               const trackCoords = rider.track.map((p) => [p.lng, p.lat]);
               return (
-                <View key={rider.id}>
+                <MapboxFragment key={rider.id}>
                   {trackCoords.length > 1 && (
                     <ShapeSource
                       id={`track-${rider.id}`}
@@ -263,7 +268,7 @@ export default function EventDetailScreen() {
                       </View>
                     </MarkerView>
                   )}
-                </View>
+                </MapboxFragment>
               );
             })}
           </MapView>
