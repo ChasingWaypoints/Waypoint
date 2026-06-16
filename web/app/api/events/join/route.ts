@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
 
+// GET /api/events/join?code=RIDE42
+// Look up an event by join code without joining — returns name and rider_classes
+// so the client can show the class picker before committing to join.
+export async function GET(request: NextRequest) {
+  const { user, supabase } = await getUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const code = request.nextUrl.searchParams.get("code")?.trim().toUpperCase();
+  if (!code) return NextResponse.json({ error: "code is required" }, { status: 400 });
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, name, status, rider_classes")
+    .eq("join_code", code)
+    .maybeSingle();
+
+  if (!event) return NextResponse.json({ error: "Event not found. Check the code and try again." }, { status: 404 });
+  if (event.status === "cancelled") return NextResponse.json({ error: "This event has been cancelled." }, { status: 410 });
+
+  return NextResponse.json({
+    id: event.id,
+    name: event.name,
+    status: event.status,
+    rider_classes: event.rider_classes ?? [],
+  });
+}
+
 // POST /api/events/join — look up event by join code and join in one step
 // Body: { code: "RIDE42", display_name?: "Victor" }
 export async function POST(request: NextRequest) {
@@ -40,11 +67,16 @@ export async function POST(request: NextRequest) {
     user.email?.split("@")[0] ||
     "Rider";
 
+  const riderClass = body.rider_class?.trim() || null;
+  const riderNumber = body.rider_number?.trim() || null;
+
   const { error } = await supabase.from("event_participants").insert({
     event_id: event.id,
     user_id: user.id,
     display_name: displayName,
     role: "rider",
+    rider_class: riderClass,
+    rider_number: riderNumber,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

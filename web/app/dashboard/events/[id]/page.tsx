@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -18,15 +18,16 @@ const RIDER_COLORS = [
 ];
 
 interface TrackPoint { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string }
-interface Rider { id: string; display_name: string; role: string; latest: TrackPoint | null; track: TrackPoint[] }
+interface Rider { id: string; display_name: string; role: string; rider_class: string | null; rider_number: string | null; latest: TrackPoint | null; track: TrackPoint[] }
 interface GepCredential { id: string; display_name: string; gep_token: string; created_at: string }
 interface AccessEntry { display_name: string; type: string; role?: string; access_count: number; last_seen: string; unique_ips: string[]; last_ip: string }
 interface EventDetail {
   id: string; name: string; status: string; join_code: string; share_token: string;
   route_gpx: string | null; route_name: string | null; organizer_id: string;
+  rider_classes: string[];
 }
 
-type Tab = "map" | "riders" | "gep";
+type Tab = "map" | "riders" | "gep" | "settings";
 
 function timeAgo(iso: string): string {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -89,6 +90,12 @@ export default function EventDetailPage() {
   const [copyFeedback, setCopyFeedback] = useState<string>("");
   const [gpxUploading, setGpxUploading] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
+
+  // Settings tab — class editor
+  const [classInput, setClassInput] = useState("");
+  const [editedClasses, setEditedClasses] = useState<string[] | null>(null); // null = not yet opened
+  const [savingClasses, setSavingClasses] = useState(false);
+  const [classesSaved, setClassesSaved] = useState(false);
 
   // Map refs
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -308,6 +315,35 @@ export default function EventDetailPage() {
     await load();
   }
 
+  // Initialize editedClasses when Settings tab is opened
+  function openSettings() {
+    if (editedClasses === null && event) setEditedClasses(event.rider_classes ?? []);
+    setTab("settings");
+  }
+
+  function addEditedClass() {
+    const val = classInput.trim();
+    if (!val) return;
+    setEditedClasses((prev) => (prev ?? []).includes(val) ? (prev ?? []) : [...(prev ?? []), val]);
+    setClassInput("");
+  }
+
+  async function saveClasses() {
+    if (!session || !event || editedClasses === null) return;
+    setSavingClasses(true);
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ rider_classes: editedClasses }),
+    });
+    setSavingClasses(false);
+    if (res.ok) {
+      await load(); // refresh event so rider_classes is updated everywhere
+      setClassesSaved(true);
+      setTimeout(() => setClassesSaved(false), 2500);
+    }
+  }
+
   if (loading) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
       <p style={{ color: "#6b6b6b" }}>Loading event...</p>
@@ -385,6 +421,17 @@ export default function EventDetailPage() {
             {t === "riders" ? `Riders (${riders.length})` : t.toUpperCase()}
           </button>
         ))}
+        {isOrganizer && (
+          <button onClick={openSettings}
+            style={{
+              padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
+              border: "none", borderBottom: tab === "settings" ? "2px solid #1c69d4" : "2px solid transparent",
+              color: tab === "settings" ? "#1c69d4" : "#6b6b6b", background: "transparent", cursor: "pointer",
+            }}
+          >
+            SETTINGS
+          </button>
+        )}
       </div>
 
       {/* ── MAP TAB ── */}
@@ -425,8 +472,13 @@ export default function EventDetailPage() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 12, fontWeight: 700, color: "#262626", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {rider.display_name}{rider.role === "organizer" ? " ★" : ""}
+                        {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                       </p>
+                      {rider.rider_class && (
+                        <p style={{ fontSize: 10, color: "#9a9a9a", margin: "1px 0 0", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                          {rider.rider_class}
+                        </p>
+                      )}
                       {rider.latest ? (
                         <p style={{ fontSize: 11, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#6b6b6b", margin: "1px 0 0" }}>
                           {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
@@ -461,9 +513,16 @@ export default function EventDetailPage() {
                       {rider.display_name.slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: 0 }}>
-                        {rider.display_name}{rider.role === "organizer" ? " ★" : ""}
-                      </p>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: 0 }}>
+                          {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
+                        </p>
+                        {rider.rider_class && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#6b6b6b", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
+                            {rider.rider_class}
+                          </span>
+                        )}
+                      </div>
                       {rider.latest ? (
                         <p style={{ fontSize: 12, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#6b6b6b", margin: "2px 0 0" }}>
                           {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
@@ -482,6 +541,82 @@ export default function EventDetailPage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SETTINGS TAB ── */}
+      {tab === "settings" && isOrganizer && (
+        <div style={{ flex: 1, overflowY: "auto", background: "#f7f7f7" }}>
+          <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* Classes */}
+            <div>
+              <SectionLabel>Rider Classes</SectionLabel>
+              <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 24 }}>
+                <p style={{ fontSize: 13, color: "#6b6b6b", margin: "0 0 20px", lineHeight: 1.6 }}>
+                  Define the class options riders see when joining this event. If left empty, the class field is hidden on the join screen.
+                </p>
+
+                {/* Chips */}
+                {(editedClasses ?? []).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+                    {(editedClasses ?? []).map((cls) => (
+                      <div
+                        key={cls}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#1c69d4", color: "#fff", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                      >
+                        {cls}
+                        <button
+                          onClick={() => setEditedClasses((prev) => (prev ?? []).filter((c) => c !== cls))}
+                          style={{ background: "none", border: "none", color: "#cce0ff", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 0 }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add input */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                  <input
+                    type="text"
+                    value={classInput}
+                    onChange={(e) => setClassInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEditedClass(); } }}
+                    placeholder="e.g. Moto, UTV, Car, Truck…"
+                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#1a2129", outline: "none" }}
+                  />
+                  <button
+                    onClick={addEditedClass}
+                    disabled={!classInput.trim()}
+                    style={{
+                      background: classInput.trim() ? "#1a2129" : "#d4d4d4", color: "#fff",
+                      border: "none", padding: "10px 18px", fontSize: 11, fontWeight: 700,
+                      letterSpacing: 0.5, textTransform: "uppercase",
+                      cursor: classInput.trim() ? "pointer" : "default",
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <button
+                  onClick={saveClasses}
+                  disabled={savingClasses}
+                  style={{
+                    background: classesSaved ? "#22c55e" : "#1c69d4", color: "#fff",
+                    border: "none", padding: "11px 24px", fontSize: 11, fontWeight: 700,
+                    letterSpacing: 0.5, textTransform: "uppercase",
+                    cursor: savingClasses ? "default" : "pointer",
+                  }}
+                >
+                  {savingClasses ? "Saving…" : classesSaved ? "Saved ✓" : "Save Classes"}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

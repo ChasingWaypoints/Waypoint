@@ -10,6 +10,11 @@ export async function POST(request: NextRequest) {
   const { name, description, starts_at } = body;
   if (!name?.trim()) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
+  // rider_classes: organizer-defined class options shown to riders on join
+  const rider_classes: string[] = Array.isArray(body.rider_classes)
+    ? body.rider_classes.map((c: string) => c.trim()).filter(Boolean)
+    : [];
+
   // Generate a readable 6-char join code — retry on collision (extremely unlikely)
   let join_code = "";
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -28,6 +33,7 @@ export async function POST(request: NextRequest) {
       description: description?.trim() || null,
       starts_at: starts_at || null,
       join_code,
+      rider_classes,
     })
     .select()
     .single();

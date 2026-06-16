@@ -24,7 +24,7 @@ export async function GET(
   // Fetch participants (keep gep_token in memory so we can expose it to organizer)
   const { data: participants } = await supabase
     .from("event_participants")
-    .select("id, user_id, display_name, role, gep_token, joined_at")
+    .select("id, user_id, display_name, role, gep_token, joined_at, rider_class, rider_number")
     .eq("event_id", id)
     .order("role", { ascending: true }); // organizer first
 
@@ -39,7 +39,7 @@ export async function GET(
   const adminSupabase = createAdminClient();
   const riders = await Promise.all(
     (participants ?? []).map(async (p: any) => {
-      const { gep_token, ...rest } = p;
+      const { gep_token, rider_class, rider_number, ...rest } = p;
 
       // Prefer an active trip; fall back to any trip started in the last 24h
       let tripId: string | null = null;
@@ -70,6 +70,8 @@ export async function GET(
       if (!tripId) {
         return {
           ...rest,
+          rider_class: rider_class ?? null,
+          rider_number: rider_number ?? null,
           latest: null,
           track: [],
           ...(isOrganizer ? { gep_token } : {}),
@@ -89,6 +91,8 @@ export async function GET(
 
       return {
         ...rest,
+        rider_class: rider_class ?? null,
+        rider_number: rider_number ?? null,
         latest,
         track: pts,
         ...(isOrganizer ? { gep_token } : {}),
@@ -122,6 +126,12 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
+  }
+  // rider_classes is a text[] — validate separately
+  if ("rider_classes" in body) {
+    updates.rider_classes = Array.isArray(body.rider_classes)
+      ? body.rider_classes.map((c: string) => String(c).trim()).filter(Boolean)
+      : [];
   }
 
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();

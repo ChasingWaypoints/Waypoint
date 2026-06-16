@@ -32,8 +32,14 @@ function Nav({ email, onSignOut }: { email: string; onSignOut: () => void }) {
       <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
         Waypoint
       </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ color: "#8a9ab0", fontSize: 13 }}>{email}</span>
+        <Link
+          href="/dashboard/profile"
+          style={{ background: "transparent", border: "1px solid #3a4550", color: "#bbbbbb", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+        >
+          Profile
+        </Link>
         <button
           onClick={onSignOut}
           style={{ background: "transparent", border: "1px solid #3a4550", color: "#bbbbbb", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
