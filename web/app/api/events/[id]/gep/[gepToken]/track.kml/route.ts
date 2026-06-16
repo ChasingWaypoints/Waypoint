@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "../../../../../../../lib/supabase/admin";
+import { createAnonClient } from "../../../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep/[gepToken]/track.kml
 //
 // Returns a KML snapshot of ALL riders in the event plus the organizer's GPX route.
 // Polled every REFRESH_SECONDS by GEP via the NetworkLink file.
-// The token can be either a participant token or a named credential token.
+// Token validation + all data queries use SECURITY DEFINER RPCs —
+// no SUPABASE_SERVICE_ROLE_KEY needed.
 
 const RIDER_COLORS = [
   "ff1c69d4", // blue
@@ -32,98 +33,55 @@ export async function GET(
   { params }: { params: Promise<{ id: string; gepToken: string }> }
 ) {
   const { id, gepToken } = await params;
-  const supabase = createAdminClient();
+  const supabase = createAnonClient();
 
-  // ── Validate token ─────────────────────────────────────────────
-  let holderName = "";
-  let logInsert: Record<string, unknown> = { event_id: id };
+  // ── Validate token (also returns event info) ──────────────────
+  const { data: tokenData, error: tokenError } = await supabase.rpc(
+    "validate_gep_token",
+    { p_event_id: id, p_token: gepToken }
+  );
 
-  const { data: participant } = await supabase
-    .from("event_participants")
-    .select("id, display_name")
-    .eq("gep_token", gepToken)
-    .eq("event_id", id)
-    .maybeSingle();
-
-  if (participant) {
-    holderName = participant.display_name;
-    logInsert.participant_id = participant.id;
-  } else {
-    const { data: credential } = await supabase
-      .from("event_gep_credentials")
-      .select("id, display_name")
-      .eq("gep_token", gepToken)
-      .eq("event_id", id)
-      .maybeSingle();
-
-    if (!credential) return new NextResponse("Invalid or expired GEP token", { status: 401 });
-    holderName = credential.display_name;
-    logInsert.credential_id = credential.id;
+  if (tokenError || !tokenData) {
+    return new NextResponse("Invalid or expired GEP token", { status: 401 });
   }
 
-  // ── Log this fetch ─────────────────────────────────────────────
+  const holderName: string = tokenData.holder_name;
+  const participantId: string | null = tokenData.participant_id ?? null;
+  const credentialId: string | null = tokenData.credential_id ?? null;
+  const event: { id: string; name: string; status: string; route_gpx: string | null; route_name: string | null } = tokenData.event;
+
+  // ── Log this fetch ────────────────────────────────────────────
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
-  await supabase.from("gep_access_log").insert({
-    ...logInsert,
-    ip_address: ip,
-    user_agent: request.headers.get("user-agent") || "unknown",
+
+  await supabase.rpc("log_gep_access", {
+    p_event_id:       id,
+    p_participant_id: participantId,
+    p_credential_id:  credentialId,
+    p_ip:             ip,
+    p_user_agent:     request.headers.get("user-agent") || "unknown",
   });
 
-  // ── Load event + riders ───────────────────────────────────────
-  const { data: event } = await supabase
-    .from("events")
-    .select("id, name, status, route_gpx, route_name")
-    .eq("id", id)
-    .single();
-
-  if (!event) return new NextResponse("Event not found", { status: 404 });
-
-  const { data: participants } = await supabase
-    .from("event_participants")
-    .select("id, user_id, display_name, role")
-    .eq("event_id", id)
-    .order("role");
+  // ── Load participants ─────────────────────────────────────────
+  const { data: participants } = await supabase.rpc(
+    "get_event_participants_for_gep",
+    { p_event_id: id }
+  );
 
   // ── Fetch each rider's track ───────────────────────────────────
   const riderData = await Promise.all(
-    (participants ?? []).map(async (p: any, i: number) => {
-      let tripId: string | null = null;
-
-      const { data: activeTrip } = await supabase
-        .from("trips")
-        .select("id")
-        .eq("user_id", p.user_id)
-        .eq("status", "active")
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (activeTrip) {
-        tripId = activeTrip.id;
-      } else {
-        const { data: recentTrip } = await supabase
-          .from("trips")
-          .select("id")
-          .eq("user_id", p.user_id)
-          .gte("started_at", new Date(Date.now() - 86400000).toISOString())
-          .order("started_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (recentTrip) tripId = recentTrip.id;
-      }
-
-      if (!tripId) return { participant: p, points: [], color: RIDER_COLORS[i % RIDER_COLORS.length] };
-
-      const { data: points } = await supabase
-        .from("track_points")
-        .select("lat, lng, altitude_m, speed_kmh, recorded_at")
-        .eq("trip_id", tripId)
-        .order("recorded_at", { ascending: true });
-
-      return { participant: p, points: points ?? [], color: RIDER_COLORS[i % RIDER_COLORS.length] };
+    (participants ?? []).map(async (p: { id: string; user_id: string; display_name: string; role: string }, i: number) => {
+      const { data: points } = await supabase.rpc("get_rider_track", {
+        p_user_id:    p.user_id,
+        p_max_points: 500,
+      });
+      return {
+        participant: p,
+        points: (points ?? []) as { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string }[],
+        color: RIDER_COLORS[i % RIDER_COLORS.length],
+      };
     })
   );
 
@@ -134,7 +92,7 @@ export async function GET(
     }
 
     const latest = points[points.length - 1];
-    const coords = points.map((p: any) => `${p.lng},${p.lat},${p.altitude_m ?? 0}`).join("\n");
+    const coords = points.map((p: { lat: number; lng: number; altitude_m: number }) => `${p.lng},${p.lat},${p.altitude_m ?? 0}`).join("\n");
     const ago = Math.round((Date.now() - new Date(latest.recorded_at).getTime()) / 60000);
     const agoStr = ago < 2 ? "just now" : `${ago}m ago`;
 

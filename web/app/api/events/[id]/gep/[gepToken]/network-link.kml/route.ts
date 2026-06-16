@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "../../../../../../../lib/supabase/admin";
+import { createAnonClient } from "../../../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep/[gepToken]/network-link.kml
 //
@@ -7,9 +7,8 @@ import { createAdminClient } from "../../../../../../../lib/supabase/admin";
 //   • A participant token (from event_participants.gep_token) — app riders
 //   • A named credential token (from event_gep_credentials.gep_token) — external viewers
 //
-// Either way: if this URL leaks, the organizer can trace it via gep_access_log.
-// Usage: in Google Earth Pro, go to Add → Network Link → paste this URL in the Link field.
-// GEP auto-refreshes the track KML every 30 seconds while the event is active.
+// Token validation + event lookup are handled by the validate_gep_token()
+// SECURITY DEFINER function — no SUPABASE_SERVICE_ROLE_KEY needed.
 
 const REFRESH_SECONDS = 30;
 
@@ -18,54 +17,35 @@ export async function GET(
   { params }: { params: Promise<{ id: string; gepToken: string }> }
 ) {
   const { id, gepToken } = await params;
-  const supabase = createAdminClient();
+  const supabase = createAnonClient();
 
-  // ── Validate token ────────────────────────────────────────────
-  // Check participant tokens first, then named credentials.
-  let holderName = "";
-  let logInsert: Record<string, unknown> = { event_id: id };
+  // ── Validate token (also returns event name/status) ───────────
+  const { data: tokenData, error: tokenError } = await supabase.rpc(
+    "validate_gep_token",
+    { p_event_id: id, p_token: gepToken }
+  );
 
-  const { data: participant } = await supabase
-    .from("event_participants")
-    .select("id, display_name, event_id")
-    .eq("gep_token", gepToken)
-    .eq("event_id", id)
-    .maybeSingle();
-
-  if (participant) {
-    holderName = participant.display_name;
-    logInsert.participant_id = participant.id;
-  } else {
-    const { data: credential } = await supabase
-      .from("event_gep_credentials")
-      .select("id, display_name, event_id")
-      .eq("gep_token", gepToken)
-      .eq("event_id", id)
-      .maybeSingle();
-
-    if (!credential) return new NextResponse("Invalid or expired GEP token", { status: 401 });
-    holderName = credential.display_name;
-    logInsert.credential_id = credential.id;
+  if (tokenError || !tokenData) {
+    return new NextResponse("Invalid or expired GEP token", { status: 401 });
   }
 
-  // ── Load event info ───────────────────────────────────────────
-  const { data: event } = await supabase
-    .from("events")
-    .select("id, name, status")
-    .eq("id", id)
-    .single();
-
-  if (!event) return new NextResponse("Event not found", { status: 404 });
+  const holderName: string = tokenData.holder_name;
+  const participantId: string | null = tokenData.participant_id ?? null;
+  const credentialId: string | null = tokenData.credential_id ?? null;
+  const event: { name: string; status: string } = tokenData.event;
 
   // ── Log the access ────────────────────────────────────────────
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
-  await supabase.from("gep_access_log").insert({
-    ...logInsert,
-    ip_address: ip,
-    user_agent: request.headers.get("user-agent") || "unknown",
+
+  await supabase.rpc("log_gep_access", {
+    p_event_id:       id,
+    p_participant_id: participantId,
+    p_credential_id:  credentialId,
+    p_ip:             ip,
+    p_user_agent:     request.headers.get("user-agent") || "unknown",
   });
 
   // ── Build KML ─────────────────────────────────────────────────

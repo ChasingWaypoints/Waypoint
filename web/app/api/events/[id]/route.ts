@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
-import { createAdminClient } from "../../../../lib/supabase/admin";
+import { createAnonClient } from "../../../../lib/supabase/admin";
 
 // GET /api/events/[id] — full event data with riders and their tracks
 export async function GET(
@@ -21,7 +21,7 @@ export async function GET(
 
   const isOrganizer = event.organizer_id === user.id;
 
-  // Fetch participants (keep gep_token in memory so we can expose it to organizer)
+  // Fetch participants via the user's own supabase client (RLS enforced — correct)
   const { data: participants } = await supabase
     .from("event_participants")
     .select("id, user_id, display_name, role, gep_token, joined_at, rider_class, rider_number")
@@ -31,62 +31,19 @@ export async function GET(
   // Find the current user's gep_token
   const me = (participants ?? []).find((p: any) => p.user_id === user.id);
 
-  // For each participant, fetch their track from their most recent active/recent trip.
-  // We use the admin client here because RLS on `trips` only allows users to see their
-  // own rows — without it the organizer cannot read other participants' tracks.
-  // Returns { id, user_id, display_name, role, joined_at, latest, track, gep_token? }
-  // gep_token is only included when the requester is the organizer.
-  const adminSupabase = createAdminClient();
+  // For each participant, fetch their track via the get_rider_track() SECURITY DEFINER
+  // RPC — this lets us read any user's trips/track_points without the service role key.
+  const anonSupabase = createAnonClient();
   const riders = await Promise.all(
     (participants ?? []).map(async (p: any) => {
       const { gep_token, rider_class, rider_number, ...rest } = p;
 
-      // Prefer an active trip; fall back to any trip started in the last 24h
-      let tripId: string | null = null;
+      const { data: points } = await anonSupabase.rpc("get_rider_track", {
+        p_user_id:    p.user_id,
+        p_max_points: 500,
+      });
 
-      const { data: activeTrip } = await adminSupabase
-        .from("trips")
-        .select("id")
-        .eq("user_id", p.user_id)
-        .eq("status", "active")
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (activeTrip) {
-        tripId = activeTrip.id;
-      } else {
-        const { data: recentTrip } = await adminSupabase
-          .from("trips")
-          .select("id")
-          .eq("user_id", p.user_id)
-          .gte("started_at", new Date(Date.now() - 86400000).toISOString())
-          .order("started_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        tripId = recentTrip?.id ?? null;
-      }
-
-      if (!tripId) {
-        return {
-          ...rest,
-          rider_class: rider_class ?? null,
-          rider_number: rider_number ?? null,
-          latest: null,
-          track: [],
-          ...(isOrganizer ? { gep_token } : {}),
-        };
-      }
-
-      // Fetch up to 500 track points (chronological) so the map can draw the polyline
-      const { data: trackPoints } = await adminSupabase
-        .from("track_points")
-        .select("lat, lng, altitude_m, speed_kmh, recorded_at")
-        .eq("trip_id", tripId)
-        .order("recorded_at", { ascending: true })
-        .limit(500);
-
-      const pts = trackPoints ?? [];
+      const pts = (points ?? []) as { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string }[];
       const latest = pts.length > 0 ? pts[pts.length - 1] : null;
 
       return {
