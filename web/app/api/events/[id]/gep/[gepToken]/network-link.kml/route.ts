@@ -8,7 +8,7 @@ import { createAdminClient } from "../../../../../../../lib/supabase/admin";
 //   • A named credential token (from event_gep_credentials.gep_token) — external viewers
 //
 // Either way: if this URL leaks, the organizer can trace it via gep_access_log.
-// Usage: open this URL in Google Earth Pro (File → Open → paste URL).
+// Usage: in Google Earth Pro, go to Add → Network Link → paste this URL in the Link field.
 // GEP auto-refreshes the track KML every 30 seconds while the event is active.
 
 const REFRESH_SECONDS = 30;

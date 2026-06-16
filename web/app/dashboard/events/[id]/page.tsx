@@ -492,7 +492,7 @@ export default function EventDetailPage() {
               <SectionLabel>Your GEP Link</SectionLabel>
               <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 20 }}>
                 <p style={{ fontSize: 13, color: "#6b6b6b", margin: "0 0 14px", lineHeight: 1.6 }}>
-                  Open this in Google Earth Pro (File → Open → paste URL) to see all riders live. This link is unique to you — do not share it.
+                  Open this in Google Earth Pro to see all riders live. Go to Add → Network Link, paste the URL in the Link field. This link is unique to you — do not share it.
                 </p>
                 {myGepUrl ? (
                   <div style={{ display: "flex", gap: 8 }}>

@@ -176,7 +176,7 @@ export default function EventDetailScreen() {
     const url = `${WEB_BASE}/api/events/${event.id}/gep/${myGepToken}/network-link.kml`;
     Alert.alert(
       "Your GEP Link",
-      "This link is personalised to you. Open Google Earth Pro and paste it under File → Open. Do not share it — if it leaks, the organizer can trace it back.",
+      "This link is personalised to you. In Google Earth Pro: Add → Network Link → paste the URL in the Link field. Do not share it — if it leaks, the organizer can trace it back.",
       [{ text: "Share Link", onPress: () => Share.share({ message: url, url }) },
        { text: "OK" }]
     );
@@ -210,7 +210,7 @@ export default function EventDetailScreen() {
     if (!event) return;
     const url = `${WEB_BASE}/api/events/${event.id}/gep/${cred.gep_token}/network-link.kml`;
     await Share.share({
-      message: `Hi ${cred.display_name}! Here is your personal Google Earth Pro link for "${event.name}":\n\n${url}\n\nIn Google Earth Pro: File → Open → paste the URL above. Auto-refreshes live. Do not share this link — it is unique to you.`,
+      message: `Hi ${cred.display_name}! Here is your personal Google Earth Pro link for "${event.name}":\n\n${url}\n\nIn Google Earth Pro: Add → Network Link → paste the URL above in the Link field. Auto-refreshes live. Do not share this link — it is unique to you.`,
       url,
     });
   }
