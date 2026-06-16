@@ -94,6 +94,7 @@ export default function EventDetailPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<Record<string, mapboxgl.Marker>>({});
+  const hasInitialFitRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
   const [followId, setFollowId] = useState<string | null>(null);
 
@@ -167,7 +168,7 @@ export default function EventDetailPage() {
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
     map.on("load", () => setMapReady(true));
-    return () => { map.remove(); mapRef.current = null; setMapReady(false); };
+    return () => { map.remove(); mapRef.current = null; setMapReady(false); hasInitialFitRef.current = false; };
   }, [event, tab]);
 
   // Sync riders + route to map
@@ -227,7 +228,10 @@ export default function EventDetailPage() {
       }
     });
 
-    if (allCoords.length && Object.keys(markersRef.current).length === riders.filter(r => r.latest).length) {
+    // Only fit bounds once — on the first refresh that has positions.
+    // Subsequent 20s auto-refreshes must NOT reset the zoom.
+    if (allCoords.length && !hasInitialFitRef.current) {
+      hasInitialFitRef.current = true;
       if (allCoords.length === 1) { map.flyTo({ center: allCoords[0], zoom: 12 }); }
       else {
         const lngs = allCoords.map(c => c[0]); const lats = allCoords.map(c => c[1]);

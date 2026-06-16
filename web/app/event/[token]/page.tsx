@@ -48,6 +48,7 @@ export default function EventPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<Record<string, mapboxgl.Marker>>({});
+  const hasInitialFitRef = useRef(false);
   const [data, setData] = useState<ApiResponse | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -84,7 +85,7 @@ export default function EventPage() {
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
     map.on("load", () => setMapReady(true));
-    return () => { map.remove(); mapRef.current = null; };
+    return () => { map.remove(); mapRef.current = null; hasInitialFitRef.current = false; };
   }, [data]);
 
   // Sync riders to map whenever data or map readiness changes
@@ -175,8 +176,9 @@ export default function EventPage() {
       }
     });
 
-    // Fit bounds to all riders on first load
-    if (allCoords.length && Object.keys(markersRef.current).length === data.riders.filter(r => r.latest).length) {
+    // Fit bounds only on first load — subsequent refreshes must not reset the zoom
+    if (allCoords.length && !hasInitialFitRef.current) {
+      hasInitialFitRef.current = true;
       if (allCoords.length === 1) {
         map.flyTo({ center: allCoords[0], zoom: 12 });
       } else if (allCoords.length > 1) {

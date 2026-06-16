@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
+import { createAdminClient } from "../../../../lib/supabase/admin";
 
 // GET /api/events/[id] — full event data with riders and their tracks
 export async function GET(
@@ -31,8 +32,11 @@ export async function GET(
   const me = (participants ?? []).find((p: any) => p.user_id === user.id);
 
   // For each participant, fetch their track from their most recent active/recent trip.
+  // We use the admin client here because RLS on `trips` only allows users to see their
+  // own rows — without it the organizer cannot read other participants' tracks.
   // Returns { id, user_id, display_name, role, joined_at, latest, track, gep_token? }
   // gep_token is only included when the requester is the organizer.
+  const adminSupabase = createAdminClient();
   const riders = await Promise.all(
     (participants ?? []).map(async (p: any) => {
       const { gep_token, ...rest } = p;
@@ -40,7 +44,7 @@ export async function GET(
       // Prefer an active trip; fall back to any trip started in the last 24h
       let tripId: string | null = null;
 
-      const { data: activeTrip } = await supabase
+      const { data: activeTrip } = await adminSupabase
         .from("trips")
         .select("id")
         .eq("user_id", p.user_id)
@@ -52,7 +56,7 @@ export async function GET(
       if (activeTrip) {
         tripId = activeTrip.id;
       } else {
-        const { data: recentTrip } = await supabase
+        const { data: recentTrip } = await adminSupabase
           .from("trips")
           .select("id")
           .eq("user_id", p.user_id)
@@ -73,7 +77,7 @@ export async function GET(
       }
 
       // Fetch up to 500 track points (chronological) so the map can draw the polyline
-      const { data: trackPoints } = await supabase
+      const { data: trackPoints } = await adminSupabase
         .from("track_points")
         .select("lat, lng, altitude_m, speed_kmh, recorded_at")
         .eq("trip_id", tripId)
