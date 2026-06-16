@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../../lib/supabase/auth";
-import { createAdminClient } from "../../../../../../lib/supabase/admin";
 
 // DELETE /api/events/[id]/gep-credentials/[credId]
 // Revoke a named GEP credential — organizer only.
@@ -18,12 +17,11 @@ export async function DELETE(
   if (!event || event.organizer_id !== user.id)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const admin = createAdminClient();
-  const { error } = await admin
+  const { error } = await supabase
     .from("event_gep_credentials")
     .delete()
     .eq("id", credId)
-    .eq("event_id", id); // safety check
+    .eq("event_id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../lib/supabase/auth";
-import { createAdminClient } from "../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep-credentials
 // Returns all named GEP viewer credentials for this event — organizer only.
@@ -47,9 +46,7 @@ export async function POST(
   const displayName = body.display_name?.trim();
   if (!displayName) return NextResponse.json({ error: "display_name is required" }, { status: 400 });
 
-  // Use admin client so the insert bypasses RLS (service role auto-generates gep_token via default)
-  const admin = createAdminClient();
-  const { data: cred, error } = await admin
+  const { data: cred, error } = await supabase
     .from("event_gep_credentials")
     .insert({ event_id: id, display_name: displayName })
     .select("id, display_name, gep_token, created_at")
