@@ -88,8 +88,11 @@ export default function TripMap({ tripId, tripStatus }: TripMapProps) {
     if (tripId === "demo") return;
     loadPoints();
 
+    // Use a unique channel name per mount so stale channels from tab switches
+    // don't block new subscriptions (removeChannel is async).
+    const channelName = `native-map-${tripId}-${Date.now()}`;
     const channel = supabase
-      .channel(`native-map-${tripId}`)
+      .channel(channelName)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "track_points",
         filter: `trip_id=eq.${tripId}`,

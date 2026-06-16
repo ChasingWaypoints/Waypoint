@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "../../../../../lib/supabase/server";
+import { getUserFromRequest } from "../../../../../lib/supabase/auth";
 
 // POST /api/events/[id]/route-gpx — organizer uploads a GPX route file
 // Body: multipart/form-data with `file` field (GPX file) and optional `route_name`
@@ -9,8 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, supabase } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify organizer
@@ -54,12 +53,11 @@ export async function POST(
 
 // DELETE /api/events/[id]/route-gpx — remove the uploaded route
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, supabase } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: event } = await supabase

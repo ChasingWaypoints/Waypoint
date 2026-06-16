@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "../../../../../lib/supabase/server";
+import { getUserFromRequest } from "../../../../../lib/supabase/auth";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep-access
@@ -7,14 +7,13 @@ import { createAdminClient } from "../../../../../lib/supabase/admin";
 // Each row shows who fetched the KML, when, and from what IP.
 // Use this to trace a leaked GEP link back to the participant who shared it.
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { user, supabase } = await getUserFromRequest(request);
   const admin = createAdminClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: event } = await supabase
