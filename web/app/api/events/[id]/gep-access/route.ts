@@ -4,8 +4,8 @@ import { createAdminClient } from "../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep-access
 // Returns GEP access log for the event — organizer only.
-// Each row shows who fetched the KML, when, and from what IP.
-// Use this to trace a leaked GEP link back to the participant who shared it.
+// Covers both participant tokens (app riders) and named credentials (external viewers).
+// Use this to trace a leaked GEP link back to the person who shared it.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,20 +21,26 @@ export async function GET(
   if (!event || event.organizer_id !== user.id)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  // Pull last 500 accesses with participant info
+  // Pull last 500 accesses — join both participant and credential tables
   const { data: logs, error } = await admin
     .from("gep_access_log")
-    .select("id, accessed_at, ip_address, user_agent, event_participants(display_name, role, gep_token)")
+    .select(`
+      id, accessed_at, ip_address, user_agent,
+      participant_id, credential_id,
+      event_participants(display_name, role, gep_token),
+      event_gep_credentials(display_name, gep_token)
+    `)
     .eq("event_id", id)
     .order("accessed_at", { ascending: false })
     .limit(500);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Summarise per-participant for easy scanning
-  const byParticipant: Record<string, {
+  // Summarise per token — each entry is either a participant or a named credential
+  const byToken: Record<string, {
     display_name: string;
-    role: string;
+    type: "participant" | "credential";
+    role?: string;
     gep_token: string;
     access_count: number;
     last_seen: string;
@@ -43,28 +49,32 @@ export async function GET(
   }> = {};
 
   for (const log of logs ?? []) {
-    const p = (log as any).event_participants;
-    if (!p) continue;
-    const key = p.gep_token;
-    if (!byParticipant[key]) {
-      byParticipant[key] = {
-        display_name: p.display_name,
-        role: p.role,
-        gep_token: p.gep_token,
+    const participant = (log as any).event_participants;
+    const credential = (log as any).event_gep_credentials;
+    const holder = participant ?? credential;
+    if (!holder) continue;
+
+    const key = holder.gep_token;
+    if (!byToken[key]) {
+      byToken[key] = {
+        display_name: holder.display_name,
+        type: participant ? "participant" : "credential",
+        role: participant?.role,
+        gep_token: holder.gep_token,
         access_count: 0,
         last_seen: log.accessed_at,
         unique_ips: [],
         last_ip: log.ip_address ?? "unknown",
       };
     }
-    byParticipant[key].access_count += 1;
-    if (log.ip_address && !byParticipant[key].unique_ips.includes(log.ip_address)) {
-      byParticipant[key].unique_ips.push(log.ip_address);
+    byToken[key].access_count += 1;
+    if (log.ip_address && !byToken[key].unique_ips.includes(log.ip_address)) {
+      byToken[key].unique_ips.push(log.ip_address);
     }
   }
 
   return NextResponse.json({
-    summary: Object.values(byParticipant).sort((a, b) => b.access_count - a.access_count),
+    summary: Object.values(byToken).sort((a, b) => b.access_count - a.access_count),
     raw_logs: logs,
   });
 }

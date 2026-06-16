@@ -3,12 +3,10 @@ import { createAdminClient } from "../../../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep/[gepToken]/track.kml
 //
-// Returns a KML snapshot of ALL riders in the event, plus the organizer's
-// uploaded GPX route (if any). GEP polls this every REFRESH_SECONDS via NetworkLink.
-//
-// Each participant's token logs to gep_access_log for traceability.
+// Returns a KML snapshot of ALL riders in the event plus the organizer's GPX route.
+// Polled every REFRESH_SECONDS by GEP via the NetworkLink file.
+// The token can be either a participant token or a named credential token.
 
-// Colours for rider tracks (KML AABBGGRR format)
 const RIDER_COLORS = [
   "ff1c69d4", // blue
   "ff00aa44", // green
@@ -21,10 +19,8 @@ const RIDER_COLORS = [
 ];
 
 function gpxToKmlCoords(gpx: string): string {
-  // Extract <trkpt lat="..." lon="..."> entries
   const matches = [...gpx.matchAll(/<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g)];
   if (!matches.length) {
-    // Try lon first
     const matches2 = [...gpx.matchAll(/<trkpt\s+lon="([^"]+)"\s+lat="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g)];
     return matches2.map((m) => `${m[1]},${m[2]},${m[3] ?? 0}`).join("\n");
   }
@@ -38,29 +34,45 @@ export async function GET(
   const { id, gepToken } = await params;
   const supabase = createAdminClient();
 
-  // Validate token belongs to this event
-  const { data: callerParticipant } = await supabase
+  // ── Validate token ─────────────────────────────────────────────
+  let holderName = "";
+  let logInsert: Record<string, unknown> = { event_id: id };
+
+  const { data: participant } = await supabase
     .from("event_participants")
     .select("id, display_name")
     .eq("gep_token", gepToken)
     .eq("event_id", id)
     .maybeSingle();
 
-  if (!callerParticipant) return new NextResponse("Invalid or expired GEP token", { status: 401 });
+  if (participant) {
+    holderName = participant.display_name;
+    logInsert.participant_id = participant.id;
+  } else {
+    const { data: credential } = await supabase
+      .from("event_gep_credentials")
+      .select("id, display_name")
+      .eq("gep_token", gepToken)
+      .eq("event_id", id)
+      .maybeSingle();
 
-  // Log this fetch
+    if (!credential) return new NextResponse("Invalid or expired GEP token", { status: 401 });
+    holderName = credential.display_name;
+    logInsert.credential_id = credential.id;
+  }
+
+  // ── Log this fetch ─────────────────────────────────────────────
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     request.headers.get("x-real-ip") ||
     "unknown";
   await supabase.from("gep_access_log").insert({
-    participant_id: callerParticipant.id,
-    event_id: id,
+    ...logInsert,
     ip_address: ip,
     user_agent: request.headers.get("user-agent") || "unknown",
   });
 
-  // Load event + all participants
+  // ── Load event + riders ───────────────────────────────────────
   const { data: event } = await supabase
     .from("events")
     .select("id, name, status, route_gpx, route_name")
@@ -75,10 +87,9 @@ export async function GET(
     .eq("event_id", id)
     .order("role");
 
-  // For each participant, load their latest active trip's track points
+  // ── Fetch each rider's track ───────────────────────────────────
   const riderData = await Promise.all(
     (participants ?? []).map(async (p: any, i: number) => {
-      // Find most recent trip (active first, then recent completed)
       let tripId: string | null = null;
 
       const { data: activeTrip } = await supabase
@@ -116,7 +127,7 @@ export async function GET(
     })
   );
 
-  // Build KML
+  // ── Build KML folders ─────────────────────────────────────────
   const riderFolders = riderData.map(({ participant, points, color }) => {
     if (!points.length) {
       return `  <Folder><name>${participant.display_name} — No data yet</name></Folder>`;
@@ -159,7 +170,7 @@ export async function GET(
   </Folder>`;
   }).join("\n");
 
-  // GPX route overlay (if organizer uploaded one)
+  // ── GPX planned route overlay ─────────────────────────────────
   let routeFolder = "";
   if (event.route_gpx) {
     const routeCoords = gpxToKmlCoords(event.route_gpx);
@@ -192,7 +203,7 @@ export async function GET(
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
   <Document>
     <name>${event.name}${event.status === "active" ? " 🔴 LIVE" : ""} — All Riders</name>
-    <description>Waypoint group event · ${riderData.length} riders · Refreshed: ${new Date().toLocaleString()}</description>
+    <description>Waypoint group event · ${riderData.length} riders · Viewer: ${holderName} · Refreshed: ${new Date().toLocaleString()}</description>
     ${routeFolder}
     ${riderFolders}
   </Document>
