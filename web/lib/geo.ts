@@ -185,7 +185,7 @@ export function parseGPXWaypoints(gpx: string): Waypoint[] {
     // Scoring type: first OpenRally flag element that maps to a code, or a
     // classic <type>/<sym> if present.
     let type: string | null = null;
-    for (const fm of body.matchAll(/<(?:\w+:)?([a-zA-Z_]+)\s*\/?\s*>/g)) {
+    for (const fm of body.matchAll(/<(?:\w+:)?([a-zA-Z_]+)(?:\s[^>]*?)?\/?>/g)) {
       const code = OPENRALLY_TYPE[fm[1].toLowerCase()];
       if (code) { type = code; break; }
     }
