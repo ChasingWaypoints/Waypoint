@@ -39,15 +39,20 @@ input, select, textarea {
 
 /* Mapbox popups on a dark map */
 .mapboxgl-popup-content {
-  background: #0C1E29;
-  color: #fff;
+  background: #0C1E29 !important;
+  color: #fff !important;
   border: 1px solid #1E3B4C;
   box-shadow: 0 8px 28px rgba(0,0,0,.55);
 }
-.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #0C1E29; }
-.mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #0C1E29; }
-.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #0C1E29; }
-.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #0C1E29; }
+.mapboxgl-popup-close-button { color: #fff !important; }
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #0C1E29 !important; }
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #0C1E29 !important; }
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #0C1E29 !important; }
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #0C1E29 !important; }
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: #0C1E29 !important; }
+.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip { border-top-color: #0C1E29 !important; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
