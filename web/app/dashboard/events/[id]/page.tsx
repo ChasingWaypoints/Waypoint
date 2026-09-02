@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import StagesManager from "../../../../components/StagesManager";
 import { getSupabaseClient } from "@/lib/supabase/client";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
@@ -28,7 +29,7 @@ interface EventDetail {
   rider_classes: string[];
 }
 
-type Tab = "map" | "riders" | "gep" | "settings";
+type Tab = "map" | "riders" | "admin";
 
 function timeAgo(iso: string): string {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -52,7 +53,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Btn({ onClick, color = "#FFFE15", border, children, disabled }: {
+function Btn({ onClick, color = "#CCFF00", border, children, disabled }: {
   onClick?: () => void; color?: string; border?: string;
   children: React.ReactNode; disabled?: boolean;
 }) {
@@ -62,7 +63,7 @@ function Btn({ onClick, color = "#FFFE15", border, children, disabled }: {
       disabled={disabled}
       style={{
         background: border ? "transparent" : (disabled ? "#1E3B4C" : color),
-        color: border ? color : "#fff",
+        color: border ? color : "#0C1E29",
         border: border ? `1px solid ${border}` : "none",
         padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
         textTransform: "uppercase", cursor: disabled ? "default" : "pointer",
@@ -152,7 +153,7 @@ export default function EventDetailPage() {
 
   // Load GEP data when switching to GEP tab
   useEffect(() => {
-    if (tab === "gep" && session && isOrganizer) {
+    if (tab === "admin" && session && isOrganizer) {
       loadCredentials();
       loadAccessLog();
     }
@@ -319,7 +320,7 @@ export default function EventDetailPage() {
   // Initialize editedClasses when Settings tab is opened
   function openSettings() {
     if (editedClasses === null && event) setEditedClasses(event.rider_classes ?? []);
-    setTab("settings");
+    setTab("admin");
   }
 
   function addEditedClass() {
@@ -417,28 +418,17 @@ export default function EventDetailPage() {
 
       {/* Tab bar */}
       <div style={{ display: "flex", background: "#0C1E29", borderBottom: "1px solid #1E3B4C", flexShrink: 0, height: TABS_H }}>
-        {(["map", "riders", "gep"] as Tab[]).map((t) => (
+        {(["map", "riders", ...(isOrganizer ? ["admin"] : [])] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             style={{
               padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
-              border: "none", borderBottom: tab === t ? "2px solid #1c69d4" : "2px solid transparent",
+              border: "none", borderBottom: tab === t ? "2px solid #CCFF00" : "2px solid transparent",
               color: tab === t ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
             {t === "riders" ? `Riders (${riders.length})` : t.toUpperCase()}
           </button>
         ))}
-        {isOrganizer && (
-          <button onClick={openSettings}
-            style={{
-              padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
-              border: "none", borderBottom: tab === "settings" ? "2px solid #1c69d4" : "2px solid transparent",
-              color: tab === "settings" ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
-            }}
-          >
-            SETTINGS
-          </button>
-        )}
       </div>
 
       {/* ── MAP TAB ── */}
@@ -553,9 +543,12 @@ export default function EventDetailPage() {
       )}
 
       {/* ── SETTINGS TAB ── */}
-      {tab === "settings" && isOrganizer && (
+      {tab === "admin" && isOrganizer && (
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
+          <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* Stages */}
+            <StagesManager eventId={id} />
 
             {/* Classes */}
             <div>
@@ -613,7 +606,7 @@ export default function EventDetailPage() {
                   onClick={saveClasses}
                   disabled={savingClasses}
                   style={{
-                    background: classesSaved ? "#CCFF00" : "#FFFE15", color: "#0C1E29",
+                    background: classesSaved ? "#CCFF00" : "#CCFF00", color: "#0C1E29",
                     border: "none", padding: "11px 24px", fontSize: 11, fontWeight: 700,
                     letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: savingClasses ? "default" : "pointer",
@@ -629,7 +622,7 @@ export default function EventDetailPage() {
       )}
 
       {/* ── GEP TAB ── */}
-      {tab === "gep" && (
+      {tab === "admin" && (
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
 

@@ -62,32 +62,67 @@ class BasemapControl implements IControl {
   private map?: MapboxMap;
   private container?: HTMLDivElement;
 
+  private menuOpen = false;
+
   onAdd(map: MapboxMap): HTMLElement {
     this.map = map;
-    const el = document.createElement("div");
-    el.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
-    el.style.cssText =
-      "display:flex;overflow:hidden;font:600 12px system-ui,sans-serif;";
-    BASEMAPS.forEach((b, i) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = b.label;
-      btn.style.cssText =
-        "border:none;padding:6px 12px;cursor:pointer;background:" +
-        (b.default ? "#CCFF00" : "#0C1E29") +
-        ";color:" + (b.default ? "#0C1E29" : "#C8D4DC") +
-        (i ? ";border-left:1px solid #1E3B4C" : "");
-      btn.addEventListener("click", () => this.select(b.id, el));
-      el.appendChild(btn);
+    const wrap = document.createElement("div");
+    wrap.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+    wrap.style.cssText = "position:relative;font:600 12px system-ui,sans-serif;";
+
+    const current = BASEMAPS.find((b) => b.default) ?? BASEMAPS[0];
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.style.cssText =
+      "display:flex;align-items:center;gap:8px;border:none;padding:7px 12px;" +
+      "cursor:pointer;background:#0C1E29;color:#fff;white-space:nowrap;";
+    trigger.innerHTML =
+      `<span data-label>${current.label}</span><span style="opacity:.6">\u25be</span>`;
+
+    const menu = document.createElement("div");
+    menu.style.cssText =
+      "position:absolute;top:100%;left:0;margin-top:4px;min-width:120px;" +
+      "background:#0C1E29;border:1px solid #1E3B4C;border-radius:4px;" +
+      "box-shadow:0 8px 24px rgba(0,0,0,.55);overflow:hidden;display:none;z-index:5;";
+
+    BASEMAPS.forEach((b) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.textContent = b.label;
+      item.dataset.id = b.id;
+      item.style.cssText =
+        "display:block;width:100%;text-align:left;border:none;padding:9px 12px;" +
+        "cursor:pointer;background:" + (b.default ? "#14303F" : "transparent") +
+        ";color:" + (b.default ? "#CCFF00" : "#C8D4DC") + ";";
+      item.addEventListener("click", () => {
+        this.select(b.id, menu, trigger);
+        this.toggle(menu, trigger, false);
+      });
+      menu.appendChild(item);
     });
-    this.container = el;
-    return el;
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.toggle(menu, trigger, !this.menuOpen);
+    });
+    document.addEventListener("click", () => this.toggle(menu, trigger, false));
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    this.container = wrap;
+    return wrap;
   }
 
-  private select(id: string, el: HTMLElement) {
+  private toggle(menu: HTMLElement, trigger: HTMLElement, open: boolean) {
+    this.menuOpen = open;
+    menu.style.display = open ? "block" : "none";
+  }
+
+  private select(id: string, menu: HTMLElement, trigger: HTMLElement) {
     const map = this.map;
     if (!map) return;
-    BASEMAPS.forEach((b, i) => {
+    BASEMAPS.forEach((b) => {
       const on = b.id === id;
       if (map.getLayer(`basemap-${b.id}`)) {
         map.setLayoutProperty(`basemap-${b.id}`, "visibility", on ? "visible" : "none");
@@ -95,9 +130,15 @@ class BasemapControl implements IControl {
       if (b.overlay && map.getLayer(`basemap-${b.id}-labels`)) {
         map.setLayoutProperty(`basemap-${b.id}-labels`, "visibility", on ? "visible" : "none");
       }
-      const btn = el.children[i] as HTMLButtonElement;
-      btn.style.background = on ? "#CCFF00" : "#0C1E29";
-      btn.style.color = on ? "#0C1E29" : "#C8D4DC";
+    });
+    const label = trigger.querySelector("[data-label]");
+    const chosen = BASEMAPS.find((b) => b.id === id);
+    if (label && chosen) label.textContent = chosen.label;
+    menu.querySelectorAll("button").forEach((el) => {
+      const item = el as HTMLButtonElement;
+      const on = item.dataset.id === id;
+      item.style.background = on ? "#14303F" : "transparent";
+      item.style.color = on ? "#CCFF00" : "#C8D4DC";
     });
   }
 
