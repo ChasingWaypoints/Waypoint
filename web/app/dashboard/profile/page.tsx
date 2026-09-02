@@ -107,7 +107,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const INPUT: React.CSSProperties = {
   width: "100%", padding: "11px 14px", border: "1px solid #d4d4d4",
   fontSize: 14, color: "#1a2129", outline: "none", boxSizing: "border-box",
-  fontFamily: "system-ui", background: "#fff",
+  fontFamily: "system-ui", background: "#0A0A0A",
 };
 
 // ── Rider / SAR profile ───────────────────────────────────────────────────────
@@ -412,7 +412,7 @@ export default function ProfilePage() {
         {/* ── Personal details ── */}
         <div style={{ marginBottom: 48 }}>
           <SectionLabel>Personal Details</SectionLabel>
-          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 28 }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
             <div style={{ display: "flex", gap: 16 }}>
               <div style={{ flex: 1 }}>{pf("first_name", "First Name", "text", "First")}</div>
               <div style={{ flex: 1 }}>{pf("last_name", "Last Name", "text", "Last")}</div>
@@ -428,7 +428,7 @@ export default function ProfilePage() {
                     onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value })}
                   />
                   {age !== null && (
-                    <p style={{ fontSize: 11, color: "#6b6b6b", margin: "6px 0 0" }}>Age {age}</p>
+                    <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>Age {age}</p>
                   )}
                 </Field>
               </div>
@@ -458,8 +458,8 @@ export default function ProfilePage() {
         {/* ── Emergency contact ── */}
         <div style={{ marginBottom: 24 }}>
           <SectionLabel>Emergency Contact</SectionLabel>
-          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 28 }}>
-            <p style={{ fontSize: 12, color: "#6b6b6b", margin: "0 0 20px", lineHeight: 1.5 }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
+            <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.5 }}>
               Shown to your event organizer for search-and-rescue. Optional, but recommended for rally and backcountry events.
             </p>
             <div style={{ display: "flex", gap: 16 }}>
@@ -476,8 +476,8 @@ export default function ProfilePage() {
             onClick={saveProfile}
             disabled={!profileChanged || savingProfile}
             style={{
-              background: profileChanged ? (profileSaved ? "#22c55e" : "#1c69d4") : "#d4d4d4",
-              color: "#fff", border: "none", padding: "12px 26px",
+              background: profileChanged ? (profileSaved ? "#CCFF00" : "#FFFE15") : "#1E3B4C",
+              color: profileChanged ? "#0C1E29" : "#7E93A0", border: "none", padding: "12px 26px",
               fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
               cursor: profileChanged ? "pointer" : "default",
             }}
@@ -485,7 +485,7 @@ export default function ProfilePage() {
             {savingProfile ? "Saving…" : profileSaved ? "Saved ✓" : "Save Profile"}
           </button>
           {profileChanged && !savingProfile && (
-            <span style={{ fontSize: 12, color: "#9a9a9a" }}>Unsaved changes</span>
+            <span style={{ fontSize: 12, color: "#7E93A0" }}>Unsaved changes</span>
           )}
         </div>
 
