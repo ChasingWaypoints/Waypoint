@@ -1,16 +1,12 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import StagesManager from "../../../../components/StagesManager";
+import LiveEventMap from "../../../../components/LiveEventMap";
 import { getSupabaseClient } from "@/lib/supabase/client";
-// @ts-ignore
-import mapboxgl from "mapbox-gl";
-import { BLANK_STYLE, installBasemaps } from "../../../../components/basemaps";
-
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const supabase = getSupabaseClient();
 
@@ -36,13 +32,6 @@ function timeAgo(iso: string): string {
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
-}
-
-function gpxToCoords(gpx: string): [number, number][] {
-  const m = [...gpx.matchAll(/<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"/g)];
-  if (m.length) return m.map((x) => [parseFloat(x[2]), parseFloat(x[1])]);
-  const m2 = [...gpx.matchAll(/<trkpt\s+lon="([^"]+)"\s+lat="([^"]+)"/g)];
-  return m2.map((x) => [parseFloat(x[1]), parseFloat(x[2])]);
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -97,13 +86,6 @@ export default function EventDetailPage() {
   const [savingClasses, setSavingClasses] = useState(false);
   const [classesSaved, setClassesSaved] = useState(false);
 
-  // Map refs
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<Record<string, mapboxgl.Marker>>({});
-  const hasInitialFitRef = useRef(false);
-  const [mapReady, setMapReady] = useState(false);
-  const [followId, setFollowId] = useState<string | null>(null);
 
   const authHeaders = useCallback((tok: string) => ({
     "Content-Type": "application/json",
@@ -164,88 +146,6 @@ export default function EventDetailPage() {
     return () => clearInterval(t);
   }, [event?.status, session]);
 
-  // Init map
-  useEffect(() => {
-    if (!event || !mapContainer.current || mapRef.current || tab !== "map") return;
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: BLANK_STYLE,
-      center: [-105, 40], zoom: 4,
-    });
-    mapRef.current = map;
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
-    map.on("load", () => { installBasemaps(map); setMapReady(true); });
-    return () => { map.remove(); mapRef.current = null; setMapReady(false); hasInitialFitRef.current = false; };
-  }, [event, tab]);
-
-  // Sync riders + route to map
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady || !event) return;
-
-    // GPX route
-    if (event.route_gpx) {
-      const coords = gpxToCoords(event.route_gpx);
-      if (coords.length > 1) {
-        const src = map.getSource("planned-route") as mapboxgl.GeoJSONSource | undefined;
-        const data = { type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: coords }, properties: {} };
-        if (src) { src.setData(data); }
-        else {
-          map.addSource("planned-route", { type: "geojson", data });
-          map.addLayer({ id: "planned-route", type: "line", source: "planned-route",
-            layout: { "line-join": "round", "line-cap": "round" },
-            paint: { "line-color": "#CCFF00", "line-width": 3, "line-dasharray": [2, 2] } });
-        }
-      }
-    }
-
-    const allCoords: [number, number][] = [];
-
-    riders.forEach((rider, i) => {
-      const color = RIDER_COLORS[i % RIDER_COLORS.length];
-      if (rider.track.length > 1) {
-        const coords: [number, number][] = rider.track.map((p) => [p.lng, p.lat]);
-        const srcId = `track-${rider.id}`;
-        const src = map.getSource(srcId) as mapboxgl.GeoJSONSource | undefined;
-        const data = { type: "Feature" as const, geometry: { type: "LineString" as const, coordinates: coords }, properties: {} };
-        if (src) { src.setData(data); }
-        else {
-          map.addSource(srcId, { type: "geojson", data });
-          map.addLayer({ id: srcId, type: "line", source: srcId,
-            layout: { "line-join": "round", "line-cap": "round" },
-            paint: { "line-color": color, "line-width": 2.5 } });
-        }
-      }
-      if (rider.latest) {
-        const lngLat: [number, number] = [rider.latest.lng, rider.latest.lat];
-        allCoords.push(lngLat);
-        if (markersRef.current[rider.id]) {
-          markersRef.current[rider.id].setLngLat(lngLat);
-        } else {
-          const el = document.createElement("div");
-          el.style.cssText = `width:36px;height:36px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer;font-family:system-ui;`;
-          el.textContent = rider.display_name.slice(0, 2).toUpperCase();
-          const popup = new mapboxgl.Popup({ offset: 20 }).setHTML(
-            `<strong>${rider.display_name}</strong><br/>${rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · ${timeAgo(rider.latest.recorded_at)}`
-          );
-          const marker = new mapboxgl.Marker({ element: el }).setLngLat(lngLat).setPopup(popup).addTo(map);
-          markersRef.current[rider.id] = marker;
-        }
-        if (followId === rider.id) map.easeTo({ center: lngLat, duration: 800 });
-      }
-    });
-
-    // Only fit bounds once — on the first refresh that has positions.
-    // Subsequent 20s auto-refreshes must NOT reset the zoom.
-    if (allCoords.length && !hasInitialFitRef.current) {
-      hasInitialFitRef.current = true;
-      if (allCoords.length === 1) { map.flyTo({ center: allCoords[0], zoom: 12 }); }
-      else {
-        const lngs = allCoords.map(c => c[0]); const lats = allCoords.map(c => c[1]);
-        map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 80, maxZoom: 14, duration: 1000 });
-      }
-    }
-  }, [riders, event, mapReady, followId]);
 
   function copy(text: string, label: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -407,63 +307,8 @@ export default function EventDetailPage() {
 
       {/* ── MAP TAB ── */}
       {tab === "map" && (
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-          {/* Sidebar */}
-          <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #1E3B4C", overflowY: "auto", flexShrink: 0 }}>
-            {event.route_name && (
-              <div style={{ padding: "10px 14px", borderBottom: "1px solid #1E3B4C", background: "#14303F" }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#15803d", textTransform: "uppercase", margin: 0 }}>Planned Route</p>
-                <p style={{ fontSize: 12, color: "#C8D4DC", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
-              </div>
-            )}
-            {riders.length === 0 && (
-              <p style={{ fontSize: 12, color: "#7E93A0", padding: "16px 14px", margin: 0 }}>No riders yet.</p>
-            )}
-            {riders.map((rider, i) => {
-              const color = RIDER_COLORS[i % RIDER_COLORS.length];
-              const minsAgo = rider.latest ? Math.round((Date.now() - new Date(rider.latest.recorded_at).getTime()) / 60000) : null;
-              return (
-                <div key={rider.id}
-                  onClick={() => {
-                    if (rider.latest) {
-                      setFollowId(followId === rider.id ? null : rider.id);
-                      mapRef.current?.flyTo({ center: [rider.latest.lng, rider.latest.lat], zoom: 13, duration: 800 });
-                    }
-                  }}
-                  style={{
-                    padding: "10px 14px", borderBottom: "1px solid #1E3B4C",
-                    cursor: rider.latest ? "pointer" : "default",
-                    background: followId === rider.id ? "#14303F" : "#0C1E29",
-                    borderLeft: `3px solid ${color}`,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
-                      {rider.display_name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "#C8D4DC", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
-                      </p>
-                      {rider.rider_class && (
-                        <p style={{ fontSize: 10, color: "#7E93A0", margin: "1px 0 0", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                          {rider.rider_class}
-                        </p>
-                      )}
-                      {rider.latest ? (
-                        <p style={{ fontSize: 11, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#7E93A0", margin: "1px 0 0" }}>
-                          {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
-                        </p>
-                      ) : (
-                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "1px 0 0" }}>No data yet</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div ref={mapContainer} style={{ flex: 1 }} />
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <LiveEventMap shareToken={event.share_token} />
         </div>
       )}
 
