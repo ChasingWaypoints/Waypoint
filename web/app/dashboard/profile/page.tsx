@@ -529,7 +529,7 @@ export default function ProfilePage() {
                     <span style={{ width: 20, height: 20, background: "#CCFF00", color: "#0C1E29", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {i + 1}
                     </span>
-                    <p style={{ fontSize: 12, color: "#4a4a4a", margin: 0, lineHeight: 1.6 }}>{step}</p>
+                    <p style={{ fontSize: 12, color: "#C8D4DC", margin: 0, lineHeight: 1.6 }}>{step}</p>
                   </div>
                 ))}
               </div>
@@ -553,7 +553,7 @@ export default function ProfilePage() {
                       }}
                     >
                       <div style={{ fontSize: 13, fontWeight: 700, color: addPoll === opt.value ? "#0C1E29" : "#C8D4DC" }}>{opt.label}</div>
-                      <div style={{ fontSize: 10, color: addPoll === opt.value ? "#cce0ff" : "#7E93A0", marginTop: 2 }}>{opt.note}</div>
+                      <div style={{ fontSize: 10, color: addPoll === opt.value ? "#0C1E29" : "#7E93A0", marginTop: 2, fontWeight: addPoll === opt.value ? 600 : 400 }}>{opt.note}</div>
                     </button>
                   ))}
                 </div>
@@ -589,7 +589,7 @@ export default function ProfilePage() {
                 onClick={submitDevice}
                 disabled={addLoading}
                 style={{
-                  width: "100%", background: addLoading ? "#1E3B4C" : "#FFFE15", color: "#fff",
+                  width: "100%", background: addLoading ? "#1E3B4C" : "#FFFE15", color: addLoading ? "#7E93A0" : "#0C1E29",
                   border: "none", padding: "13px", fontSize: 12, fontWeight: 700,
                   letterSpacing: 0.5, textTransform: "uppercase", cursor: addLoading ? "default" : "pointer",
                 }}
