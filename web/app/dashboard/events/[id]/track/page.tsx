@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import { authFetch } from "../../../../../lib/authFetch";
 import LiveEventMap from "../../../../../components/LiveEventMap";
 import EntrantManager from "../../../../../components/EntrantManager";
 import EventShareLinks from "../../../../../components/EventShareLinks";
@@ -29,7 +30,7 @@ export default function EventTrackPage({
 
   useEffect(() => {
     setOrigin(window.location.origin);
-    fetch(`/api/events/${id}`)
+    authFetch(`/api/events/${id}`)
       .then(async (r) => {
         if (!r.ok) throw new Error("Could not load this event");
         const d = await r.json();

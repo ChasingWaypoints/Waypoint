@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import { getUserFromRequest } from "../../../../lib/supabase/auth";
 
 // GET /api/trips/[id]
 export async function GET(
@@ -58,12 +59,13 @@ export async function PATCH(
 
 // DELETE /api/trips/[id] — soft delete
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // The web client stores its session in localStorage and sends a Bearer
+  // token; getUserFromRequest handles both that and the cookie session.
+  const { user, supabase } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { error } = await supabase

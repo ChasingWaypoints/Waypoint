@@ -23,13 +23,11 @@ async function requireOrganizer(request: NextRequest, eventId: string) {
 
 // ── GET — download the CSV template ───────────────────────────
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  _ctx: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const guard = await requireOrganizer(request, id);
-  if ("error" in guard) return guard.error;
-
+  // The template is a fixed sample CSV with no event data, so it needs no
+  // auth — a plain <a download> link can fetch it without a Bearer token.
   return new NextResponse(CSV_TEMPLATE, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

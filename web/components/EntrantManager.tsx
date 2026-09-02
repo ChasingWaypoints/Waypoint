@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { authFetch } from "../lib/authFetch";
 import { timeAgo } from "../lib/geo";
 import { theme, font, btnPrimary, btnGhost } from "../lib/theme";
 
@@ -46,7 +47,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/events/${eventId}/entrants`);
+      const res = await authFetch(`/api/events/${eventId}/entrants`);
       if (!res.ok) {
         setError("Could not load the roster");
         return;
@@ -72,7 +73,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
     try {
       const csv = await file.text();
       setPendingCsv(csv);
-      const res = await fetch(`/api/events/${eventId}/entrants/batch?dry_run=1`, {
+      const res = await authFetch(`/api/events/${eventId}/entrants/batch?dry_run=1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ csv }),
@@ -93,7 +94,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
     if (!pendingCsv) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/events/${eventId}/entrants/batch`, {
+      const res = await authFetch(`/api/events/${eventId}/entrants/batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ csv: pendingCsv, replace }),
@@ -115,7 +116,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
 
   async function remove(id: string, name: string) {
     if (!confirm(`Remove ${name} from this event?`)) return;
-    await fetch(`/api/events/${eventId}/entrants/${id}`, { method: "DELETE" });
+    await authFetch(`/api/events/${eventId}/entrants/${id}`, { method: "DELETE" });
     await load();
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authFetch } from "../lib/authFetch";
 import { theme, font, btnPrimary, btnGhost, card as cardStyle, input as inputStyle } from "../lib/theme";
 
 /**
@@ -35,7 +36,7 @@ export default function EventShareLinks({
     if (!credName.trim()) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/events/${eventId}/gep-credentials`, {
+      const res = await authFetch(`/api/events/${eventId}/gep-credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ display_name: credName.trim() }),
