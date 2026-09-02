@@ -131,8 +131,9 @@ export function parseGPXCoordinates(gpx: string): LngLat[] {
  * <openrally:dss/>, <openrally:checkpoint/>), not in <type>. The note number
  * is the trailing digits of the name (..._001).
  *
- * `label` is what the map shows: the scoring type code when the waypoint has
- * one, otherwise the 3-digit note number.
+ * `label` is what the map shows: the scoring type code followed by the note
+ * number when the waypoint has a type (e.g. WPM026), otherwise just the
+ * 3-digit note number (e.g. 014).
  */
 export interface Waypoint {
   lat: number;
@@ -197,7 +198,7 @@ export function parseGPXWaypoints(gpx: string): Waypoint[] {
     const digits = (name.match(/(\d+)\s*$/) || [])[1];
     const num = (digits ? digits : String(seq)).padStart(3, "0").slice(-3);
 
-    out.push({ lat, lng, name, type, num, label: type ?? num, desc: wpTag(body, "desc") });
+    out.push({ lat, lng, name, type, num, label: type ? type + num : num, desc: wpTag(body, "desc") });
   }
   return out;
 }
