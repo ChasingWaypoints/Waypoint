@@ -42,6 +42,7 @@ interface Feed {
   feed_url: string | null;
   feed_id: string | null;
   feed_password: string | null;
+  last_seen_at: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -113,7 +114,10 @@ async function pollEntrant(
 
   if (feed.device_type === "garmin") {
     if (!feed.feed_url) throw new Error("No MapShare URL");
-    url = garminFeedUrl(feed.feed_url);
+    // A brand-new entrant with no fix yet: pull the full feed so their
+    // last-known position lands on the map immediately. Once they have a
+    // fix, switch to the light last-hour window.
+    url = feed.last_seen_at ? garminFeedUrl(feed.feed_url) : feed.feed_url;
   } else if (feed.device_type === "spot") {
     if (!feed.feed_id) throw new Error("No SPOT feed id");
     url = spotFeedUrl(feed.feed_id, feed.feed_password);
