@@ -101,6 +101,8 @@ export default function TrackingMap({
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const popup = useRef<mapboxgl.Popup | null>(null);
+  const popupHtml = useRef<Map<string, string>>(new Map());
   const didFit = useRef(false);
 
   const [layerId, setLayerId] = useState<LayerId>(DEFAULT_LAYER);
@@ -195,7 +197,15 @@ export default function TrackingMap({
 
         el.addEventListener("click", (ev) => {
           ev.stopPropagation();
-          onSelectEntrant?.(e.id);
+          const id = e.id;
+          // Quick-reference popup: name, status, device, coordinates.
+          if (!popup.current) {
+            popup.current = new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "300px" });
+          }
+          const html = popupHtml.current.get(id) || "";
+          const mk = markers.current.get(id);
+          if (mk && html) popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
+          onSelectEntrant?.(id);
         });
 
         markers.current.set(e.id, marker);
@@ -220,17 +230,22 @@ export default function TrackingMap({
                </div>`).join("")}
            </div>`
         : "";
-      marker.setPopup(
-        new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "300px" }).setHTML(
-          `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff;min-width:210px">
+      const popupContent =
+        `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff;min-width:210px">
              <strong>${escapeHtml(e.name)}</strong>${e.number ? ` &middot; #${escapeHtml(e.number)}` : ""}
              ${e.class ? `<br><span style="color:#7E93A0">${escapeHtml(e.class)}</span>` : ""}
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
              ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
              ${coordHtml}
-           </div>`
-        )
-      );
+           </div>`;
+      popupHtml.current.set(e.id, popupContent);
+      // If this entrant's popup is currently open, refresh it in place.
+      if (popup.current && popup.current.isOpen()) {
+        const open = popup.current.getLngLat();
+        if (open && Math.abs(open.lng - e.lng) < 1e-6 && Math.abs(open.lat - e.lat) < 1e-6) {
+          popup.current.setHTML(popupContent);
+        }
+      }
     }
 
     // Remove markers for entrants that dropped out of the payload
@@ -238,6 +253,7 @@ export default function TrackingMap({
       if (!seen.has(id)) {
         marker.remove();
         markers.current.delete(id);
+        popupHtml.current.delete(id);
       }
     }
 
