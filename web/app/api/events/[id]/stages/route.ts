@@ -73,9 +73,11 @@ export async function POST(
   const { count } = await guard.supabase!
     .from("event_stages").select("*", { count: "exact", head: true }).eq("event_id", id);
 
+  const waypoints = parseGPXWaypoints(gpx);
+
   const { data, error } = await guard.supabase!
     .from("event_stages")
-    .insert({ event_id: id, name, route_gpx: gpx, position: count ?? 0 })
+    .insert({ event_id: id, name, route_gpx: gpx, position: count ?? 0, waypoints })
     .select("id, name, position, color, visible, waypoints, created_at")
     .single();
 
