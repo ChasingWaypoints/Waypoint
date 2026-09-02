@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
+import { BLANK_STYLE, installBasemaps } from "../../../../components/basemaps";
 import Link from "next/link";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -50,7 +51,7 @@ export default function StoryPage() {
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style: BLANK_STYLE,
       center: [-120, 37],
       zoom: 4,
       interactive: true,
@@ -58,6 +59,7 @@ export default function StoryPage() {
     mapRef.current = map;
 
     map.on("load", () => {
+      installBasemaps(map);
       // Full route (faded)
       map.addSource("route-ghost", {
         type: "geojson",

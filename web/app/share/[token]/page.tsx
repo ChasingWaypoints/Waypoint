@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
+import { BLANK_STYLE, installBasemaps } from "../../../components/basemaps";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
@@ -76,7 +77,7 @@ export default function SharePage() {
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style: BLANK_STYLE,
       center: [-120, 37],
       zoom: 5,
     });
@@ -84,6 +85,7 @@ export default function SharePage() {
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
+      installBasemaps(map);
       // Route line
       map.addSource("route", {
         type: "geojson",

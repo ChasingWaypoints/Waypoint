@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
+import { BLANK_STYLE, installBasemaps } from "../../../../components/basemaps";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -169,12 +170,12 @@ export default function EventDetailPage() {
     if (!event || !mapContainer.current || mapRef.current || tab !== "map") return;
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style: BLANK_STYLE,
       center: [-105, 40], zoom: 4,
     });
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
-    map.on("load", () => setMapReady(true));
+    map.on("load", () => { installBasemaps(map); setMapReady(true); });
     return () => { map.remove(); mapRef.current = null; setMapReady(false); hasInitialFitRef.current = false; };
   }, [event, tab]);
 
