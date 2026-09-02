@@ -9,7 +9,9 @@
 -- Run in the Supabase SQL editor after 010. Safe to re-run.
 -- ============================================================
 
-create or replace function public.get_entrant_feeds()
+drop function if exists public.get_entrant_feeds();
+
+create function public.get_entrant_feeds()
 returns table (
   id            uuid,
   event_id      uuid,
