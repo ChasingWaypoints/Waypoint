@@ -156,6 +156,9 @@ export default function ProfilePage() {
   const [savedProfile, setSavedProfile] = useState<RiderProfile>(BLANK_PROFILE);
   const [waypointId, setWaypointId] = useState("");
   const [wpCopied, setWpCopied] = useState(false);
+  const [iceToken, setIceToken] = useState("");
+  const [iceCopied, setIceCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -182,6 +185,7 @@ export default function ProfilePage() {
       if (!session) { router.push("/auth/login"); return; }
       setToken(session.access_token);
       setUserEmail(session.user.email ?? "");
+      if (typeof window !== "undefined") setOrigin(window.location.origin);
       setMemberSince(new Date(session.user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }));
       const name = session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? "";
       setDisplayName(name);
@@ -202,7 +206,7 @@ export default function ProfilePage() {
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select(PROFILE_KEYS.join(",") + ",waypoint_id")
+      .select(PROFILE_KEYS.join(",") + ",waypoint_id,ice_token")
       .eq("id", uid)
       .single();
     if (data) {
@@ -215,6 +219,7 @@ export default function ProfilePage() {
       setProfile(p);
       setSavedProfile(p);
       setWaypointId(rec.waypoint_id == null ? "" : String(rec.waypoint_id));
+      setIceToken(rec.ice_token == null ? "" : String(rec.ice_token));
     }
   }
 
@@ -223,6 +228,14 @@ export default function ProfilePage() {
     try { await navigator.clipboard.writeText(waypointId); } catch {}
     setWpCopied(true);
     setTimeout(() => setWpCopied(false), 1800);
+  }
+
+  const iceUrl = iceToken && origin ? `${origin}/ice/${iceToken}` : "";
+  async function copyIceLink() {
+    if (!iceUrl) return;
+    try { await navigator.clipboard.writeText(iceUrl); } catch {}
+    setIceCopied(true);
+    setTimeout(() => setIceCopied(false), 1800);
   }
 
   async function saveProfile() {
@@ -514,6 +527,41 @@ export default function ProfilePage() {
           {profileChanged && !savingProfile && (
             <span style={{ fontSize: 12, color: "#7E93A0" }}>Unsaved changes</span>
           )}
+        </div>
+
+        {/* ── ICE share card ── */}
+        <div style={{ marginBottom: 48 }}>
+          <SectionLabel>Emergency Card (ICE)</SectionLabel>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
+            <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.5 }}>
+              A Waypoint-branded page showing your emergency info and Waypoint ID. Share this link, add it to a bracelet or bike sticker, or hand it to a first responder. The link is private until you share it — the rest of your account stays hidden.
+            </p>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <code style={{ flex: 1, minWidth: 220, font: "13px ui-monospace, monospace", color: "#C8D4DC", background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "11px 14px", userSelect: "all", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {iceUrl || "—"}
+              </code>
+              <button
+                onClick={copyIceLink}
+                disabled={!iceUrl}
+                style={{ background: iceCopied ? "#CCFF00" : "#14303F", color: iceCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "11px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: iceUrl ? "pointer" : "default", whiteSpace: "nowrap" }}
+              >
+                {iceCopied ? "Copied \u2713" : "Copy Link"}
+              </button>
+              {iceUrl && (
+                <a
+                  href={iceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ background: "#FFFE15", color: "#0C1E29", padding: "11px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4, whiteSpace: "nowrap" }}
+                >
+                  Open Card
+                </a>
+              )}
+            </div>
+            <p style={{ fontSize: 11, color: "#54697A", margin: "10px 0 0" }}>
+              Tip: fill in your blood type and emergency contact above so the card is useful.
+            </p>
+          </div>
         </div>
 
         {/* ── Devices ── */}
