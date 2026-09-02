@@ -191,6 +191,19 @@ export default function EventDetailPage() {
     if (res.ok) setCredentials((prev) => prev.filter((c) => c.id !== credId));
   }
 
+  async function removeRider(riderId: string, name: string) {
+    if (!session || !confirm(`Remove ${name} from this event? This deletes their roster entry and stops tracking them.`)) return;
+    const res = await fetch(`/api/events/${id}/entrants/${riderId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (res.ok) {
+      setRiders((prev) => prev.filter((r) => r.id !== riderId));
+    } else {
+      alert("Could not remove that rider. Please try again.");
+    }
+  }
+
   // Initialize editedClasses when Settings tab is opened
   function openSettings() {
     if (editedClasses === null && event) setEditedClasses(event.rider_classes ?? []);
@@ -351,6 +364,11 @@ export default function EventDetailPage() {
                     {rider.latest && (
                       <Btn border="#1E3B4C" color="#7E93A0" onClick={() => setTab("map")}>
                         Find on Map
+                      </Btn>
+                    )}
+                    {isOrganizer && (
+                      <Btn border="#5A2530" color="#FF6B6B" onClick={() => removeRider(rider.id, rider.display_name)}>
+                        Remove
                       </Btn>
                     )}
                   </div>
