@@ -3,29 +3,87 @@ import { createAnonClient } from "../../../../../../../lib/supabase/admin";
 
 // GET /api/events/[id]/gep/[gepToken]/track.kml
 //
-// Returns a KML snapshot of ALL riders in the event plus the organizer's GPX route.
-// Polled every REFRESH_SECONDS by GEP via the NetworkLink file.
-// Token validation + all data queries use SECURITY DEFINER RPCs —
-// no SUPABASE_SERVICE_ROLE_KEY needed.
+// KML snapshot of every entrant in the event plus the organizer's planned
+// route. Polled every 30s by Google Earth Pro via the NetworkLink file.
+//
+// Entrants are roster rows (event_participants), which since migration 005
+// may have no app account at all — their positions come from the beacon
+// feeds the organizer loaded. Entrants who ARE app users fall back to
+// their own trip track so nothing regresses for existing events.
+//
+// Token validation and every query use SECURITY DEFINER RPCs, so no
+// service role key is required.
 
+// KML colours are aabbggrr, not rrggbb. These are picked to stay
+// distinguishable from each other AND from the terrain in Google Earth.
 const RIDER_COLORS = [
-  "ff1c69d4", // blue
-  "ff00aa44", // green
-  "ffcc3300", // red-orange
-  "ffcc00aa", // purple
-  "ff0099cc", // cyan
-  "ffff6600", // orange
-  "ff006699", // teal
-  "ffcc6600", // amber
+  "ff00ffcc", // acid green   (#CCFF00)
+  "ff15feff", // palesun      (#FFFE15)
+  "ff3399ff", // orange
+  "ffff9933", // sky blue
+  "ffcc44ff", // pink
+  "ff44ffcc", // lime
+  "ffffcc00", // cyan-blue
+  "ff8888ff", // salmon
 ];
 
+// Entrant names come from an organizer-supplied CSV. An unescaped "&"
+// or "<" in a name would produce invalid KML that Google Earth silently
+// refuses to load, so everything interpolated is escaped.
+function xml(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 function gpxToKmlCoords(gpx: string): string {
-  const matches = [...gpx.matchAll(/<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g)];
+  const matches = [
+    ...gpx.matchAll(
+      /<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g
+    ),
+  ];
   if (!matches.length) {
-    const matches2 = [...gpx.matchAll(/<trkpt\s+lon="([^"]+)"\s+lat="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g)];
+    const matches2 = [
+      ...gpx.matchAll(
+        /<trkpt\s+lon="([^"]+)"\s+lat="([^"]+)"[^>]*>(?:[\s\S]*?<ele>([^<]+)<\/ele>)?/g
+      ),
+    ];
     return matches2.map((m) => `${m[1]},${m[2]},${m[3] ?? 0}`).join("\n");
   }
   return matches.map((m) => `${m[2]},${m[1]},${m[3] ?? 0}`).join("\n");
+}
+
+interface Entrant {
+  id: string;
+  user_id: string | null;
+  display_name: string;
+  rider_number: string | null;
+  rider_class: string | null;
+  role: string;
+  last_lat: number | null;
+  last_lng: number | null;
+  last_seen_at: string | null;
+}
+
+interface Point {
+  lat: number;
+  lng: number;
+  altitude_m: number | null;
+  speed_kmh: number | null;
+  recorded_at: string;
+}
+
+// Matches the thresholds used on the web map so the two never disagree.
+function statusOf(lastSeen: string | null): { label: string; icon: string } {
+  if (!lastSeen) return { label: "No fix yet", icon: "wht-blank" };
+  const mins = (Date.now() - new Date(lastSeen).getTime()) / 60000;
+  if (mins <= 15) return { label: "Live", icon: "grn-circle" };
+  if (mins <= 60) return { label: "Stale", icon: "ylw-circle" };
+  return { label: "No signal", icon: "red-circle" };
 }
 
 export async function GET(
@@ -48,7 +106,13 @@ export async function GET(
   const holderName: string = tokenData.holder_name;
   const participantId: string | null = tokenData.participant_id ?? null;
   const credentialId: string | null = tokenData.credential_id ?? null;
-  const event: { id: string; name: string; status: string; route_gpx: string | null; route_name: string | null } = tokenData.event;
+  const event: {
+    id: string;
+    name: string;
+    status: string;
+    route_gpx: string | null;
+    route_name: string | null;
+  } = tokenData.event;
 
   // ── Log this fetch ────────────────────────────────────────────
   const ip =
@@ -57,61 +121,89 @@ export async function GET(
     "unknown";
 
   await supabase.rpc("log_gep_access", {
-    p_event_id:       id,
+    p_event_id: id,
     p_participant_id: participantId,
-    p_credential_id:  credentialId,
-    p_ip:             ip,
-    p_user_agent:     request.headers.get("user-agent") || "unknown",
+    p_credential_id: credentialId,
+    p_ip: ip,
+    p_user_agent: request.headers.get("user-agent") || "unknown",
   });
 
-  // ── Load participants ─────────────────────────────────────────
-  const { data: participants } = await supabase.rpc(
-    "get_event_participants_for_gep",
-    { p_event_id: id }
-  );
+  // ── Load the roster ───────────────────────────────────────────
+  const { data: roster } = await supabase.rpc("get_event_entrants_for_gep", {
+    p_event_id: id,
+  });
+  const entrants = (roster ?? []) as Entrant[];
 
-  // ── Fetch each rider's track ───────────────────────────────────
+  // ── Fetch each entrant's trail ────────────────────────────────
   const riderData = await Promise.all(
-    (participants ?? []).map(async (p: { id: string; user_id: string; display_name: string; role: string }, i: number) => {
-      const { data: points } = await supabase.rpc("get_rider_track", {
-        p_user_id:    p.user_id,
+    entrants.map(async (e, i) => {
+      // Beacon entrants: event_track_points
+      const { data: beaconPoints } = await supabase.rpc("get_entrant_track_by_id", {
+        p_participant_id: e.id,
         p_max_points: 500,
       });
-      return {
-        participant: p,
-        points: (points ?? []) as { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string }[],
-        color: RIDER_COLORS[i % RIDER_COLORS.length],
-      };
+
+      let points = (beaconPoints ?? []) as Point[];
+
+      // App users who joined by code still have their positions in trips
+      if (points.length === 0 && e.user_id) {
+        const { data: tripPoints } = await supabase.rpc("get_rider_track", {
+          p_user_id: e.user_id,
+          p_max_points: 500,
+        });
+        points = (tripPoints ?? []) as Point[];
+      }
+
+      return { entrant: e, points, color: RIDER_COLORS[i % RIDER_COLORS.length] };
     })
   );
 
   // ── Build KML folders ─────────────────────────────────────────
-  const riderFolders = riderData.map(({ participant, points, color }) => {
-    if (!points.length) {
-      return `  <Folder><name>${participant.display_name} — No data yet</name></Folder>`;
-    }
+  const riderFolders = riderData
+    .map(({ entrant, points, color }) => {
+      const label = `${entrant.rider_number ? `#${entrant.rider_number} ` : ""}${entrant.display_name}`;
+      const name = xml(label) + (entrant.role === "organizer" ? " &#9733;" : "");
 
-    const latest = points[points.length - 1];
-    const coords = points.map((p: { lat: number; lng: number; altitude_m: number }) => `${p.lng},${p.lat},${p.altitude_m ?? 0}`).join("\n");
-    const ago = Math.round((Date.now() - new Date(latest.recorded_at).getTime()) / 60000);
-    const agoStr = ago < 2 ? "just now" : `${ago}m ago`;
+      // No trail, but we may still know where they are
+      if (points.length === 0) {
+        if (entrant.last_lat === null || entrant.last_lng === null) {
+          return `  <Folder><name>${name} &mdash; No data yet</name></Folder>`;
+        }
+        const s = statusOf(entrant.last_seen_at);
+        return `  <Folder>
+    <name>${name}</name>
+    <Placemark>
+      <name>${name}</name>
+      <description>${s.label}${entrant.rider_class ? ` &middot; ${xml(entrant.rider_class)}` : ""}</description>
+      <Style><IconStyle><scale>1.2</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/${s.icon}.png</href></Icon></IconStyle></Style>
+      <Point><coordinates>${entrant.last_lng},${entrant.last_lat},0</coordinates></Point>
+    </Placemark>
+  </Folder>`;
+      }
 
-    return `  <Folder>
-    <name>${participant.display_name}${participant.role === "organizer" ? " ★" : ""}</name>
-    <Style id="track-${participant.id}">
+      const latest = points[points.length - 1];
+      const coords = points
+        .map((p) => `${p.lng},${p.lat},${p.altitude_m ?? 0}`)
+        .join("\n");
+      const s = statusOf(latest.recorded_at);
+      const ago = Math.round((Date.now() - new Date(latest.recorded_at).getTime()) / 60000);
+      const agoStr = ago < 2 ? "just now" : ago < 60 ? `${ago}m ago` : `${Math.floor(ago / 60)}h ${ago % 60}m ago`;
+
+      return `  <Folder>
+    <name>${name}</name>
+    <Style id="track-${entrant.id}">
       <LineStyle><color>${color}</color><width>3</width></LineStyle>
     </Style>
-    <Style id="dot-${participant.id}">
+    <Style id="dot-${entrant.id}">
       <IconStyle>
         <scale>1.3</scale>
-        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon>
-        <color>${color}</color>
+        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/${s.icon}.png</href></Icon>
       </IconStyle>
       <LabelStyle><scale>0.9</scale></LabelStyle>
     </Style>
     <Placemark>
-      <name>${participant.display_name} — Route</name>
-      <styleUrl>#track-${participant.id}</styleUrl>
+      <name>${name} &mdash; Route</name>
+      <styleUrl>#track-${entrant.id}</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <altitudeMode>clampToGround</altitudeMode>
@@ -119,14 +211,17 @@ export async function GET(
       </LineString>
     </Placemark>
     <Placemark>
-      <name>${participant.display_name}</name>
-      <description>Speed: ${latest.speed_kmh?.toFixed(1) ?? "?"} km/h · Last seen: ${agoStr}</description>
-      <styleUrl>#dot-${participant.id}</styleUrl>
+      <name>${name}</name>
+      <description>${s.label} &middot; last fix ${agoStr}${
+        entrant.rider_class ? ` &middot; ${xml(entrant.rider_class)}` : ""
+      }${latest.speed_kmh != null ? ` &middot; ${latest.speed_kmh.toFixed(1)} km/h` : ""}</description>
+      <styleUrl>#dot-${entrant.id}</styleUrl>
       <TimeStamp><when>${latest.recorded_at}</when></TimeStamp>
       <Point><coordinates>${latest.lng},${latest.lat},${latest.altitude_m ?? 0}</coordinates></Point>
     </Placemark>
   </Folder>`;
-  }).join("\n");
+    })
+    .join("\n");
 
   // ── GPX planned route overlay ─────────────────────────────────
   let routeFolder = "";
@@ -135,17 +230,13 @@ export async function GET(
     if (routeCoords) {
       routeFolder = `
   <Folder>
-    <name>📍 Planned Route${event.route_name ? ": " + event.route_name : ""}</name>
+    <name>Planned Route${event.route_name ? ": " + xml(event.route_name) : ""}</name>
     <Style id="planned-route">
-      <LineStyle>
-        <color>7f00ff00</color>
-        <width>4</width>
-        <gx:labelVisibility>0</gx:labelVisibility>
-      </LineStyle>
+      <LineStyle><color>c015feff</color><width>4</width></LineStyle>
       <PolyStyle><fill>0</fill></PolyStyle>
     </Style>
     <Placemark>
-      <name>${event.route_name ?? "Planned Route"}</name>
+      <name>${xml(event.route_name) || "Planned Route"}</name>
       <styleUrl>#planned-route</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
@@ -157,11 +248,17 @@ export async function GET(
     }
   }
 
+  const reporting = riderData.filter(
+    ({ entrant, points }) => points.length > 0 || entrant.last_lat !== null
+  ).length;
+
   const kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
   <Document>
-    <name>${event.name}${event.status === "active" ? " 🔴 LIVE" : ""} — All Riders</name>
-    <description>Waypoint group event · ${riderData.length} riders · Viewer: ${holderName} · Refreshed: ${new Date().toLocaleString()}</description>
+    <name>${xml(event.name)}${event.status === "active" ? " LIVE" : ""}</name>
+    <description>Waypoint &middot; ${reporting} of ${entrants.length} entrants reporting &middot; Viewer: ${xml(
+      holderName
+    )} &middot; Refreshed ${new Date().toISOString()}</description>
     ${routeFolder}
     ${riderFolders}
   </Document>
