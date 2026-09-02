@@ -126,20 +126,26 @@ export function parseGPXCoordinates(gpx: string): LngLat[] {
 }
 
 /**
- * Waypoint pulled from a GPX <wpt> element. OpenRally files carry named
- * waypoints (DSS start, FSS finish, WPM/WPE waypoints, CKP checkpoints,
- * etc.); the rally type, when present, lives in <type> or <sym>.
+ * Waypoint pulled from a GPX <wpt> element. OpenRally files mark the scoring
+ * type as a flag child element inside <extensions> (e.g. <openrally:wpm/>,
+ * <openrally:dss/>, <openrally:checkpoint/>), not in <type>. The note number
+ * is the trailing digits of the name (..._001).
+ *
+ * `label` is what the map shows: the scoring type code when the waypoint has
+ * one, otherwise the 3-digit note number.
  */
 export interface Waypoint {
   lat: number;
   lng: number;
   name: string;
-  type: string | null;
+  type: string | null;   // scoring type code, e.g. WPM / DSS / CKP, or null
+  num: string;           // 3-digit note number
+  label: string;         // type ?? num — what the map pin shows
   desc: string | null;
 }
 
-function tag(block: string, name: string): string | null {
-  const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
+function wpTag(block: string, name: string): string | null {
+  const m = block.match(new RegExp("<" + name + "[^>]*>([^]*?)</" + name + ">", "i"));
   if (!m) return null;
   return m[1]
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -148,30 +154,51 @@ function tag(block: string, name: string): string | null {
     .trim() || null;
 }
 
+// OpenRally flag element -> the code shown on the map. Anything not listed
+// here (distance, cap, tulip, notes, show_coordinates, units, format) is
+// metadata, not a waypoint type.
+const OPENRALLY_TYPE: Record<string, string> = {
+  dss: "DSS", fss: "FSS", start: "DSS", finish: "FSS",
+  wpm: "WPM", wpe: "WPE", wpv: "WPV", wps: "WPS", wpc: "WPC", wpk: "WPK",
+  checkpoint: "CKP", cp: "CKP", ckp: "CKP",
+  fuel: "FUEL", reset: "RST", neutralization: "NEU", neutralisation: "NEU",
+  ass: "ASS", sz: "SZ", dz: "DZ",
+};
+
 /** Extracts named waypoints from a GPX / OpenRally file. */
 export function parseGPXWaypoints(gpx: string): Waypoint[] {
   const out: Waypoint[] = [];
   const re = /<wpt\b([^>]*)>([\s\S]*?)<\/wpt>/gi;
   let m: RegExpExecArray | null;
+  let seq = 0;
   while ((m = re.exec(gpx)) !== null) {
     const attrs = m[1];
     const body = m[2];
     const lat = parseFloat((attrs.match(/\blat\s*=\s*"([-\d.]+)"/i) || [])[1] ?? "");
     const lng = parseFloat((attrs.match(/\blon\s*=\s*"([-\d.]+)"/i) || [])[1] ?? "");
     if (isNaN(lat) || isNaN(lng)) continue;
+    seq++;
 
-    // OpenRally sometimes tags the type in <type>, <sym>, or an
-    // <extensions> child; take the first that looks like a short code.
-    const rawType = tag(body, "type") || tag(body, "sym");
-    const extType = (body.match(/<(?:orr:)?(?:wptType|type|kind)>([^<]+)</i) || [])[1];
+    const name = wpTag(body, "name") || wpTag(body, "desc") || `WP${seq}`;
 
-    out.push({
-      lat,
-      lng,
-      name: tag(body, "name") || tag(body, "desc") || "WP",
-      type: (rawType || extType || "").trim().toUpperCase() || null,
-      desc: tag(body, "desc") || tag(body, "cmt"),
-    });
+    // Scoring type: first OpenRally flag element that maps to a code, or a
+    // classic <type>/<sym> if present.
+    let type: string | null = null;
+    for (const fm of body.matchAll(/<(?:\w+:)?([a-zA-Z_]+)\s*\/?\s*>/g)) {
+      const code = OPENRALLY_TYPE[fm[1].toLowerCase()];
+      if (code) { type = code; break; }
+    }
+    if (!type) {
+      const raw = (wpTag(body, "type") || wpTag(body, "sym") || "").trim().toUpperCase();
+      if (raw && raw.length <= 5) type = raw;
+    }
+
+    // Note number: trailing digits of the name, else the sequence.
+    const digits = (name.match(/(\d+)\s*$/) || [])[1];
+    const num = (digits ? digits : String(seq)).padStart(3, "0").slice(-3);
+
+    out.push({ lat, lng, name, type, num, label: type ?? num, desc: wpTag(body, "desc") });
   }
   return out;
 }
+

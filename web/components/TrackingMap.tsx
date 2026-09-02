@@ -38,6 +38,8 @@ export interface StageWaypoint {
   lng: number;
   name: string;
   type: string | null;
+  num?: string;
+  label?: string;
 }
 
 export interface StageLine {
@@ -298,7 +300,11 @@ export default function TrackingMap({
     const feats = (stages ?? []).flatMap((st) =>
       (st.waypoints ?? []).map((w) => ({
         type: "Feature" as const,
-        properties: { name: w.name, type: w.type ?? "", color: st.color || theme.route },
+        properties: {
+          label: w.label || w.type || w.num || "",
+          name: w.name,
+          color: st.color || theme.route,
+        },
         geometry: { type: "Point" as const, coordinates: [w.lng, w.lat] },
       }))
     );
@@ -325,7 +331,7 @@ export default function TrackingMap({
       type: "symbol",
       source: "stage-waypoints",
       layout: {
-        "text-field": ["get", "name"],
+        "text-field": ["get", "label"],
         "text-size": 11,
         "text-offset": [0, 1.1],
         "text-anchor": "top",
