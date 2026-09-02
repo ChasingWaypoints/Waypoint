@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../../lib/supabase/auth";
 import { parseCSVWithHeader } from "../../../../../../lib/csv";
-import { rowToEntrant, EntrantInput, RowError, CSV_TEMPLATE } from "../../../../../../lib/entrants";
+import { rowToEntrant, EntrantInput, RowError, CSV_TEMPLATE, waypointCodeFromRow } from "../../../../../../lib/entrants";
 
 const MAX_ROWS = 1000;
 
@@ -100,19 +100,34 @@ export async function POST(
   }
 
   // ── Validate every row ──────────────────────────────────────
-  const valid: EntrantInput[] = [];
+  const valid: { entrant: EntrantInput; code: string | null }[] = [];
   const errors: RowError[] = [];
 
   rows.forEach((row, i) => {
     const result = rowToEntrant(row, i + 2); // +2: 1-based, and skip header
     if ("error" in result) errors.push(result.error);
-    else valid.push(result.entrant);
+    else valid.push({ entrant: result.entrant, code: waypointCodeFromRow(row) });
   });
+
+  // Resolve any Waypoint account codes to linked users (dedup the calls).
+  const codeToUser = new Map<string, string | null>();
+  const uniqueCodes = [
+    ...new Set(valid.map((v) => v.code).filter((c): c is string => !!c).map((c) => c.toUpperCase())),
+  ];
+  for (const code of uniqueCodes) {
+    const { data: uid } = await guard.supabase!.rpc("resolve_waypoint_id", { p_code: code });
+    codeToUser.set(code, (uid as string | null) ?? null);
+  }
+  const linkFor = (code: string | null): string | null =>
+    code ? codeToUser.get(code.toUpperCase()) ?? null : null;
+  const unlinkedCodes = uniqueCodes.filter((c) => !codeToUser.get(c));
+  const linkedCount = valid.filter((v) => linkFor(v.code)).length;
 
   // ── Flag duplicates inside the file ─────────────────────────
   const seen = new Map<string, number>();
   const duplicates: string[] = [];
-  valid.forEach((e) => {
+  valid.forEach((v) => {
+    const e = v.entrant;
     const key = `${e.display_name.toLowerCase()}|${e.rider_number ?? ""}`;
     const prev = seen.get(key);
     if (prev !== undefined) duplicates.push(e.display_name);
@@ -123,9 +138,11 @@ export async function POST(
     return NextResponse.json({
       dry_run: true,
       would_insert: valid.length,
+      would_link: linkedCount,
+      unlinked_codes: unlinkedCodes,
       errors,
       duplicates,
-      preview: valid.slice(0, 10),
+      preview: valid.slice(0, 10).map((v) => v.entrant),
     });
   }
 
@@ -155,7 +172,7 @@ export async function POST(
 
   const { data, error } = await guard.supabase!
     .from("event_participants")
-    .insert(valid.map((e) => ({ ...e, event_id: id })))
+    .insert(valid.map((v) => ({ ...v.entrant, event_id: id, user_id: linkFor(v.code) })))
     .select("id, display_name, rider_number, rider_class, device_type, gep_token");
 
   if (error) {
@@ -167,6 +184,8 @@ export async function POST(
 
   return NextResponse.json({
     inserted: data?.length ?? 0,
+    linked: linkedCount,
+    unlinked_codes: unlinkedCodes,
     skipped: errors.length,
     errors,
     duplicates,

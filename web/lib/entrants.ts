@@ -31,15 +31,22 @@ export const CSV_COLUMNS = {
   device: ["device", "device_type", "beacon", "beacon_type", "tracker", "type"],
   feed: ["feed", "feed_url", "share_link", "share_url", "mapshare", "mapshare_url", "url", "link", "feed_id", "spot_feed_id", "glid"],
   password: ["password", "feed_password", "spot_password"],
+  waypoint: ["waypoint_id", "waypoint id", "waypointid", "wp_id", "wpid", "waypoint_code", "waypoint", "account_id", "account id"],
   notes: ["notes", "note", "comment", "comments"],
 };
 
+/** The Waypoint account code from a roster row, if the organizer supplied one. */
+export function waypointCodeFromRow(row: Record<string, string>): string | null {
+  const v = pick(row, ...CSV_COLUMNS.waypoint);
+  return v ? v.trim() : null;
+}
+
 export const CSV_TEMPLATE =
-  "name,number,class,device,feed,password,notes\n" +
-  "Skyler Howes,42,RallyPro,garmin,https://share.garmin.com/SkylerH,,\n" +
-  "Mason Klein,7,RallyPro,spot,0AbCdEfGhIjKlMnOpQrStUvWxYz123456,,\n" +
-  "Ace Nilson,113,Rally1,garmin,https://share.garmin.com/Feed/Share/acenilson,,\n" +
-  "Jacob Argubright,88,Adventure Bike,zoleo,,,ZOLEO pushes by webhook — no feed needed\n";
+  "name,number,class,device,feed,password,waypoint_id,notes\n" +
+  "Skyler Howes,42,RallyPro,garmin,https://share.garmin.com/SkylerH,,WPX7K2,\n" +
+  "Mason Klein,7,RallyPro,spot,0AbCdEfGhIjKlMnOpQrStUvWxYz123456,,,\n" +
+  "Ace Nilson,113,Rally1,garmin,https://share.garmin.com/Feed/Share/acenilson,,,\n" +
+  "Jacob Argubright,88,Adventure Bike,zoleo,,,,ZOLEO pushes by webhook — no feed needed\n";
 
 /**
  * Garmin MapShare links come in several shapes. All of these are valid

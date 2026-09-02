@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../lib/supabase/auth";
-import { rowToEntrant, EntrantInput } from "../../../../../lib/entrants";
+import { rowToEntrant, EntrantInput, waypointCodeFromRow } from "../../../../../lib/entrants";
 
 // Shared organizer guard for every entrant route.
 export async function requireOrganizer(request: NextRequest, eventId: string) {
@@ -93,9 +93,18 @@ export async function POST(
     return NextResponse.json({ error: result.error.message }, { status: 400 });
   }
 
-  const row: EntrantInput & { event_id: string } = {
+  // Link to a Waypoint account if the organizer supplied a code.
+  let linkedUserId: string | null = null;
+  const code = waypointCodeFromRow(body);
+  if (code) {
+    const { data: uid } = await guard.supabase!.rpc("resolve_waypoint_id", { p_code: code });
+    linkedUserId = (uid as string | null) ?? null;
+  }
+
+  const row: EntrantInput & { event_id: string; user_id: string | null } = {
     ...result.entrant,
     event_id: id,
+    user_id: linkedUserId,
   };
 
   const { data, error } = await guard.supabase!

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../../lib/supabase/auth";
-import { rowToEntrant, CSV_COLUMNS } from "../../../../../../lib/entrants";
+import { rowToEntrant, CSV_COLUMNS, waypointCodeFromRow } from "../../../../../../lib/entrants";
 
 async function requireOrganizer(request: NextRequest, eventId: string) {
   const { user, supabase } = await getUserFromRequest(request);
@@ -71,13 +71,20 @@ export async function PATCH(
     return NextResponse.json({ error: result.error.message }, { status: 400 });
   }
 
+  // If a Waypoint code was provided in this edit, (re)resolve the link.
+  const updatePayload: Record<string, unknown> = {
+    ...result.entrant,
+    poll_error: null,
+  };
+  const code = waypointCodeFromRow(body);
+  if (code !== null) {
+    const { data: uid } = await guard.supabase!.rpc("resolve_waypoint_id", { p_code: code });
+    updatePayload.user_id = (uid as string | null) ?? null;
+  }
+
   const { data, error } = await guard.supabase!
     .from("event_participants")
-    .update({
-      ...result.entrant,
-      // re-validating the feed invalidates the previous poll error
-      poll_error: null,
-    })
+    .update(updatePayload)
     .eq("id", entrantId)
     .eq("event_id", id)
     .select("id, display_name, rider_number, rider_class, device_type, feed_url, feed_id")
