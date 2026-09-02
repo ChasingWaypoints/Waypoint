@@ -105,10 +105,36 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const INPUT: React.CSSProperties = {
-  width: "100%", padding: "11px 14px", border: "1px solid #1E3B4C",
-  fontSize: 14, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
-  fontFamily: "system-ui",
+  width: "100%", padding: "11px 14px", border: "1px solid #d4d4d4",
+  fontSize: 14, color: "#1a2129", outline: "none", boxSizing: "border-box",
+  fontFamily: "system-ui", background: "#fff",
 };
+
+// ── Rider / SAR profile ───────────────────────────────────────────────────────
+type RiderProfile = {
+  first_name: string; last_name: string; date_of_birth: string; blood_type: string;
+  country: string; phone: string; emergency_contact_name: string;
+  emergency_contact_phone: string; emergency_contact_relation: string;
+};
+const BLANK_PROFILE: RiderProfile = {
+  first_name: "", last_name: "", date_of_birth: "", blood_type: "", country: "",
+  phone: "", emergency_contact_name: "", emergency_contact_phone: "",
+  emergency_contact_relation: "",
+};
+const PROFILE_KEYS = Object.keys(BLANK_PROFILE) as (keyof RiderProfile)[];
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"];
+
+// Age from an ISO yyyy-mm-dd date of birth, or null.
+function ageFrom(dob: string): number | null {
+  if (!dob) return null;
+  const d = new Date(dob + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let a = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+  return a >= 0 && a < 130 ? a : null;
+}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -124,6 +150,12 @@ export default function ProfilePage() {
   const [savingName, setSavingName] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  // Rider / SAR profile (profiles table)
+  const [profile, setProfile] = useState<RiderProfile>(BLANK_PROFILE);
+  const [savedProfile, setSavedProfile] = useState<RiderProfile>(BLANK_PROFILE);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
 
   // Devices
   const [devices, setDevices] = useState<Device[]>([]);
@@ -153,6 +185,7 @@ export default function ProfilePage() {
       setDisplayName(name);
       setSavedName(name);
       loadDevices(session.access_token);
+      loadProfile(session.user.id);
     });
   }, []);
 
@@ -164,6 +197,41 @@ export default function ProfilePage() {
   }
 
   // ── Profile actions ──────────────────────────────────────────────
+  async function loadProfile(uid: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select(PROFILE_KEYS.join(","))
+      .eq("id", uid)
+      .single();
+    if (data) {
+      const rec = data as unknown as Record<string, unknown>;
+      const p = { ...BLANK_PROFILE };
+      PROFILE_KEYS.forEach((k) => {
+        const v = rec[k];
+        p[k] = v == null ? "" : String(v);
+      });
+      setProfile(p);
+      setSavedProfile(p);
+    }
+  }
+
+  async function saveProfile() {
+    setSavingProfile(true);
+    const payload: Record<string, string | null> = {};
+    PROFILE_KEYS.forEach((k) => {
+      const v = profile[k].trim();
+      payload[k] = v === "" ? null : v;
+    });
+    const { data: { session } } = await supabase.auth.getSession();
+    const { error } = await supabase.from("profiles").update(payload).eq("id", session!.user.id);
+    setSavingProfile(false);
+    if (!error) {
+      setSavedProfile(profile);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2500);
+    }
+  }
+
   async function saveName() {
     if (!displayName.trim() || displayName.trim() === savedName) return;
     setSavingName(true);
@@ -254,6 +322,20 @@ export default function ProfilePage() {
 
   // ── Render ───────────────────────────────────────────────────────
   const nameChanged = displayName.trim() !== savedName;
+  const profileChanged = PROFILE_KEYS.some((k) => profile[k] !== savedProfile[k]);
+  const age = ageFrom(profile.date_of_birth);
+
+  const pf = (key: keyof RiderProfile, label: string, type = "text", placeholder = "") => (
+    <Field label={label}>
+      <input
+        style={INPUT}
+        type={type}
+        value={profile[key]}
+        placeholder={placeholder}
+        onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+      />
+    </Field>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif" }}>
@@ -325,6 +407,86 @@ export default function ProfilePage() {
 
             <p style={{ fontSize: 11, color: "#c4c4c4", margin: "20px 0 0" }}>Member since {memberSince}</p>
           </div>
+        </div>
+
+        {/* ── Personal details ── */}
+        <div style={{ marginBottom: 48 }}>
+          <SectionLabel>Personal Details</SectionLabel>
+          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 28 }}>
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>{pf("first_name", "First Name", "text", "First")}</div>
+              <div style={{ flex: 1 }}>{pf("last_name", "Last Name", "text", "Last")}</div>
+            </div>
+
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <Field label="Date of Birth">
+                  <input
+                    style={INPUT}
+                    type="date"
+                    value={profile.date_of_birth}
+                    onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value })}
+                  />
+                  {age !== null && (
+                    <p style={{ fontSize: 11, color: "#6b6b6b", margin: "6px 0 0" }}>Age {age}</p>
+                  )}
+                </Field>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Field label="Blood Type">
+                  <select
+                    style={{ ...INPUT, appearance: "auto" }}
+                    value={profile.blood_type}
+                    onChange={(e) => setProfile({ ...profile, blood_type: e.target.value })}
+                  >
+                    <option value="">—</option>
+                    {BLOOD_TYPES.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>{pf("country", "Country", "text", "United States")}</div>
+              <div style={{ flex: 1 }}>{pf("phone", "Phone Number", "tel", "+1 555 123 4567")}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Emergency contact ── */}
+        <div style={{ marginBottom: 24 }}>
+          <SectionLabel>Emergency Contact</SectionLabel>
+          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 28 }}>
+            <p style={{ fontSize: 12, color: "#6b6b6b", margin: "0 0 20px", lineHeight: 1.5 }}>
+              Shown to your event organizer for search-and-rescue. Optional, but recommended for rally and backcountry events.
+            </p>
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>{pf("emergency_contact_name", "Contact Name", "text", "Full name")}</div>
+              <div style={{ flex: 1 }}>{pf("emergency_contact_relation", "Relationship", "text", "e.g. Spouse")}</div>
+            </div>
+            {pf("emergency_contact_phone", "Contact Phone", "tel", "+1 555 123 4567")}
+          </div>
+        </div>
+
+        {/* ── Save personal + emergency ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
+          <button
+            onClick={saveProfile}
+            disabled={!profileChanged || savingProfile}
+            style={{
+              background: profileChanged ? (profileSaved ? "#22c55e" : "#1c69d4") : "#d4d4d4",
+              color: "#fff", border: "none", padding: "12px 26px",
+              fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+              cursor: profileChanged ? "pointer" : "default",
+            }}
+          >
+            {savingProfile ? "Saving…" : profileSaved ? "Saved ✓" : "Save Profile"}
+          </button>
+          {profileChanged && !savingProfile && (
+            <span style={{ fontSize: 12, color: "#9a9a9a" }}>Unsaved changes</span>
+          )}
         </div>
 
         {/* ── Devices ── */}
