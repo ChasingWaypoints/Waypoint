@@ -154,6 +154,8 @@ export default function ProfilePage() {
   // Rider / SAR profile (profiles table)
   const [profile, setProfile] = useState<RiderProfile>(BLANK_PROFILE);
   const [savedProfile, setSavedProfile] = useState<RiderProfile>(BLANK_PROFILE);
+  const [waypointId, setWaypointId] = useState("");
+  const [wpCopied, setWpCopied] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -200,7 +202,7 @@ export default function ProfilePage() {
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select(PROFILE_KEYS.join(","))
+      .select(PROFILE_KEYS.join(",") + ",waypoint_id")
       .eq("id", uid)
       .single();
     if (data) {
@@ -212,7 +214,15 @@ export default function ProfilePage() {
       });
       setProfile(p);
       setSavedProfile(p);
+      setWaypointId(rec.waypoint_id == null ? "" : String(rec.waypoint_id));
     }
+  }
+
+  async function copyWaypointId() {
+    if (!waypointId) return;
+    try { await navigator.clipboard.writeText(waypointId); } catch {}
+    setWpCopied(true);
+    setTimeout(() => setWpCopied(false), 1800);
   }
 
   async function saveProfile() {
@@ -388,6 +398,23 @@ export default function ProfilePage() {
 
             <Field label="Email">
               <p style={{ fontSize: 14, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
+            </Field>
+
+            <Field label="Waypoint ID">
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <code style={{ flex: 1, font: "700 18px ui-monospace, SFMono-Regular, monospace", letterSpacing: 3, color: "#CCFF00", background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "10px 14px", userSelect: "all" }}>
+                  {waypointId || "—"}
+                </code>
+                <button
+                  onClick={copyWaypointId}
+                  style={{ background: wpCopied ? "#CCFF00" : "#14303F", color: wpCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  {wpCopied ? "Copied \u2713" : "Copy"}
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>
+                Give this to an event organizer to link your account \u2014 it lets them reach your emergency info if something goes wrong.
+              </p>
             </Field>
 
             <div style={{ borderTop: "1px solid #1E3B4C", paddingTop: 20 }}>
