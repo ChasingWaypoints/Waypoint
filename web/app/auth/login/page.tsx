@@ -45,7 +45,7 @@ export default function LoginPage() {
 
       {/* Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400 }}>
+        <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 40, width: "100%", maxWidth: 400 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 8px" }}>
             Waypoint
           </p>
@@ -62,7 +62,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                style={{ width: "100%", border: "1px solid #e6e6e6", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
+                style={{ width: "100%", border: "1px solid #1E3B4C", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
               />
             </div>
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                style={{ width: "100%", border: "1px solid #e6e6e6", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
+                style={{ width: "100%", border: "1px solid #1E3B4C", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
               />
             </div>
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{ background: "#FFFE15", color: "#0C1E29", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
+              style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>

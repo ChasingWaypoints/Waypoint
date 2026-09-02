@@ -210,7 +210,7 @@ export default function EventPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "system-ui" }}>
       {/* Header */}
-      <div style={{ background: "#FFFE15", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint · Group Event</p>
           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0" }}>{event.name}</h1>
@@ -229,9 +229,9 @@ export default function EventPage() {
       {/* Rider sidebar + map */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Sidebar */}
-        <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
+        <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #1E3B4C", overflowY: "auto", flexShrink: 0 }}>
           {event.route_name && (
-            <div style={{ padding: "10px 14px", borderBottom: "1px solid #e6e6e6", background: "#f0fdf4" }}>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid #1E3B4C", background: "#14303F" }}>
               <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#15803d", textTransform: "uppercase", margin: 0 }}>Planned Route</p>
               <p style={{ fontSize: 12, color: "#C8D4DC", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
             </div>
@@ -253,8 +253,8 @@ export default function EventPage() {
                   }
                 }}
                 style={{
-                  padding: "10px 14px", borderBottom: "1px solid #e6e6e6", cursor: rider.latest ? "pointer" : "default",
-                  background: followId === rider.id ? "#f0f7ff" : "#fff",
+                  padding: "10px 14px", borderBottom: "1px solid #1E3B4C", cursor: rider.latest ? "pointer" : "default",
+                  background: followId === rider.id ? "#14303F" : "#0C1E29",
                   borderLeft: `3px solid ${color}`,
                 }}
               >

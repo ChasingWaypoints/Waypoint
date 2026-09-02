@@ -20,6 +20,7 @@ const C = {
   hairline: "#1E3B4C",
   accent: "#FFFE15",
   accentInk: "#0C1E29",
+  lime: "#CCFF00",
   track: "#CCFF00",
   ink: "#FFFFFF",
   body: "#C8D4DC",
@@ -70,7 +71,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/auth/signup"
-            style={{ background: C.accent, color: C.accentInk, fontSize: 13, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
+            style={{ background: C.lime, color: C.accentInk, fontSize: 13, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
           >
             Get started
           </Link>
@@ -94,7 +95,7 @@ export default function LandingPage() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link
             href="/auth/signup"
-            style={{ background: C.accent, color: C.accentInk, fontWeight: 800, fontSize: 15, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
+            style={{ background: C.lime, color: C.accentInk, fontWeight: 800, fontSize: 15, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
           >
             Start an event — free during beta
           </Link>

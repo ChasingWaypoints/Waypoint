@@ -37,7 +37,7 @@ export default function SignupPage() {
           <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
         </nav>
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400, textAlign: "center" }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 40, width: "100%", maxWidth: 400, textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: "0 0 12px" }}>Check your email</h1>
             <p style={{ fontSize: 14, color: "#7E93A0", lineHeight: 1.6, margin: "0 0 24px" }}>
@@ -45,7 +45,7 @@ export default function SignupPage() {
             </p>
             <Link
               href="/auth/login"
-              style={{ display: "inline-block", background: "#FFFE15", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ display: "inline-block", background: "#CCFF00", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
             >
               Go to Sign In
             </Link>
@@ -66,7 +66,7 @@ export default function SignupPage() {
 
       {/* Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400 }}>
+        <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 40, width: "100%", maxWidth: 400 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 8px" }}>
             Waypoint
           </p>
@@ -84,7 +84,7 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                style={{ width: "100%", border: "1px solid #e6e6e6", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
+                style={{ width: "100%", border: "1px solid #1E3B4C", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
               />
             </div>
 
@@ -98,7 +98,7 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 6 characters"
                 required
-                style={{ width: "100%", border: "1px solid #e6e6e6", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
+                style={{ width: "100%", border: "1px solid #1E3B4C", padding: "12px 14px", fontSize: 15, outline: "none", borderRadius: 0, boxSizing: "border-box", fontFamily: "inherit" }}
               />
             </div>
 
@@ -109,7 +109,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{ background: "#FFFE15", color: "#0C1E29", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
+              style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
             >
               {loading ? "Creating account..." : "Create Free Account"}
             </button>

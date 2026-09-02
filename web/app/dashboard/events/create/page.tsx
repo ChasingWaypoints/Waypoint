@@ -75,7 +75,7 @@ export default function CreateEventPage() {
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Group Rides</p>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: "0 0 32px" }}>Create Event</h1>
 
-        <form onSubmit={handleSubmit} style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 32 }}>
+        <form onSubmit={handleSubmit} style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 32 }}>
 
           {/* Name */}
           <div style={{ marginBottom: 24 }}>
@@ -89,7 +89,7 @@ export default function CreateEventPage() {
               placeholder="e.g. Baja 500 Recon Ride"
               required
               autoFocus
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #d4d4d4", fontSize: 15, color: "#FFFFFF", outline: "none", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: 15, color: "#FFFFFF", outline: "none", boxSizing: "border-box" }}
             />
           </div>
 
@@ -103,7 +103,7 @@ export default function CreateEventPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Route details, meeting point, start time..."
               rows={3}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none", resize: "vertical", fontFamily: "system-ui", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none", resize: "vertical", fontFamily: "system-ui", boxSizing: "border-box" }}
             />
           </div>
 
@@ -122,7 +122,7 @@ export default function CreateEventPage() {
                 {riderClasses.map((cls) => (
                   <div
                     key={cls}
-                    style={{ display: "flex", alignItems: "center", gap: 6, background: "#FFFE15", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                    style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
                   >
                     {cls}
                     <button
@@ -146,14 +146,14 @@ export default function CreateEventPage() {
                 onChange={(e) => setClassInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addClass(); } }}
                 placeholder="e.g. Moto, UTV, Car, Truck…"
-                style={{ flex: 1, padding: "10px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
               />
               <button
                 type="button"
                 onClick={addClass}
                 disabled={!classInput.trim()}
                 style={{
-                  background: classInput.trim() ? "#1a2129" : "#d4d4d4",
+                  background: classInput.trim() ? "#1a2129" : "#1E3B4C",
                   color: "#fff", border: "none", padding: "10px 18px",
                   fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
                   textTransform: "uppercase", cursor: classInput.trim() ? "pointer" : "default",
@@ -171,8 +171,8 @@ export default function CreateEventPage() {
               type="submit"
               disabled={submitting || !name.trim()}
               style={{
-                flex: 1, background: name.trim() ? "#FFFE15" : "#d4d4d4",
-                color: "#fff", padding: "13px", border: "none",
+                flex: 1, background: name.trim() ? "#CCFF00" : "#1E3B4C",
+                color: "#0C1E29", padding: "13px", border: "none",
                 fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
                 cursor: name.trim() && !submitting ? "pointer" : "default",
               }}
@@ -181,7 +181,7 @@ export default function CreateEventPage() {
             </button>
             <Link
               href="/dashboard"
-              style={{ background: "transparent", color: "#7E93A0", border: "1px solid #e6e6e6", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
             >
               Cancel
             </Link>

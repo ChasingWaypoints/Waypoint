@@ -87,6 +87,21 @@ export default function DashboardPage() {
     router.push("/");
   }
 
+  async function deleteTrip(id: string, name: string) {
+    if (!confirm(`Delete "${name}"? This removes the trip and its track history. This cannot be undone.`)) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch(`/api/trips/${id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (res.ok) {
+      setTrips((prev) => prev.filter((t) => t.id !== id));
+    } else {
+      alert("Could not delete that trip. Please try again.");
+    }
+  }
+
   const activeEvents = events.filter((e) => e.status === "active");
   const pastEvents = events.filter((e) => e.status !== "active");
 
@@ -105,16 +120,16 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/dashboard/events/create"
-              style={{ background: "#FFFE15", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
             >
               + Create Event
             </Link>
           </div>
 
           {loading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
           ) : events.length === 0 ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "40px 32px", textAlign: "center" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🏁</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No events yet</h3>
               <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", fontWeight: 300 }}>
@@ -122,13 +137,13 @@ export default function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/events/create"
-                style={{ background: "#FFFE15", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
+                style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
               >
                 Create Your First Event
               </Link>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #e6e6e6" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
               {[...activeEvents, ...pastEvents].map((ev) => (
                 <div key={ev.id} style={{ background: "#0C1E29", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
                   <div>
@@ -148,14 +163,14 @@ export default function DashboardPage() {
                     {ev.my_role === "organizer" && (
                       <Link
                         href={`/dashboard/events/${ev.id}/track`}
-                        style={{ background: "#FFFE15", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                        style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
                       >
                         Tracking
                       </Link>
                     )}
                     <Link
                       href={`/dashboard/events/${ev.id}`}
-                      style={{ background: "#FFFE15", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                      style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
                     >
                       Manage →
                     </Link>
@@ -173,15 +188,15 @@ export default function DashboardPage() {
               <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Your Trips</p>
               <h2 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Track History</h2>
             </div>
-            <div style={{ background: "#e8f0fb", border: "1px solid #c7d9f5", padding: "10px 16px", maxWidth: 300, fontSize: 12, color: "#4a6fa8", lineHeight: 1.5 }}>
-              <strong style={{ color: "#FFFE15" }}>📱 Use the Mobile App</strong> to start trips and track live.
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "10px 16px", maxWidth: 320, fontSize: 12, color: "#7E93A0", lineHeight: 1.5 }}>
+              Personal trips are recorded from the mobile app. For an event, use <strong style={{ color: "#CCFF00" }}>Create Event</strong> above.
             </div>
           </div>
 
           {loading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
           ) : trips.length === 0 ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "40px 32px", textAlign: "center" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No trips yet</h3>
               <p style={{ fontSize: 13, color: "#7E93A0", margin: 0, fontWeight: 300 }}>
@@ -189,7 +204,7 @@ export default function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #e6e6e6" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
               {trips.map((trip) => (
                 <div key={trip.id} style={{ background: "#0C1E29", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
                   <div>
@@ -207,19 +222,26 @@ export default function DashboardPage() {
                     {trip.is_public && trip.share_token ? (
                       <>
                         <a href={`/share/${trip.share_token}`} target="_blank" rel="noopener noreferrer"
-                          style={{ background: "#FFFE15", color: "#0C1E29", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+                          style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
                           Live Map ↗
                         </a>
                         <a href={`/share/${trip.share_token}/story`} target="_blank" rel="noopener noreferrer"
-                          style={{ background: "transparent", color: "#FFFFFF", border: "1px solid #e6e6e6", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+                          style={{ background: "transparent", color: "#FFFFFF", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
                           Story ↗
                         </a>
                       </>
                     ) : (
-                      <span style={{ border: "1px solid #e6e6e6", color: "#7E93A0", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                      <span style={{ border: "1px solid #1E3B4C", color: "#7E93A0", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
                         Private
                       </span>
                     )}
+                    <button
+                      onClick={() => deleteTrip(trip.id, trip.name)}
+                      title="Delete trip and its track history"
+                      style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}

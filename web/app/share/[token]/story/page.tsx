@@ -194,7 +194,7 @@ export default function StoryPage() {
         </Link>
         <Link
           href={`/share/${token}`}
-          style={{ background: "#FFFE15", color: "#0C1E29", padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          style={{ background: "#CCFF00", color: "#0C1E29", padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
         >
           View Live Map →
         </Link>
@@ -217,7 +217,7 @@ export default function StoryPage() {
       </div>
 
       {/* Stats bar */}
-      <div style={{ background: "#0C1E29", borderBottom: "1px solid #e6e6e6", padding: "16px 24px", display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #1E3B4C", padding: "16px 24px", display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center" }}>
         <StatPill label="Distance" value={`${data.stats.distance_km} km`} />
         {data.stats.duration_minutes && <StatPill label="Duration" value={fmtDuration(data.stats.duration_minutes)!} />}
         {maxSpeed > 0 && <StatPill label="Max Speed" value={`${Math.round(maxSpeed)} km/h`} />}
@@ -233,7 +233,7 @@ export default function StoryPage() {
         {/* Progress bar */}
         {(animating || animProgress > 0) && (
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "#1E3B4C" }}>
-            <div style={{ height: "100%", width: `${animProgress}%`, background: "#FFFE15", transition: "width 0.1s linear" }} />
+            <div style={{ height: "100%", width: `${animProgress}%`, background: "#CCFF00", transition: "width 0.1s linear" }} />
           </div>
         )}
 
@@ -243,7 +243,7 @@ export default function StoryPage() {
             onClick={replayAnimation}
             style={{
               position: "absolute", top: 12, left: 12,
-              background: "#FFFE15", color: "#0C1E29", border: "none",
+              background: "#CCFF00", color: "#0C1E29", border: "none",
               padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
               textTransform: "uppercase", cursor: "pointer",
             }}
@@ -261,7 +261,7 @@ export default function StoryPage() {
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link
             href={`/share/${token}`}
-            style={{ background: "#FFFE15", color: "#0C1E29", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+            style={{ background: "#CCFF00", color: "#0C1E29", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
           >
             View Live Map
           </Link>

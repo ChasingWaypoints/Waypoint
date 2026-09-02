@@ -105,7 +105,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const INPUT: React.CSSProperties = {
-  width: "100%", padding: "11px 14px", border: "1px solid #d4d4d4",
+  width: "100%", padding: "11px 14px", border: "1px solid #1E3B4C",
   fontSize: 14, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
   fontFamily: "system-ui",
 };
@@ -275,7 +275,7 @@ export default function ProfilePage() {
         {/* ── Profile ── */}
         <div style={{ marginBottom: 48 }}>
           <SectionLabel>Profile</SectionLabel>
-          <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 28 }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
             <Field label="Display Name">
               <div style={{ display: "flex", gap: 8 }}>
                 <input
@@ -289,8 +289,8 @@ export default function ProfilePage() {
                   onClick={saveName}
                   disabled={!nameChanged || savingName}
                   style={{
-                    background: nameChanged ? (nameSaved ? "#CCFF00" : "#FFFE15") : "#d4d4d4",
-                    color: "#fff", border: "none", padding: "11px 20px",
+                    background: nameChanged ? (nameSaved ? "#CCFF00" : "#FFFE15") : "#1E3B4C",
+                    color: "#0C1E29", border: "none", padding: "11px 20px",
                     fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: nameChanged ? "pointer" : "default",
                     whiteSpace: "nowrap",
@@ -308,7 +308,7 @@ export default function ProfilePage() {
               <p style={{ fontSize: 14, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
             </Field>
 
-            <div style={{ borderTop: "1px solid #e6e6e6", paddingTop: 20 }}>
+            <div style={{ borderTop: "1px solid #1E3B4C", paddingTop: 20 }}>
               {resetSent ? (
                 <p style={{ fontSize: 13, color: "#CCFF00", margin: 0 }}>
                   ✓ Reset email sent to {userEmail}
@@ -316,7 +316,7 @@ export default function ProfilePage() {
               ) : (
                 <button
                   onClick={sendPasswordReset}
-                  style={{ background: "transparent", border: "1px solid #e6e6e6", color: "#7E93A0", padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                  style={{ background: "transparent", border: "1px solid #1E3B4C", color: "#7E93A0", padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
                   Send Password Reset Email
                 </button>
@@ -339,7 +339,7 @@ export default function ProfilePage() {
                   key={t}
                   onClick={() => openAddForm(t)}
                   style={{
-                    flex: 1, background: "#0C1E29", border: "1px solid #d4d4d4",
+                    flex: 1, background: "#0C1E29", border: "1px solid #1E3B4C",
                     padding: "12px 8px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
                     textTransform: "uppercase", cursor: "pointer", color: "#FFFFFF",
                   }}
@@ -361,10 +361,10 @@ export default function ProfilePage() {
               </div>
 
               {/* Steps */}
-              <div style={{ background: "#0A0A0A", border: "1px solid #e6e6e6", padding: "16px 20px", marginBottom: 24 }}>
+              <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "16px 20px", marginBottom: 24 }}>
                 {DEVICE_META[addType].steps.map((step, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < DEVICE_META[addType].steps.length - 1 ? 10 : 0 }}>
-                    <span style={{ width: 20, height: 20, background: "#FFFE15", color: "#0C1E29", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ width: 20, height: 20, background: "#CCFF00", color: "#0C1E29", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {i + 1}
                     </span>
                     <p style={{ fontSize: 12, color: "#4a4a4a", margin: 0, lineHeight: 1.6 }}>{step}</p>
@@ -385,12 +385,12 @@ export default function ProfilePage() {
                       onClick={() => setAddPoll(opt.value)}
                       style={{
                         flex: 1, padding: "10px 4px", border: "1px solid", borderRadius: 0,
-                        borderColor: addPoll === opt.value ? "#FFFE15" : "#1E3B4C",
-                        background: addPoll === opt.value ? "#FFFE15" : "#fff",
+                        borderColor: addPoll === opt.value ? "#CCFF00" : "#1E3B4C",
+                        background: addPoll === opt.value ? "#CCFF00" : "#14303F",
                         cursor: "pointer",
                       }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 700, color: addPoll === opt.value ? "#fff" : "#1a2129" }}>{opt.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: addPoll === opt.value ? "#0C1E29" : "#C8D4DC" }}>{opt.label}</div>
                       <div style={{ fontSize: 10, color: addPoll === opt.value ? "#cce0ff" : "#7E93A0", marginTop: 2 }}>{opt.note}</div>
                     </button>
                   ))}
@@ -427,7 +427,7 @@ export default function ProfilePage() {
                 onClick={submitDevice}
                 disabled={addLoading}
                 style={{
-                  width: "100%", background: addLoading ? "#d4d4d4" : "#FFFE15", color: "#fff",
+                  width: "100%", background: addLoading ? "#1E3B4C" : "#FFFE15", color: "#fff",
                   border: "none", padding: "13px", fontSize: 12, fontWeight: 700,
                   letterSpacing: 0.5, textTransform: "uppercase", cursor: addLoading ? "default" : "pointer",
                 }}
@@ -439,17 +439,17 @@ export default function ProfilePage() {
 
           {/* Device list */}
           {devicesLoading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "24px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "24px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>
               Loading devices…
             </div>
           ) : devices.length === 0 ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "32px", textAlign: "center" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center" }}>
               <p style={{ fontSize: 24, margin: "0 0 8px" }}>📡</p>
               <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>No satellite devices connected</p>
               <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>Add a Garmin inReach, SPOT, or ZOLEO above to track your location during trips.</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #e6e6e6" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
               {devices.map((device) => {
                 const meta = DEVICE_META[device.type as DeviceType];
                 const test = testResults[device.id];
@@ -490,7 +490,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => removeDevice(device.id)}
                           style={{
-                            background: "transparent", border: "1px solid #e6e6e6", color: "#7E93A0",
+                            background: "transparent", border: "1px solid #1E3B4C", color: "#7E93A0",
                             padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
                             textTransform: "uppercase", cursor: "pointer",
                           }}

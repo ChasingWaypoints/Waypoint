@@ -60,7 +60,7 @@ function Btn({ onClick, color = "#FFFE15", border, children, disabled }: {
       onClick={onClick}
       disabled={disabled}
       style={{
-        background: border ? "transparent" : (disabled ? "#d4d4d4" : color),
+        background: border ? "transparent" : (disabled ? "#1E3B4C" : color),
         color: border ? color : "#fff",
         border: border ? `1px solid ${border}` : "none",
         padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
@@ -399,7 +399,7 @@ export default function EventDetailPage() {
           </a>
           {isOrganizer && (
             <Link href={`/dashboard/events/${id}/track`}
-              style={{ background: "#FFFE15", border: "1px solid #FFFE15", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
               Tracking Page
             </Link>
           )}
@@ -415,13 +415,13 @@ export default function EventDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", background: "#0C1E29", borderBottom: "1px solid #e6e6e6", flexShrink: 0, height: TABS_H }}>
+      <div style={{ display: "flex", background: "#0C1E29", borderBottom: "1px solid #1E3B4C", flexShrink: 0, height: TABS_H }}>
         {(["map", "riders", "gep"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             style={{
               padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
               border: "none", borderBottom: tab === t ? "2px solid #1c69d4" : "2px solid transparent",
-              color: tab === t ? "#FFFE15" : "#7E93A0", background: "transparent", cursor: "pointer",
+              color: tab === t ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
             {t === "riders" ? `Riders (${riders.length})` : t.toUpperCase()}
@@ -432,7 +432,7 @@ export default function EventDetailPage() {
             style={{
               padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
               border: "none", borderBottom: tab === "settings" ? "2px solid #1c69d4" : "2px solid transparent",
-              color: tab === "settings" ? "#FFFE15" : "#7E93A0", background: "transparent", cursor: "pointer",
+              color: tab === "settings" ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
             SETTINGS
@@ -444,9 +444,9 @@ export default function EventDetailPage() {
       {tab === "map" && (
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
           {/* Sidebar */}
-          <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
+          <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #1E3B4C", overflowY: "auto", flexShrink: 0 }}>
             {event.route_name && (
-              <div style={{ padding: "10px 14px", borderBottom: "1px solid #e6e6e6", background: "#f0fdf4" }}>
+              <div style={{ padding: "10px 14px", borderBottom: "1px solid #1E3B4C", background: "#14303F" }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#15803d", textTransform: "uppercase", margin: 0 }}>Planned Route</p>
                 <p style={{ fontSize: 12, color: "#C8D4DC", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
               </div>
@@ -466,9 +466,9 @@ export default function EventDetailPage() {
                     }
                   }}
                   style={{
-                    padding: "10px 14px", borderBottom: "1px solid #e6e6e6",
+                    padding: "10px 14px", borderBottom: "1px solid #1E3B4C",
                     cursor: rider.latest ? "pointer" : "default",
-                    background: followId === rider.id ? "#f0f7ff" : "#fff",
+                    background: followId === rider.id ? "#14303F" : "#0C1E29",
                     borderLeft: `3px solid ${color}`,
                   }}
                 >
@@ -507,14 +507,14 @@ export default function EventDetailPage() {
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
             <SectionLabel>Participants</SectionLabel>
-            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
               {riders.length === 0 ? (
                 <p style={{ padding: "24px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No riders have joined yet. Share the join code: <strong>{event.join_code}</strong></p>
               ) : riders.map((rider, i) => {
                 const color = RIDER_COLORS[i % RIDER_COLORS.length];
                 const minsAgo = rider.latest ? Math.round((Date.now() - new Date(rider.latest.recorded_at).getTime()) / 60000) : null;
                 return (
-                  <div key={rider.id} style={{ padding: "14px 20px", borderBottom: "1px solid #e6e6e6", display: "flex", alignItems: "center", gap: 14, borderLeft: `3px solid ${color}` }}>
+                  <div key={rider.id} style={{ padding: "14px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", alignItems: "center", gap: 14, borderLeft: `3px solid ${color}` }}>
                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                       {rider.display_name.slice(0, 2).toUpperCase()}
                     </div>
@@ -524,7 +524,7 @@ export default function EventDetailPage() {
                           {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                         </p>
                         {rider.rider_class && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: "#7E93A0", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#7E93A0", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
                             {rider.rider_class}
                           </span>
                         )}
@@ -559,7 +559,7 @@ export default function EventDetailPage() {
             {/* Classes */}
             <div>
               <SectionLabel>Rider Classes</SectionLabel>
-              <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 24 }}>
+              <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
                 <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.6 }}>
                   Define the class options riders see when joining this event. If left empty, the class field is hidden on the join screen.
                 </p>
@@ -570,7 +570,7 @@ export default function EventDetailPage() {
                     {(editedClasses ?? []).map((cls) => (
                       <div
                         key={cls}
-                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#FFFE15", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
                       >
                         {cls}
                         <button
@@ -592,13 +592,13 @@ export default function EventDetailPage() {
                     onChange={(e) => setClassInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEditedClass(); } }}
                     placeholder="e.g. Moto, UTV, Car, Truck…"
-                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
                   />
                   <button
                     onClick={addEditedClass}
                     disabled={!classInput.trim()}
                     style={{
-                      background: classInput.trim() ? "#1a2129" : "#d4d4d4", color: "#fff",
+                      background: classInput.trim() ? "#1a2129" : "#1E3B4C", color: "#fff",
                       border: "none", padding: "10px 18px", fontSize: 11, fontWeight: 700,
                       letterSpacing: 0.5, textTransform: "uppercase",
                       cursor: classInput.trim() ? "pointer" : "default",
@@ -612,7 +612,7 @@ export default function EventDetailPage() {
                   onClick={saveClasses}
                   disabled={savingClasses}
                   style={{
-                    background: classesSaved ? "#CCFF00" : "#FFFE15", color: "#fff",
+                    background: classesSaved ? "#CCFF00" : "#FFFE15", color: "#0C1E29",
                     border: "none", padding: "11px 24px", fontSize: 11, fontWeight: 700,
                     letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: savingClasses ? "default" : "pointer",
@@ -635,7 +635,7 @@ export default function EventDetailPage() {
             {/* Your GEP link */}
             <div>
               <SectionLabel>Your GEP Link</SectionLabel>
-              <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 20 }}>
+              <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 20 }}>
                 <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
                   Open this in Google Earth Pro to see all riders live. Go to Add → Network Link, paste the URL in the Link field. This link is unique to you — do not share it.
                 </p>
@@ -643,7 +643,7 @@ export default function EventDetailPage() {
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       readOnly value={myGepUrl}
-                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #e6e6e6", fontSize: 12, color: "#FFFFFF", background: "#0A0A0A", outline: "none" }}
+                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: 12, color: "#FFFFFF", background: "#0A0A0A", outline: "none" }}
                     />
                     <Btn onClick={() => copy(myGepUrl, "my-gep")} color={copyFeedback === "my-gep" ? "#CCFF00" : "#FFFE15"}>
                       {copyFeedback === "my-gep" ? "Copied!" : "Copy"}
@@ -659,8 +659,8 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>GEP Viewers</SectionLabel>
-                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
-                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #e6e6e6" }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
+                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #1E3B4C" }}>
                     <p style={{ fontSize: 12, color: "#7E93A0", margin: 0, lineHeight: 1.6 }}>
                       Issue a named KML link to anyone watching in Google Earth Pro — marshals, crew, sponsors. Each link is unique and traceable. Revoking it kills their feed immediately.
                     </p>
@@ -670,7 +670,7 @@ export default function EventDetailPage() {
                     const url = `${gepBase}/api/events/${event.id}/gep/${cred.gep_token}/network-link.kml`;
                     const copyKey = `cred-${cred.id}`;
                     return (
-                      <div key={cred.id} style={{ padding: "12px 20px", borderBottom: "1px solid #e6e6e6", display: "flex", alignItems: "center", gap: 12 }}>
+                      <div key={cred.id} style={{ padding: "12px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{cred.display_name}</p>
                           <p style={{ fontSize: 11, color: "#7E93A0", margin: "2px 0 0", fontFamily: "monospace" }}>…{cred.gep_token.slice(-10)}</p>
@@ -695,7 +695,7 @@ export default function EventDetailPage() {
                         value={newViewerName}
                         onChange={(e) => setNewViewerName(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") addViewer(); }}
-                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
                       />
                       <Btn onClick={addViewer} disabled={addingViewer || !newViewerName.trim()}>
                         {addingViewer ? "Adding..." : "Add"}
@@ -710,7 +710,7 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>Planned Route</SectionLabel>
-                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 20 }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 20 }}>
                   {event.route_name ? (
                     <div>
                       <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>📍 {event.route_name}</p>
@@ -741,15 +741,15 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>GEP Access Log</SectionLabel>
-                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
                   {accessLog.length === 0 ? (
                     <p style={{ padding: "20px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No GEP accesses yet.</p>
                   ) : accessLog.map((entry, i) => (
-                    <div key={i} style={{ padding: "12px 20px", borderBottom: "1px solid #e6e6e6", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                    <div key={i} style={{ padding: "12px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", gap: 16, alignItems: "flex-start" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <p style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{entry.display_name}</p>
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#7E93A0", textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#7E93A0", textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
                             {entry.type === "credential" ? "GEP Viewer" : entry.role === "organizer" ? "Organizer" : "Rider"}
                           </span>
                         </div>

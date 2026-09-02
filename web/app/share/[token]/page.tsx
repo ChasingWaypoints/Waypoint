@@ -184,12 +184,12 @@ export default function SharePage() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Enter password"
-        style={{ border: "1px solid #e6e6e6", padding: "12px 16px", fontSize: 16, width: "100%", maxWidth: 320, outline: "none", borderRadius: 0 }}
+        style={{ border: "1px solid #1E3B4C", padding: "12px 16px", fontSize: 16, width: "100%", maxWidth: 320, outline: "none", borderRadius: 0 }}
         onKeyDown={(e) => e.key === "Enter" && loadTrip(password)}
       />
       <button
         onClick={() => loadTrip(password)}
-        style={{ marginTop: 12, background: "#FFFE15", color: "#0C1E29", border: "none", padding: "14px 32px", fontWeight: 700, fontSize: 13, letterSpacing: 0.5, cursor: "pointer", width: "100%", maxWidth: 320 }}
+        style={{ marginTop: 12, background: "#CCFF00", color: "#0C1E29", border: "none", padding: "14px 32px", fontWeight: 700, fontSize: 13, letterSpacing: 0.5, cursor: "pointer", width: "100%", maxWidth: 320 }}
       >
         VIEW TRIP
       </button>
@@ -203,7 +203,7 @@ export default function SharePage() {
       <p style={{ fontSize: 14, color: "#7E93A0", fontWeight: 300, margin: "0 0 32px", textAlign: "center", maxWidth: 320 }}>
         The person who shared this trip set an expiry date. Ask them to generate a new share link.
       </p>
-      <a href="/" style={{ background: "#FFFE15", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}>
+      <a href="/" style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}>
         Go to Waypoint
       </a>
     </div>
@@ -222,7 +222,7 @@ export default function SharePage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "system-ui" }}>
       {/* Header */}
-      <div style={{ background: "#FFFE15", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint</p>
           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0", color: "#fff" }}>{data.trip.name}</h1>
@@ -259,7 +259,7 @@ export default function SharePage() {
       </div>
 
       {/* Stats bar */}
-      <div style={{ background: "#0C1E29", borderBottom: "1px solid #e6e6e6", padding: "10px 20px", display: "flex", gap: 24, flexShrink: 0, alignItems: "center" }}>
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #1E3B4C", padding: "10px 20px", display: "flex", gap: 24, flexShrink: 0, alignItems: "center" }}>
         <Stat label="Points" value={String(liveStats?.pointCount ?? data.stats.point_count)} />
         <Stat label="Distance" value={`${liveStats?.distanceKm ?? data.stats.distance_km} km`} />
         {data.stats.duration_minutes && <Stat label="Duration" value={`${Math.floor(data.stats.duration_minutes / 60)}h ${data.stats.duration_minutes % 60}m`} />}
