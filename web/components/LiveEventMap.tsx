@@ -18,12 +18,15 @@ interface Props {
   /** Embed mode: no roster sidebar, minimal chrome. */
   compact?: boolean;
   refreshMs?: number;
+  /** Organizer view of this event — enables the emergency-info popup. */
+  organizerEventId?: string;
 }
 
 export default function LiveEventMap({
   shareToken,
   compact = false,
   refreshMs = 30_000,
+  organizerEventId,
 }: Props) {
   const [event, setEvent] = useState<EventMeta | null>(null);
   const [stages, setStages] = useState<StageLine[]>([]);
@@ -202,6 +205,7 @@ export default function LiveEventMap({
           compact={compact}
           onSelectEntrant={selectEntrant}
           selectedTrack={track}
+          organizerEventId={organizerEventId}
         />
       </div>
     </div>

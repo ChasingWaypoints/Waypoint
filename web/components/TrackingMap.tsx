@@ -11,6 +11,7 @@ import {
   rasterStyle,
 } from "../lib/mapLayers";
 import { theme, font, btnMap, panel } from "../lib/theme";
+import { authFetch } from "../lib/authFetch";
 import {
   LngLat,
   pathLength,
@@ -33,6 +34,7 @@ export interface Entrant {
   lng: number | null;
   last_seen_at: string | null;
   device_type: string | null;
+  linked?: boolean;
 }
 
 export interface StageWaypoint {
@@ -63,6 +65,10 @@ interface Props {
   compact?: boolean;
   onSelectEntrant?: (id: string) => void;
   selectedTrack?: LngLat[];
+  /** When set, this is the organizer's own view of that event: the popup
+   *  gains an Emergency-info button that fetches SAR details for linked
+   *  riders. Never pass on public/embed maps. */
+  organizerEventId?: string;
 }
 
 type Status = "live" | "stale" | "dark" | "no_fix";
@@ -97,6 +103,7 @@ export default function TrackingMap({
   compact = false,
   onSelectEntrant,
   selectedTrack,
+  organizerEventId,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -207,6 +214,7 @@ export default function TrackingMap({
           if (mk && html) {
             popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
             wireCopyButtons(popup.current.getElement());
+            wireEmergencyButtons(popup.current.getElement(), organizerEventId);
           }
           onSelectEntrant?.(id);
         });
@@ -241,6 +249,10 @@ export default function TrackingMap({
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
              ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
              ${coordHtml}
+             ${organizerEventId && e.linked ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px">
+               <button class="wp-emergency" data-id="${e.id}" style="width:100%;background:#2A1214;color:#FF6B6B;border:1px solid #5A2530;border-radius:4px;font:700 11px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:7px;cursor:pointer">&#9888; Emergency info</button>
+               <div class="wp-emergency-out" data-id="${e.id}"></div>
+             </div>` : ""}
            </div>`;
       popupHtml.current.set(e.id, popupContent);
       // If this entrant's popup is currently open, refresh it in place.
@@ -249,6 +261,7 @@ export default function TrackingMap({
         if (open && Math.abs(open.lng - e.lng) < 1e-6 && Math.abs(open.lat - e.lat) < 1e-6) {
           popup.current.setHTML(popupContent);
           wireCopyButtons(popup.current.getElement());
+          wireEmergencyButtons(popup.current.getElement(), organizerEventId);
         }
       }
     }
@@ -630,6 +643,83 @@ function wireCopyButtons(root: HTMLElement | undefined) {
         btn.style.color = "#C8D4DC";
         btn.style.borderColor = "#1E3B4C";
       }, 1300);
+    });
+  });
+}
+
+// Organizer-only: fetch and reveal a linked rider's emergency details.
+function emgErrBox(msg: string): string {
+  return '<div style="margin-top:6px;color:#7E93A0;font-size:12px">' + msg + '</div>';
+}
+function emgLine(label: string, val: unknown): string {
+  if (val === null || val === undefined || val === "") return "";
+  return '<div style="display:flex;gap:8px;margin:2px 0"><span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:82px;flex-shrink:0">'
+    + label + '</span><span style="color:#fff;font-size:12px">' + escapeHtml(String(val)) + '</span></div>';
+}
+function renderEmergency(d: Record<string, unknown>): string {
+  let age = "";
+  const dobRaw = d.date_of_birth ? String(d.date_of_birth) : "";
+  if (dobRaw) {
+    const dob = new Date(dobRaw + "T00:00:00");
+    if (!isNaN(dob.getTime())) {
+      const n = new Date();
+      let a = n.getFullYear() - dob.getFullYear();
+      const m = n.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && n.getDate() < dob.getDate())) a--;
+      if (a >= 0 && a < 130) age = String(a);
+    }
+  }
+  const contact = d.emergency_contact_name || d.emergency_contact_phone;
+  return '<div style="margin-top:6px;background:#1A0E10;border:1px solid #5A2530;border-radius:4px;padding:8px 10px">'
+    + emgLine("Name", d.name)
+    + emgLine("Blood type", d.blood_type)
+    + (age ? emgLine("Age", age) : "")
+    + emgLine("Phone", d.phone)
+    + emgLine("Country", d.country)
+    + (contact
+        ? '<div style="border-top:1px solid #5A2530;margin-top:6px;padding-top:6px">'
+          + '<div style="color:#FF6B6B;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Emergency contact</div>'
+          + emgLine("Name", d.emergency_contact_name)
+          + emgLine("Relation", d.emergency_contact_relation)
+          + emgLine("Phone", d.emergency_contact_phone)
+          + '</div>'
+        : "")
+    + '</div>';
+}
+function wireEmergencyButtons(root: HTMLElement | undefined, eventId: string | undefined) {
+  if (!root || !eventId) return;
+  root.querySelectorAll<HTMLButtonElement>(".wp-emergency").forEach((btn) => {
+    const b = btn as HTMLButtonElement & { _wired?: boolean };
+    if (b._wired) return;
+    b._wired = true;
+    btn.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      const id = btn.getAttribute("data-id") || "";
+      const out = root.querySelector<HTMLElement>('.wp-emergency-out[data-id="' + id + '"]');
+      const label = btn.innerHTML;
+      btn.textContent = "Loading\u2026";
+      btn.disabled = true;
+      try {
+        const res = await authFetch(`/api/events/${eventId}/entrants/${id}/emergency`);
+        const d = (await res.json()) as Record<string, unknown>;
+        if (!res.ok) {
+          if (out) out.innerHTML = emgErrBox("Could not load emergency info.");
+          btn.innerHTML = label;
+          btn.disabled = false;
+          return;
+        }
+        if (d.linked === false) {
+          if (out) out.innerHTML = emgErrBox("No linked Waypoint account for this rider.");
+          btn.style.display = "none";
+          return;
+        }
+        if (out) out.innerHTML = renderEmergency(d);
+        btn.style.display = "none";
+      } catch {
+        if (out) out.innerHTML = emgErrBox("Network error.");
+        btn.innerHTML = label;
+        btn.disabled = false;
+      }
     });
   });
 }

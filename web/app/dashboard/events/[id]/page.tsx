@@ -321,7 +321,7 @@ export default function EventDetailPage() {
       {/* ── MAP TAB ── */}
       {tab === "map" && (
         <div style={{ flex: 1, minHeight: 0 }}>
-          <LiveEventMap shareToken={event.share_token} />
+          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer ? event.id : undefined} />
         </div>
       )}
 

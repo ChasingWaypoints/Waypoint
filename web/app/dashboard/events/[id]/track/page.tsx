@@ -111,7 +111,7 @@ export default function EventTrackPage({
       </header>
 
       <main style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto" }}>
-        {tab === "map" && <LiveEventMap shareToken={event.share_token} />}
+        {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} />}
         {tab === "entrants" && (
           <div style={{ padding: 24, maxWidth: 1100 }}>
             <EntrantManager eventId={id} />
