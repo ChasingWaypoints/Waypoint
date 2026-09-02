@@ -16,6 +16,8 @@ import {
   pathLength,
   bearing,
   compassPoint,
+  initials,
+  allCoordFormats,
   formatDistance,
   timeAgo,
   boundsOf,
@@ -45,8 +47,9 @@ export interface StageWaypoint {
 export interface StageLine {
   id: string;
   name: string;
-  route_gpx: string;
   color: string;
+  route_line?: [number, number][];   // [lng,lat] pairs — compact, no GPX
+  route_gpx?: string;                // legacy fallback only
   waypoints?: StageWaypoint[];
 }
 
@@ -174,7 +177,7 @@ export default function TrackingMap({
 
       const status = statusOf(e.last_seen_at);
       const color = STATUS_COLOR[status];
-      const label = e.number ? `${e.number}` : e.name.slice(0, 2).toUpperCase();
+      const label = e.number ? `${e.number}` : initials(e.name);
 
       let marker = markers.current.get(e.id);
 
@@ -205,13 +208,26 @@ export default function TrackingMap({
       el.textContent = label;
       el.title = `${e.name}${e.number ? ` #${e.number}` : ""} — ${STATUS_LABEL[status]}`;
 
+      const coordRows = (e.lat !== null && e.lng !== null)
+        ? allCoordFormats(e.lat, e.lng)
+        : [];
+      const coordHtml = coordRows.length
+        ? `<div style="margin-top:6px;border-top:1px solid #1E3B4C;padding-top:6px">
+             ${coordRows.map((c, i) => `
+               <div style="display:flex;gap:6px;justify-content:space-between;align-items:center;margin:2px 0">
+                 <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:52px">${c.label}</span>
+                 <code style="color:${i === 0 ? "#CCFF00" : "#C8D4DC"};font-size:${i === 0 ? "12px" : "11px"};font-weight:${i === 0 ? 700 : 400};user-select:all">${c.value}</code>
+               </div>`).join("")}
+           </div>`
+        : "";
       marker.setPopup(
-        new mapboxgl.Popup({ offset: 18, closeButton: false }).setHTML(
-          `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff">
+        new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "300px" }).setHTML(
+          `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff;min-width:210px">
              <strong>${escapeHtml(e.name)}</strong>${e.number ? ` &middot; #${escapeHtml(e.number)}` : ""}
              ${e.class ? `<br><span style="color:#7E93A0">${escapeHtml(e.class)}</span>` : ""}
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
-             ${e.device_type ? `<br><span style="color:#54697A">${escapeHtml(e.device_type)}</span>` : ""}
+             ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
+             ${coordHtml}
            </div>`
         )
       );
@@ -240,7 +256,7 @@ export default function TrackingMap({
 
   // ── Event route from the organizer's GPX ──────────────────────
   const routeKey = (stages && stages.length
-    ? stages.map((s) => s.id + ":" + s.color).join("|")
+    ? stages.map((s) => s.id + ":" + s.color + ":" + (s.route_line?.length ?? 0)).join("|")
     : routeGpx) ?? "";
   useEffect(() => {
     const m = map.current;
@@ -249,7 +265,13 @@ export default function TrackingMap({
     // Build one line per visible stage; fall back to the single planned route.
     const lines: { id: string; color: string; coords: LngLat[] }[] =
       stages && stages.length
-        ? stages.map((st) => ({ id: st.id, color: st.color || theme.route, coords: parseGPXCoordinates(st.route_gpx) }))
+        ? stages.map((st) => ({
+          id: st.id,
+          color: st.color || theme.route,
+          coords: (st.route_line && st.route_line.length)
+            ? st.route_line.map(([lng, lat]) => ({ lng, lat }))
+            : (st.route_gpx ? parseGPXCoordinates(st.route_gpx) : []),
+        }))
         : routeGpx
           ? [{ id: "route", color: theme.route, coords: parseGPXCoordinates(routeGpx) }]
           : [];
@@ -438,9 +460,11 @@ export default function TrackingMap({
   }, [measuring]);
 
   const total = pathLength(measurePoints);
-  const leg =
+  // CAP heading is always taken from the FIRST point clicked to the last,
+  // so measuring competitor A then B gives A->B relative heading.
+  const cap =
     measurePoints.length >= 2
-      ? bearing(measurePoints[measurePoints.length - 2], measurePoints[measurePoints.length - 1])
+      ? bearing(measurePoints[0], measurePoints[measurePoints.length - 1])
       : null;
 
   const attribution = getLayer(layerId).attribution;
@@ -506,8 +530,8 @@ export default function TrackingMap({
               </div>
               <div style={{ fontSize: 12, color: theme.muted, marginTop: 4 }}>
                 {measurePoints.length} point{measurePoints.length === 1 ? "" : "s"}
-                {leg !== null && (
-                  <> &middot; {compassPoint(leg)} {Math.round(((leg % 360) + 360) % 360)}&deg;</>
+                {cap !== null && (
+                  <> &middot; CAP {Math.round(((cap % 360) + 360) % 360)}&deg; {compassPoint(cap)}</>
                 )}
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 10 }}>

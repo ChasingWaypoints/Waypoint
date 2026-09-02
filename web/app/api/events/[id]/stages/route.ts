@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../lib/supabase/auth";
-import { parseGPXWaypoints } from "../../../../../lib/geo";
+import { parseGPXWaypoints, parseGPXCoordinates } from "../../../../../lib/geo";
 
 async function requireOrganizer(request: NextRequest, eventId: string) {
   const { user, supabase } = await getUserFromRequest(request);
@@ -75,9 +75,18 @@ export async function POST(
 
   const waypoints = parseGPXWaypoints(gpx);
 
+  // Compact route line for the map — [[lng,lat], ...], downsampled so a
+  // dense stage never bloats the live feed. The raw GPX still lives in
+  // route_gpx for export, but is never sent to the map.
+  const coords = parseGPXCoordinates(gpx);
+  const MAX_PTS = 2500;
+  const step = coords.length > MAX_PTS ? Math.ceil(coords.length / MAX_PTS) : 1;
+  const route_line = coords.filter((_, i) => i % step === 0 || i === coords.length - 1)
+    .map((c) => [c.lng, c.lat]);
+
   const { data, error } = await guard.supabase!
     .from("event_stages")
-    .insert({ event_id: id, name, route_gpx: gpx, position: count ?? 0, waypoints })
+    .insert({ event_id: id, name, route_gpx: gpx, position: count ?? 0, waypoints, route_line })
     .select("id, name, position, color, visible, waypoints, created_at")
     .single();
 

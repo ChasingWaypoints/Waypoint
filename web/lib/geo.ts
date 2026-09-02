@@ -203,3 +203,97 @@ export function parseGPXWaypoints(gpx: string): Waypoint[] {
   return out;
 }
 
+
+// ── Coordinate formatting for emergency handoff ───────────────
+// Decimal is primary; DMS / DDM / UTM are provided so crews on any system
+// can be given a fix they can enter.
+
+export function formatDecimal(lat: number, lng: number): string {
+  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+
+export function formatDMS(lat: number, lng: number): string {
+  const dms = (v: number, pos: string, neg: string) => {
+    const dir = v >= 0 ? pos : neg;
+    v = Math.abs(v);
+    const d = Math.floor(v);
+    const mFloat = (v - d) * 60;
+    const m = Math.floor(mFloat);
+    const s = ((mFloat - m) * 60).toFixed(1);
+    return `${d}°${String(m).padStart(2, "0")}'${s.padStart(4, "0")}"${dir}`;
+  };
+  return `${dms(lat, "N", "S")} ${dms(lng, "E", "W")}`;
+}
+
+export function formatDDM(lat: number, lng: number): string {
+  const ddm = (v: number, pos: string, neg: string) => {
+    const dir = v >= 0 ? pos : neg;
+    v = Math.abs(v);
+    const d = Math.floor(v);
+    const m = ((v - d) * 60).toFixed(3);
+    return `${d}° ${m}'${dir}`;
+  };
+  return `${ddm(lat, "N", "S")} ${ddm(lng, "E", "W")}`;
+}
+
+/** WGS-84 lat/lng to UTM (zone + easting/northing). */
+export function formatUTM(lat: number, lng: number): string {
+  const a = 6378137.0;
+  const f = 1 / 298.257223563;
+  const k0 = 0.9996;
+  const e2 = f * (2 - f);
+  const ep2 = e2 / (1 - e2);
+
+  const zone = Math.floor((lng + 180) / 6) + 1;
+  const lngOrigin = (zone - 1) * 6 - 180 + 3;
+  const latR = (lat * Math.PI) / 180;
+  const lngR = (lng * Math.PI) / 180;
+  const lngOriginR = (lngOrigin * Math.PI) / 180;
+
+  const N = a / Math.sqrt(1 - e2 * Math.sin(latR) ** 2);
+  const T = Math.tan(latR) ** 2;
+  const C = ep2 * Math.cos(latR) ** 2;
+  const A = Math.cos(latR) * (lngR - lngOriginR);
+  const M =
+    a *
+    ((1 - e2 / 4 - (3 * e2 ** 2) / 64 - (5 * e2 ** 3) / 256) * latR -
+      ((3 * e2) / 8 + (3 * e2 ** 2) / 32 + (45 * e2 ** 3) / 1024) * Math.sin(2 * latR) +
+      ((15 * e2 ** 2) / 256 + (45 * e2 ** 3) / 1024) * Math.sin(4 * latR) -
+      ((35 * e2 ** 3) / 3072) * Math.sin(6 * latR));
+
+  let easting =
+    k0 *
+      N *
+      (A + ((1 - T + C) * A ** 3) / 6 + ((5 - 18 * T + T ** 2 + 72 * C - 58 * ep2) * A ** 5) / 120) +
+    500000;
+  let northing =
+    k0 *
+    (M +
+      N *
+        Math.tan(latR) *
+        (A ** 2 / 2 +
+          ((5 - T + 9 * C + 4 * C ** 2) * A ** 4) / 24 +
+          ((61 - 58 * T + T ** 2 + 600 * C - 330 * ep2) * A ** 6) / 720));
+  if (lat < 0) northing += 10000000;
+
+  const band = "CDEFGHJKLMNPQRSTUVWX"[Math.floor((lat + 80) / 8)] ?? "";
+  return `${zone}${band} ${Math.round(easting)}E ${Math.round(northing)}N`;
+}
+
+/** All formats for a coordinate, decimal first. */
+export function allCoordFormats(lat: number, lng: number): { label: string; value: string }[] {
+  return [
+    { label: "Decimal", value: formatDecimal(lat, lng) },
+    { label: "DMS", value: formatDMS(lat, lng) },
+    { label: "DDM", value: formatDDM(lat, lng) },
+    { label: "UTM", value: formatUTM(lat, lng) },
+  ];
+}
+
+/** First+last initials, e.g. "Victor Orellana" -> "VO". */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
