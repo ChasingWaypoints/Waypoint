@@ -200,11 +200,14 @@ export default function TrackingMap({
           const id = e.id;
           // Quick-reference popup: name, status, device, coordinates.
           if (!popup.current) {
-            popup.current = new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "300px" });
+            popup.current = new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "320px" });
           }
           const html = popupHtml.current.get(id) || "";
           const mk = markers.current.get(id);
-          if (mk && html) popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
+          if (mk && html) {
+            popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
+            wireCopyButtons(popup.current.getElement());
+          }
           onSelectEntrant?.(id);
         });
 
@@ -224,9 +227,10 @@ export default function TrackingMap({
       const coordHtml = coordRows.length
         ? `<div style="margin-top:6px;border-top:1px solid #1E3B4C;padding-top:6px">
              ${coordRows.map((c, i) => `
-               <div style="display:flex;gap:6px;justify-content:space-between;align-items:center;margin:2px 0">
-                 <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:52px">${c.label}</span>
-                 <code style="color:${i === 0 ? "#CCFF00" : "#C8D4DC"};font-size:${i === 0 ? "12px" : "11px"};font-weight:${i === 0 ? 700 : 400};user-select:all">${c.value}</code>
+               <div style="display:flex;gap:6px;align-items:center;margin:3px 0">
+                 <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:44px;flex-shrink:0">${c.label}</span>
+                 <code style="flex:1;min-width:0;color:${i === 0 ? "#CCFF00" : "#C8D4DC"};font-size:${i === 0 ? "12px" : "11px"};font-weight:${i === 0 ? 700 : 400};user-select:all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.value}</code>
+                 <button class="wp-copy" data-copy="${escapeHtml(c.value)}" title="Copy ${c.label}" style="flex-shrink:0;background:#14303F;color:#C8D4DC;border:1px solid #1E3B4C;border-radius:3px;font:600 10px system-ui;padding:3px 8px;cursor:pointer">Copy</button>
                </div>`).join("")}
            </div>`
         : "";
@@ -244,6 +248,7 @@ export default function TrackingMap({
         const open = popup.current.getLngLat();
         if (open && Math.abs(open.lng - e.lng) < 1e-6 && Math.abs(open.lat - e.lat) < 1e-6) {
           popup.current.setHTML(popupContent);
+          wireCopyButtons(popup.current.getElement());
         }
       }
     }
@@ -580,6 +585,50 @@ export default function TrackingMap({
       />
     </div>
   );
+}
+
+// Attaches copy-to-clipboard to every .wp-copy button inside a popup.
+// Copying a coordinate for a rescue crew must give a clear confirmation,
+// so the button flips to "Copied ✓" on success.
+function wireCopyButtons(root: HTMLElement | undefined) {
+  if (!root) return;
+  root.querySelectorAll<HTMLButtonElement>(".wp-copy").forEach((btn) => {
+    if ((btn as HTMLButtonElement & { _wired?: boolean })._wired) return;
+    (btn as HTMLButtonElement & { _wired?: boolean })._wired = true;
+    btn.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      const value = btn.getAttribute("data-copy") || "";
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(value);
+        ok = true;
+      } catch {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = value;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch {
+          ok = false;
+        }
+      }
+      const original = btn.textContent;
+      btn.textContent = ok ? "Copied \u2713" : "Failed";
+      btn.style.background = ok ? "#CCFF00" : "#FF3B30";
+      btn.style.color = ok ? "#0C1E29" : "#fff";
+      btn.style.borderColor = ok ? "#CCFF00" : "#FF3B30";
+      window.setTimeout(() => {
+        btn.textContent = original;
+        btn.style.background = "#14303F";
+        btn.style.color = "#C8D4DC";
+        btn.style.borderColor = "#1E3B4C";
+      }, 1300);
+    });
+  });
 }
 
 function escapeHtml(s: string): string {
