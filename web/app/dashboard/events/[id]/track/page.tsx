@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Link from "next/link";
 import { authFetch } from "../../../../../lib/authFetch";
 import LiveEventMap from "../../../../../components/LiveEventMap";
 import EntrantManager from "../../../../../components/EntrantManager";
@@ -59,6 +60,25 @@ export default function EventTrackPage({
           flexShrink: 0,
         }}
       >
+        <Link
+          href={`/dashboard/events/${id}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            color: theme.body,
+            textDecoration: "none",
+            border: `1px solid ${theme.hairline}`,
+            borderRadius: 4,
+            padding: "8px 14px",
+            font: `600 13px ${font.sans}`,
+            whiteSpace: "nowrap",
+          }}
+          title="Back to event setup"
+        >
+          ← Event dashboard
+        </Link>
+
         <div>
           <h1 style={{ font: `700 20px ${font.sans}`, color: theme.ink, margin: 0 }}>
             {event.name}
