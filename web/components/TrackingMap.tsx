@@ -230,7 +230,7 @@ export default function TrackingMap({
                <div style="display:flex;gap:6px;align-items:center;margin:3px 0">
                  <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:44px;flex-shrink:0">${c.label}</span>
                  <code style="flex:1;min-width:0;color:${i === 0 ? "#CCFF00" : "#C8D4DC"};font-size:${i === 0 ? "12px" : "11px"};font-weight:${i === 0 ? 700 : 400};user-select:all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.value}</code>
-                 <button class="wp-copy" data-copy="${escapeHtml(c.value)}" title="Copy ${c.label}" style="flex-shrink:0;background:#14303F;color:#C8D4DC;border:1px solid #1E3B4C;border-radius:3px;font:600 10px system-ui;padding:3px 8px;cursor:pointer">Copy</button>
+                 <button class="wp-copy" data-copy="${escapeHtml(c.value)}" title="Copy ${c.label}" aria-label="Copy ${c.label}" style="flex-shrink:0;background:#14303F;color:#C8D4DC;border:1px solid #1E3B4C;border-radius:4px;padding:4px 6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:0">${COPY_ICON}</button>
                </div>`).join("")}
            </div>`
         : "";
@@ -587,6 +587,12 @@ export default function TrackingMap({
   );
 }
 
+// Two-overlapping-pages "copy" glyph, and a check for the copied state.
+const COPY_ICON =
+  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const CHECK_ICON =
+  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
 // Attaches copy-to-clipboard to every .wp-copy button inside a popup.
 // Copying a coordinate for a rescue crew must give a clear confirmation,
 // so the button flips to "Copied ✓" on success.
@@ -616,14 +622,11 @@ function wireCopyButtons(root: HTMLElement | undefined) {
           ok = false;
         }
       }
-      const original = btn.textContent;
-      btn.textContent = ok ? "Copied \u2713" : "Failed";
-      btn.style.background = ok ? "#CCFF00" : "#FF3B30";
-      btn.style.color = ok ? "#0C1E29" : "#fff";
+      btn.innerHTML = ok ? CHECK_ICON : COPY_ICON;
+      btn.style.color = ok ? "#CCFF00" : "#FF3B30";
       btn.style.borderColor = ok ? "#CCFF00" : "#FF3B30";
       window.setTimeout(() => {
-        btn.textContent = original;
-        btn.style.background = "#14303F";
+        btn.innerHTML = COPY_ICON;
         btn.style.color = "#C8D4DC";
         btn.style.borderColor = "#1E3B4C";
       }, 1300);
