@@ -130,5 +130,9 @@ export function rasterStyle(layer: BaseLayer): StyleSpecification {
     layers.push({ id: "base-overlay", type: "raster", source: "baseOverlay" });
   }
 
-  return { version: 8, sources, layers, glyphs: undefined } as StyleSpecification;
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const glyphs = token
+    ? `https://api.mapbox.com/fonts/v1/mapbox/{fontstack}/{range}.pbf?access_token=${token}`
+    : undefined;
+  return { version: 8, sources, layers, glyphs } as StyleSpecification;
 }

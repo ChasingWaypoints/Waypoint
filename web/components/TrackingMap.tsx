@@ -33,11 +33,19 @@ export interface Entrant {
   device_type: string | null;
 }
 
+export interface StageWaypoint {
+  lat: number;
+  lng: number;
+  name: string;
+  type: string | null;
+}
+
 export interface StageLine {
   id: string;
   name: string;
   route_gpx: string;
   color: string;
+  waypoints?: StageWaypoint[];
 }
 
 interface Props {
@@ -279,7 +287,61 @@ export default function TrackingMap({
     });
   }, [routeKey, routeGpx, stages, ready, layerId]);
 
-  // ── Selected entrant's breadcrumb trail ───────────────────────
+  // ── Stage waypoints (OpenRally) — labelled pins ───────────────
+  const wpKey = (stages && stages.length
+    ? stages.map((s) => s.id + ":" + (s.waypoints?.length ?? 0)).join("|")
+    : "") ;
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready) return;
+
+    const feats = (stages ?? []).flatMap((st) =>
+      (st.waypoints ?? []).map((w) => ({
+        type: "Feature" as const,
+        properties: { name: w.name, type: w.type ?? "", color: st.color || theme.route },
+        geometry: { type: "Point" as const, coordinates: [w.lng, w.lat] },
+      }))
+    );
+    const fc = { type: "FeatureCollection" as const, features: feats };
+
+    const src = m.getSource("stage-waypoints") as mapboxgl.GeoJSONSource | undefined;
+    if (src) { src.setData(fc); return; }
+    if (feats.length === 0) return;
+
+    m.addSource("stage-waypoints", { type: "geojson", data: fc });
+    m.addLayer({
+      id: "stage-waypoints-dot",
+      type: "circle",
+      source: "stage-waypoints",
+      paint: {
+        "circle-radius": 5,
+        "circle-color": ["get", "color"],
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#0A0A0A",
+      },
+    });
+    m.addLayer({
+      id: "stage-waypoints-label",
+      type: "symbol",
+      source: "stage-waypoints",
+      layout: {
+        "text-field": ["get", "name"],
+        "text-size": 11,
+        "text-offset": [0, 1.1],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "text-optional": true,
+        "text-font": ["DIN Pro Medium", "Arial Unicode MS Regular"],
+      },
+      paint: {
+        "text-color": "#ffffff",
+        "text-halo-color": "#0A0A0A",
+        "text-halo-width": 1.4,
+      },
+    });
+  }, [wpKey, stages, ready, layerId]);
+
+    // ── Selected entrant's breadcrumb trail ───────────────────────
   useEffect(() => {
     const m = map.current;
     if (!m || !ready) return;

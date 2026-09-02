@@ -99,13 +99,79 @@ export function boundsOf(points: LngLat[]): [[number, number], [number, number]]
 
 /** Minimal GPX track/route extraction for drawing an event route. */
 export function parseGPXCoordinates(gpx: string): LngLat[] {
-  const coords: LngLat[] = [];
-  const re = /<(?:trkpt|rtept|wpt)[^>]*\blat="([-\d.]+)"[^>]*\blon="([-\d.]+)"/gi;
+  // The route line comes from track (<trkpt>) or route (<rtept>) points.
+  // Standalone <wpt> waypoints are NOT part of the line — they are pins —
+  // so including them would zig-zag the route. Only fall back to <wpt> when
+  // a file has no track/route points at all.
+  const collect = (tags: string) => {
+    const coords: LngLat[] = [];
+    const re = new RegExp(`<(?:${tags})[^>]*\\blat="([-\\d.]+)"[^>]*\\blon="([-\\d.]+)"`, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(gpx)) !== null) {
+      const lat = parseFloat(m[1]);
+      const lng = parseFloat(m[2]);
+      if (!isNaN(lat) && !isNaN(lng)) coords.push({ lat, lng });
+    }
+    // handle lon-before-lat too
+    const re2 = new RegExp(`<(?:${tags})[^>]*\\blon="([-\\d.]+)"[^>]*\\blat="([-\\d.]+)"`, "gi");
+    while ((m = re2.exec(gpx)) !== null) {
+      const lng = parseFloat(m[1]);
+      const lat = parseFloat(m[2]);
+      if (!isNaN(lat) && !isNaN(lng)) coords.push({ lat, lng });
+    }
+    return coords;
+  };
+  const line = collect("trkpt|rtept");
+  return line.length ? line : collect("wpt");
+}
+
+/**
+ * Waypoint pulled from a GPX <wpt> element. OpenRally files carry named
+ * waypoints (DSS start, FSS finish, WPM/WPE waypoints, CKP checkpoints,
+ * etc.); the rally type, when present, lives in <type> or <sym>.
+ */
+export interface Waypoint {
+  lat: number;
+  lng: number;
+  name: string;
+  type: string | null;
+  desc: string | null;
+}
+
+function tag(block: string, name: string): string | null {
+  const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
+  if (!m) return null;
+  return m[1]
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .trim() || null;
+}
+
+/** Extracts named waypoints from a GPX / OpenRally file. */
+export function parseGPXWaypoints(gpx: string): Waypoint[] {
+  const out: Waypoint[] = [];
+  const re = /<wpt\b([^>]*)>([\s\S]*?)<\/wpt>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(gpx)) !== null) {
-    const lat = parseFloat(m[1]);
-    const lng = parseFloat(m[2]);
-    if (!isNaN(lat) && !isNaN(lng)) coords.push({ lat, lng });
+    const attrs = m[1];
+    const body = m[2];
+    const lat = parseFloat((attrs.match(/\blat\s*=\s*"([-\d.]+)"/i) || [])[1] ?? "");
+    const lng = parseFloat((attrs.match(/\blon\s*=\s*"([-\d.]+)"/i) || [])[1] ?? "");
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    // OpenRally sometimes tags the type in <type>, <sym>, or an
+    // <extensions> child; take the first that looks like a short code.
+    const rawType = tag(body, "type") || tag(body, "sym");
+    const extType = (body.match(/<(?:orr:)?(?:wptType|type|kind)>([^<]+)</i) || [])[1];
+
+    out.push({
+      lat,
+      lng,
+      name: tag(body, "name") || tag(body, "desc") || "WP",
+      type: (rawType || extType || "").trim().toUpperCase() || null,
+      desc: tag(body, "desc") || tag(body, "cmt"),
+    });
   }
-  return coords;
+  return out;
 }

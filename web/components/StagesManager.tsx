@@ -9,6 +9,7 @@ interface Stage {
   position: number;
   color: string;
   visible: boolean;
+  waypoints?: { name: string }[];
   created_at: string;
 }
 
@@ -69,8 +70,9 @@ export default function StagesManager({ eventId }: { eventId: string }) {
     <section>
       <p style={label}>Stages</p>
       <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 12px", lineHeight: 1.5 }}>
-        Upload a GPX per day or special stage and name it. Toggle each one on or off on the map
-        and give it a colour — every visible stage is drawn in its colour on all maps and GEP feeds.
+        Upload a GPX per day or special stage and name it. OpenRally files bring their named
+        waypoints in automatically. Toggle each stage on or off, give it a colour — every visible
+        stage draws in its colour with its waypoint pins on all maps.
       </p>
 
       {stages.length > 0 && (
@@ -97,8 +99,13 @@ export default function StagesManager({ eventId }: { eventId: string }) {
                 }} />
               </button>
 
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: st.visible ? "#fff" : "#7E93A0" }}>
-                {st.name}
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: st.visible ? "#fff" : "#7E93A0" }}>{st.name}</span>
+                {st.waypoints && st.waypoints.length > 0 && (
+                  <span style={{ fontSize: 11, color: "#7E93A0", marginLeft: 8 }}>
+                    {st.waypoints.length} waypoint{st.waypoints.length === 1 ? "" : "s"}
+                  </span>
+                )}
               </span>
 
               {/* colour swatches */}
