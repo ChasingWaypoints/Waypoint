@@ -105,8 +105,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const INPUT: React.CSSProperties = {
-  width: "100%", padding: "11px 14px", border: "1px solid #d4d4d4",
-  fontSize: 14, color: "#1a2129", outline: "none", boxSizing: "border-box",
+  width: "100%", padding: "11px 14px", border: "1px solid #1E3B4C",
+  fontSize: 14, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
   fontFamily: "system-ui", background: "#0A0A0A",
 };
 
