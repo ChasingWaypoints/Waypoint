@@ -23,7 +23,7 @@ export async function GET(
 
   const { data, error } = await guard.supabase!
     .from("event_stages")
-    .select("id, name, position, created_at")
+    .select("id, name, position, color, visible, created_at")
     .eq("event_id", id)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
@@ -75,7 +75,7 @@ export async function POST(
   const { data, error } = await guard.supabase!
     .from("event_stages")
     .insert({ event_id: id, name, route_gpx: gpx, position: count ?? 0 })
-    .select("id, name, position, created_at")
+    .select("id, name, position, color, visible, created_at")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

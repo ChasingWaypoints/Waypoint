@@ -67,16 +67,18 @@ class BasemapControl implements IControl {
   onAdd(map: MapboxMap): HTMLElement {
     this.map = map;
     const wrap = document.createElement("div");
-    wrap.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
-    wrap.style.cssText = "position:relative;font:600 12px system-ui,sans-serif;";
+    wrap.className = "mapboxgl-ctrl";
+    wrap.style.cssText =
+      "position:relative;font:600 12px system-ui,sans-serif;pointer-events:auto;";
 
     const current = BASEMAPS.find((b) => b.default) ?? BASEMAPS[0];
 
     const trigger = document.createElement("button");
     trigger.type = "button";
     trigger.style.cssText =
-      "display:flex;align-items:center;gap:8px;border:none;padding:7px 12px;" +
-      "cursor:pointer;background:#0C1E29;color:#fff;white-space:nowrap;";
+      "display:flex;align-items:center;gap:8px;width:auto;min-width:0;height:auto;" +
+      "border:1px solid #1E3B4C;border-radius:4px;padding:7px 12px;cursor:pointer;" +
+      "background:#0C1E29;color:#fff;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.5);";
     trigger.innerHTML =
       `<span data-label>${current.label}</span><span style="opacity:.6">\u25be</span>`;
 

@@ -33,10 +33,19 @@ export interface Entrant {
   device_type: string | null;
 }
 
+export interface StageLine {
+  id: string;
+  name: string;
+  route_gpx: string;
+  color: string;
+}
+
 interface Props {
   entrants: Entrant[];
   routeGpx?: string | null;
   routeName?: string | null;
+  /** Visible stages, each drawn as its own coloured line. Overrides routeGpx. */
+  stages?: StageLine[];
   /** Hides the sidebar and trims chrome — used by the embed view. */
   compact?: boolean;
   onSelectEntrant?: (id: string) => void;
@@ -71,6 +80,7 @@ export default function TrackingMap({
   entrants,
   routeGpx,
   routeName,
+  stages,
   compact = false,
   onSelectEntrant,
   selectedTrack,
@@ -219,28 +229,40 @@ export default function TrackingMap({
   }, [entrants, onSelectEntrant]);
 
   // ── Event route from the organizer's GPX ──────────────────────
+  const routeKey = (stages && stages.length
+    ? stages.map((s) => s.id + ":" + s.color).join("|")
+    : routeGpx) ?? "";
   useEffect(() => {
     const m = map.current;
     if (!m || !ready) return;
 
-    const coords = routeGpx ? parseGPXCoordinates(routeGpx) : [];
-    const data = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: {
-        type: "LineString" as const,
-        coordinates: coords.map((c) => [c.lng, c.lat]),
-      },
+    // Build one line per visible stage; fall back to the single planned route.
+    const lines: { id: string; color: string; coords: LngLat[] }[] =
+      stages && stages.length
+        ? stages.map((st) => ({ id: st.id, color: st.color || theme.route, coords: parseGPXCoordinates(st.route_gpx) }))
+        : routeGpx
+          ? [{ id: "route", color: theme.route, coords: parseGPXCoordinates(routeGpx) }]
+          : [];
+
+    const fc = {
+      type: "FeatureCollection" as const,
+      features: lines
+        .filter((l) => l.coords.length > 0)
+        .map((l) => ({
+          type: "Feature" as const,
+          properties: { color: l.color },
+          geometry: { type: "LineString" as const, coordinates: l.coords.map((c) => [c.lng, c.lat]) },
+        })),
     };
 
     const existing = m.getSource("event-route") as mapboxgl.GeoJSONSource | undefined;
     if (existing) {
-      existing.setData(data);
+      existing.setData(fc);
       return;
     }
-    if (coords.length === 0) return;
+    if (fc.features.length === 0) return;
 
-    m.addSource("event-route", { type: "geojson", data });
+    m.addSource("event-route", { type: "geojson", data: fc });
     m.addLayer({
       id: "event-route-casing",
       type: "line",
@@ -252,10 +274,10 @@ export default function TrackingMap({
       id: "event-route-line",
       type: "line",
       source: "event-route",
-      paint: { "line-color": theme.route, "line-width": 2.5 },
+      paint: { "line-color": ["get", "color"], "line-width": 3 },
       layout: { "line-cap": "round", "line-join": "round" },
     });
-  }, [routeGpx, ready, layerId]);
+  }, [routeKey, routeGpx, stages, ready, layerId]);
 
   // ── Selected entrant's breadcrumb trail ───────────────────────
   useEffect(() => {

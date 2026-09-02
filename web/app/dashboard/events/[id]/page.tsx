@@ -90,8 +90,6 @@ export default function EventDetailPage() {
   const [newViewerName, setNewViewerName] = useState("");
   const [addingViewer, setAddingViewer] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string>("");
-  const [gpxUploading, setGpxUploading] = useState(false);
-  const gpxInputRef = useRef<HTMLInputElement>(null);
 
   // Settings tab — class editor
   const [classInput, setClassInput] = useState("");
@@ -291,30 +289,6 @@ export default function EventDetailPage() {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (res.ok) setCredentials((prev) => prev.filter((c) => c.id !== credId));
-  }
-
-  async function uploadGpx(file: File) {
-    if (!session) return;
-    setGpxUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    form.append("route_name", file.name.replace(/\.gpx$/i, ""));
-    const res = await fetch(`/api/events/${id}/route-gpx`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      body: form,
-    });
-    if (res.ok) await load();
-    setGpxUploading(false);
-  }
-
-  async function removeGpx() {
-    if (!session || !confirm("Remove planned route?")) return;
-    await fetch(`/api/events/${id}/route-gpx`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    await load();
   }
 
   // Initialize editedClasses when Settings tab is opened
@@ -617,15 +591,6 @@ export default function EventDetailPage() {
               </div>
             </div>
 
-          </div>
-        </div>
-      )}
-
-      {/* ── GEP TAB ── */}
-      {tab === "admin" && (
-        <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
-          <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
-
             {/* Your GEP link */}
             <div>
               <SectionLabel>Your GEP Link</SectionLabel>
@@ -696,37 +661,6 @@ export default function EventDetailPage() {
                       </Btn>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Planned route — organizer only */}
-            {isOrganizer && (
-              <div>
-                <SectionLabel>Planned Route</SectionLabel>
-                <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 20 }}>
-                  {event.route_name ? (
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>📍 {event.route_name}</p>
-                      <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 14px" }}>
-                        Shown as a dashed green line on the live map and in all GEP feeds.
-                      </p>
-                      <Btn border="#1E3B4C" color="#7E93A0" onClick={removeGpx}>Remove Route</Btn>
-                    </div>
-                  ) : (
-                    <div>
-                      <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
-                        Upload a .gpx file to show the planned route on the group map and in all GEP feeds.
-                      </p>
-                      <input
-                        type="file" accept=".gpx" ref={gpxInputRef} style={{ display: "none" }}
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadGpx(f); }}
-                      />
-                      <Btn onClick={() => gpxInputRef.current?.click()} disabled={gpxUploading}>
-                        {gpxUploading ? "Uploading..." : "Upload GPX File"}
-                      </Btn>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

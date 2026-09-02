@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import TrackingMap, { Entrant } from "./TrackingMap";
+import TrackingMap, { Entrant, StageLine } from "./TrackingMap";
 import { LngLat, timeAgo } from "../lib/geo";
 import { theme, font } from "../lib/theme";
 
@@ -26,6 +26,7 @@ export default function LiveEventMap({
   refreshMs = 30_000,
 }: Props) {
   const [event, setEvent] = useState<EventMeta | null>(null);
+  const [stages, setStages] = useState<StageLine[]>([]);
   const [entrants, setEntrants] = useState<Entrant[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [track, setTrack] = useState<LngLat[] | undefined>(undefined);
@@ -48,6 +49,7 @@ export default function LiveEventMap({
       }
       const data = await res.json();
       setEvent(data.event);
+      setStages(data.stages ?? []);
       setEntrants(data.entrants ?? []);
       if (data.track) {
         setTrack(data.track.map((p: LngLat) => ({ lat: p.lat, lng: p.lng })));
@@ -195,6 +197,7 @@ export default function LiveEventMap({
         <TrackingMap
           entrants={entrants}
           routeGpx={event?.route_gpx}
+          stages={stages}
           routeName={event?.route_name}
           compact={compact}
           onSelectEntrant={selectEntrant}

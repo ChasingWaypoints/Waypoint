@@ -7,17 +7,21 @@ interface Stage {
   id: string;
   name: string;
   position: number;
+  color: string;
+  visible: boolean;
   created_at: string;
 }
 
+// Six distinct route colours that read well on satellite imagery.
+const COLORS = ["#CCFF00", "#00E5FF", "#FF3B7B", "#FF9500", "#B388FF", "#FFFE15"];
+
 /**
- * Organizer stage library. Upload a GPX per day/stage with a name, then
- * pick the active one — activating mirrors that route onto the event so
- * every map and GEP feed shows it. Lives in the event Admin tab.
+ * Organizer stage library. Upload a GPX per day/stage with a name, toggle
+ * each on or off on the map, and pick a colour. Every visible stage is
+ * drawn in its colour on all shared maps.
  */
 export default function StagesManager({ eventId }: { eventId: string }) {
   const [stages, setStages] = useState<Stage[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,11 +30,7 @@ export default function StagesManager({ eventId }: { eventId: string }) {
 
   const load = useCallback(async () => {
     const res = await authFetch(`/api/events/${eventId}/stages`);
-    if (res.ok) {
-      const d = await res.json();
-      setStages(d.stages ?? []);
-      setActiveId(d.active_stage_id ?? null);
-    }
+    if (res.ok) setStages((await res.json()).stages ?? []);
   }, [eventId]);
 
   useEffect(() => { load(); }, [load]);
@@ -49,9 +49,14 @@ export default function StagesManager({ eventId }: { eventId: string }) {
     await load();
   }
 
-  async function activate(id: string) {
-    const res = await authFetch(`/api/events/${eventId}/stages/${id}`, { method: "POST" });
-    if (res.ok) setActiveId(id);
+  async function patch(id: string, body: { visible?: boolean; color?: string }) {
+    // optimistic
+    setStages((prev) => prev.map((s) => (s.id === id ? { ...s, ...body } : s)));
+    await authFetch(`/api/events/${eventId}/stages/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
   }
 
   async function remove(id: string, n: string) {
@@ -61,39 +66,59 @@ export default function StagesManager({ eventId }: { eventId: string }) {
   }
 
   return (
-    <section style={{ marginBottom: 28 }}>
+    <section>
       <p style={label}>Stages</p>
       <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 12px", lineHeight: 1.5 }}>
-        Upload a GPX per day or special stage and name each one. Select a stage to make it the
-        active route — it shows on every map and in all Google Earth Pro feeds.
+        Upload a GPX per day or special stage and name it. Toggle each one on or off on the map
+        and give it a colour — every visible stage is drawn in its colour on all maps and GEP feeds.
       </p>
 
       {stages.length > 0 && (
         <div style={{ border: "1px solid #1E3B4C", borderRadius: 4, marginBottom: 14, overflow: "hidden" }}>
-          {stages.map((st) => {
-            const active = st.id === activeId;
-            return (
-              <div key={st.id} style={{
-                display: "flex", alignItems: "center", gap: 12, padding: "11px 14px",
-                borderBottom: "1px solid #14303F",
-                background: active ? "#14303F" : "transparent",
-              }}>
+          {stages.map((st) => (
+            <div key={st.id} style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+              borderBottom: "1px solid #14303F",
+              background: st.visible ? "#14303F" : "transparent",
+            }}>
+              {/* visibility toggle */}
+              <button
+                onClick={() => patch(st.id, { visible: !st.visible })}
+                title={st.visible ? "Shown on map — click to hide" : "Hidden — click to show"}
+                style={{
+                  width: 42, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+                  background: st.visible ? "#CCFF00" : "#1E3B4C", position: "relative", flexShrink: 0,
+                  transition: "background .15s",
+                }}
+              >
                 <span style={{
-                  width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                  background: active ? "#CCFF00" : "#54697A",
+                  position: "absolute", top: 3, left: st.visible ? 21 : 3, width: 18, height: 18,
+                  borderRadius: "50%", background: st.visible ? "#0C1E29" : "#7E93A0", transition: "left .15s",
                 }} />
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#fff" }}>{st.name}</span>
-                {active ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: "#CCFF00" }}>
-                    Active
-                  </span>
-                ) : (
-                  <button onClick={() => activate(st.id)} style={selectBtn}>Select</button>
-                )}
-                <button onClick={() => remove(st.id, st.name)} style={delBtn}>Remove</button>
+              </button>
+
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: st.visible ? "#fff" : "#7E93A0" }}>
+                {st.name}
+              </span>
+
+              {/* colour swatches */}
+              <div style={{ display: "flex", gap: 5 }}>
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => patch(st.id, { color: c })}
+                    title={c}
+                    style={{
+                      width: 18, height: 18, borderRadius: "50%", cursor: "pointer", background: c,
+                      border: st.color?.toLowerCase() === c.toLowerCase() ? "2px solid #fff" : "2px solid transparent",
+                    }}
+                  />
+                ))}
               </div>
-            );
-          })}
+
+              <button onClick={() => remove(st.id, st.name)} style={delBtn}>Remove</button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -134,11 +159,6 @@ const addBtn: React.CSSProperties = {
   background: "#CCFF00", color: "#0C1E29", border: "none", borderRadius: 4,
   padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
   textTransform: "uppercase", cursor: "pointer",
-};
-const selectBtn: React.CSSProperties = {
-  background: "transparent", color: "#CCFF00", border: "1px solid #CCFF00",
-  borderRadius: 4, padding: "5px 12px", fontSize: 11, fontWeight: 700,
-  letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer",
 };
 const delBtn: React.CSSProperties = {
   background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C",
