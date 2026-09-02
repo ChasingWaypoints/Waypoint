@@ -66,7 +66,7 @@ export default function StoryPage() {
       map.addLayer({
         id: "route-ghost", type: "line", source: "route-ghost",
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": "#1c69d4", "line-width": 2, "line-opacity": 0.15 },
+        paint: { "line-color": "#FFFE15", "line-width": 2, "line-opacity": 0.15 },
       });
 
       // Animated route
@@ -77,14 +77,14 @@ export default function StoryPage() {
       map.addLayer({
         id: "route-anim", type: "line", source: "route-anim",
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": "#1c69d4", "line-width": 3 },
+        paint: { "line-color": "#FFFE15", "line-width": 3 },
       });
 
       // Start + end markers
       if (coords.length) {
-        new mapboxgl.Marker({ color: "#22c55e" }).setLngLat(coords[0]).addTo(map);
+        new mapboxgl.Marker({ color: "#CCFF00" }).setLngLat(coords[0]).addTo(map);
         if (coords.length > 1) {
-          new mapboxgl.Marker({ color: "#1c69d4" }).setLngLat(coords[coords.length - 1]).addTo(map);
+          new mapboxgl.Marker({ color: "#FFFE15" }).setLngLat(coords[coords.length - 1]).addTo(map);
         }
       }
 
@@ -172,36 +172,36 @@ export default function StoryPage() {
 
   if (loading) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#9a9a9a", fontSize: 13 }}>Loading trip story...</p>
+      <p style={{ color: "#7E93A0", fontSize: 13 }}>Loading trip story...</p>
     </div>
   );
 
   if (error) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>
+      <p style={{ color: "#FF3B30", fontSize: 13 }}>{error}</p>
     </div>
   );
 
   if (!data) return null;
 
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", background: "#f7f7f7", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", background: "#0A0A0A", minHeight: "100vh" }}>
 
       {/* Nav */}
-      <nav style={{ background: "#1a2129", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <nav style={{ background: "#0C1E29", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
         <Link
           href={`/share/${token}`}
-          style={{ background: "#1c69d4", color: "#fff", padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          style={{ background: "#FFFE15", color: "#0C1E29", padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
         >
           View Live Map →
         </Link>
       </nav>
 
       {/* Hero — trip name + date */}
-      <div style={{ background: "#1a2129", padding: "40px 24px 32px", textAlign: "center" }}>
+      <div style={{ background: "#0C1E29", padding: "40px 24px 32px", textAlign: "center" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: "#4a8ab5", textTransform: "uppercase", margin: "0 0 10px" }}>
           Trip Story
         </p>
@@ -209,7 +209,7 @@ export default function StoryPage() {
           {data.trip.name}
         </h1>
         {data.trip.started_at && (
-          <p style={{ fontSize: 13, color: "#8a9ab0", fontWeight: 300, margin: 0 }}>
+          <p style={{ fontSize: 13, color: "#7E93A0", fontWeight: 300, margin: 0 }}>
             {fmtDate(data.trip.started_at)}
             {data.trip.ended_at && data.trip.ended_at !== data.trip.started_at && ` — ${fmtDate(data.trip.ended_at)}`}
           </p>
@@ -217,7 +217,7 @@ export default function StoryPage() {
       </div>
 
       {/* Stats bar */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e6e6e6", padding: "16px 24px", display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #e6e6e6", padding: "16px 24px", display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center" }}>
         <StatPill label="Distance" value={`${data.stats.distance_km} km`} />
         {data.stats.duration_minutes && <StatPill label="Duration" value={fmtDuration(data.stats.duration_minutes)!} />}
         {maxSpeed > 0 && <StatPill label="Max Speed" value={`${Math.round(maxSpeed)} km/h`} />}
@@ -232,8 +232,8 @@ export default function StoryPage() {
 
         {/* Progress bar */}
         {(animating || animProgress > 0) && (
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "#e6e6e6" }}>
-            <div style={{ height: "100%", width: `${animProgress}%`, background: "#1c69d4", transition: "width 0.1s linear" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "#1E3B4C" }}>
+            <div style={{ height: "100%", width: `${animProgress}%`, background: "#FFFE15", transition: "width 0.1s linear" }} />
           </div>
         )}
 
@@ -243,7 +243,7 @@ export default function StoryPage() {
             onClick={replayAnimation}
             style={{
               position: "absolute", top: 12, left: 12,
-              background: "#1a2129", color: "#fff", border: "none",
+              background: "#FFFE15", color: "#0C1E29", border: "none",
               padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
               textTransform: "uppercase", cursor: "pointer",
             }}
@@ -254,14 +254,14 @@ export default function StoryPage() {
       </div>
 
       {/* CTA */}
-      <div style={{ background: "#1a2129", padding: "48px 24px", textAlign: "center" }}>
-        <p style={{ fontSize: 13, color: "#8a9ab0", fontWeight: 300, margin: "0 0 20px" }}>
+      <div style={{ background: "#0C1E29", padding: "48px 24px", textAlign: "center" }}>
+        <p style={{ fontSize: 13, color: "#7E93A0", fontWeight: 300, margin: "0 0 20px" }}>
           Follow this trip live — or track your own.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link
             href={`/share/${token}`}
-            style={{ background: "#1c69d4", color: "#fff", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+            style={{ background: "#FFFE15", color: "#0C1E29", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
           >
             View Live Map
           </Link>
@@ -276,7 +276,7 @@ export default function StoryPage() {
 
       {/* Footer */}
       <footer style={{ background: "#0f1923", padding: "20px 24px", textAlign: "center" }}>
-        <p style={{ fontSize: 11, color: "#3a4550", fontWeight: 300, margin: 0 }}>
+        <p style={{ fontSize: 11, color: "#1E3B4C", fontWeight: 300, margin: 0 }}>
           © {new Date().getFullYear()} Waypoint · We never sell your location data. Ever.
         </p>
       </footer>
@@ -288,8 +288,8 @@ export default function StoryPage() {
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: "#1a2129", marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", marginTop: 2 }}>{value}</div>
     </div>
   );
 }

@@ -32,20 +32,20 @@ export default function SignupPage() {
 
   if (sent) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f7f7f7", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
-        <nav style={{ background: "#1a2129", padding: "0 24px", height: 56, display: "flex", alignItems: "center" }}>
+      <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
+        <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center" }}>
           <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
         </nav>
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400, textAlign: "center" }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400, textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a2129", margin: "0 0 12px" }}>Check your email</h1>
-            <p style={{ fontSize: 14, color: "#6b6b6b", lineHeight: 1.6, margin: "0 0 24px" }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: "0 0 12px" }}>Check your email</h1>
+            <p style={{ fontSize: 14, color: "#7E93A0", lineHeight: 1.6, margin: "0 0 24px" }}>
               We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then sign in.
             </p>
             <Link
               href="/auth/login"
-              style={{ display: "inline-block", background: "#1c69d4", color: "#fff", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ display: "inline-block", background: "#FFFE15", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
             >
               Go to Sign In
             </Link>
@@ -56,9 +56,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f7f7", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
       {/* Nav */}
-      <nav style={{ background: "#1a2129", padding: "0 24px", height: 56, display: "flex", alignItems: "center" }}>
+      <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center" }}>
         <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
@@ -66,16 +66,16 @@ export default function SignupPage() {
 
       {/* Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", margin: "0 0 8px" }}>
+        <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 40, width: "100%", maxWidth: 400 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 8px" }}>
             Waypoint
           </p>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a2129", margin: "0 0 8px" }}>Create Account</h1>
-          <p style={{ fontSize: 14, color: "#6b6b6b", margin: "0 0 32px", fontWeight: 300 }}>Free to start. No credit card required.</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>Create Account</h1>
+          <p style={{ fontSize: 14, color: "#7E93A0", margin: "0 0 32px", fontWeight: 300 }}>Free to start. No credit card required.</p>
 
           <form onSubmit={handleSignup} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#6b6b6b", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
                 Email
               </label>
               <input
@@ -89,7 +89,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#6b6b6b", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", display: "block", marginBottom: 6 }}>
                 Password
               </label>
               <input
@@ -103,21 +103,21 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <p style={{ color: "#dc2626", fontSize: 13, margin: 0 }}>{error}</p>
+              <p style={{ color: "#FF3B30", fontSize: 13, margin: 0 }}>{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              style={{ background: "#1c69d4", color: "#fff", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
+              style={{ background: "#FFFE15", color: "#0C1E29", border: "none", padding: "14px", fontWeight: 700, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, borderRadius: 0, fontFamily: "inherit" }}
             >
               {loading ? "Creating account..." : "Create Free Account"}
             </button>
           </form>
 
-          <p style={{ fontSize: 13, color: "#6b6b6b", textAlign: "center", margin: "24px 0 0" }}>
+          <p style={{ fontSize: 13, color: "#7E93A0", textAlign: "center", margin: "24px 0 0" }}>
             Already have one?{" "}
-            <Link href="/auth/login" style={{ color: "#1c69d4", fontWeight: 700, textDecoration: "none" }}>
+            <Link href="/auth/login" style={{ color: "#FFFE15", fontWeight: 700, textDecoration: "none" }}>
               Sign in
             </Link>
           </p>

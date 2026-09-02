@@ -13,7 +13,7 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const supabase = getSupabaseClient();
 
 const RIDER_COLORS = [
-  "#1c69d4", "#00aa44", "#cc3300", "#cc00aa",
+  "#FFFE15", "#00aa44", "#FF3B30", "#cc00aa",
   "#0099cc", "#ff6600", "#006699", "#cc6600",
 ];
 
@@ -45,13 +45,13 @@ function gpxToCoords(gpx: string): [number, number][] {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", margin: "0 0 10px" }}>
+    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>
       {children}
     </p>
   );
 }
 
-function Btn({ onClick, color = "#1c69d4", border, children, disabled }: {
+function Btn({ onClick, color = "#FFFE15", border, children, disabled }: {
   onClick?: () => void; color?: string; border?: string;
   children: React.ReactNode; disabled?: boolean;
 }) {
@@ -194,7 +194,7 @@ export default function EventDetailPage() {
           map.addSource("planned-route", { type: "geojson", data });
           map.addLayer({ id: "planned-route", type: "line", source: "planned-route",
             layout: { "line-join": "round", "line-cap": "round" },
-            paint: { "line-color": "#22c55e", "line-width": 3, "line-dasharray": [2, 2] } });
+            paint: { "line-color": "#CCFF00", "line-width": 3, "line-dasharray": [2, 2] } });
         }
       }
     }
@@ -346,12 +346,12 @@ export default function EventDetailPage() {
 
   if (loading) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#6b6b6b" }}>Loading event...</p>
+      <p style={{ color: "#7E93A0" }}>Loading event...</p>
     </div>
   );
   if (!event) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#cc3300" }}>Event not found.</p>
+      <p style={{ color: "#FF3B30" }}>Event not found.</p>
     </div>
   );
 
@@ -368,33 +368,33 @@ export default function EventDetailPage() {
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif", overflow: "hidden" }}>
 
       {/* Nav */}
-      <nav style={{ background: "#1a2129", padding: "0 24px", height: NAV_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <nav style={{ background: "#0C1E29", padding: "0 24px", height: NAV_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
-        <Link href="/dashboard" style={{ color: "#8a9ab0", fontSize: 12, textDecoration: "none" }}>← Dashboard</Link>
+        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: 12, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 
       {/* Event header */}
-      <div style={{ background: "#222d38", padding: "0 24px", height: HEADER_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ background: "#14303F", padding: "0 24px", height: HEADER_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {isLive && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />}
+          {isLive && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />}
           <div>
             <h1 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{event.name}</h1>
-            <p style={{ fontSize: 11, color: "#8a9ab0", margin: 0 }}>
+            <p style={{ fontSize: 11, color: "#7E93A0", margin: 0 }}>
               Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>
               {" · "}{riders.length} rider{riders.length !== 1 ? "s" : ""}
-              {" · "}<span style={{ color: isLive ? "#22c55e" : "#6b6b6b", fontWeight: 700, textTransform: "uppercase" }}>{event.status}</span>
+              {" · "}<span style={{ color: isLive ? "#CCFF00" : "#7E93A0", fontWeight: 700, textTransform: "uppercase" }}>{event.status}</span>
             </p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
             onClick={() => copy(`Join code: ${event.join_code}\n\nFollow live: ${gepBase}/event/${event.share_token}`, "join-code")}
-            style={{ background: "transparent", border: "1px solid #3a4550", color: copyFeedback === "join-code" ? "#22c55e" : "#bbbbbb", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            style={{ background: "transparent", border: "1px solid #3a4550", color: copyFeedback === "join-code" ? "#CCFF00" : "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
           >
             {copyFeedback === "join-code" ? "Copied!" : "Share Code"}
           </button>
           <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer"
-            style={{ background: "transparent", border: "1px solid #3a4550", color: "#bbbbbb", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
             Public View ↗
           </a>
           {isOrganizer && (
@@ -406,7 +406,7 @@ export default function EventDetailPage() {
           {isOrganizer && isLive && (
             <button
               onClick={endEvent}
-              style={{ background: "transparent", border: "1px solid #cc3300", color: "#cc3300", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+              style={{ background: "transparent", border: "1px solid #cc3300", color: "#FF3B30", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
             >
               End Event
             </button>
@@ -415,13 +415,13 @@ export default function EventDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", background: "#fff", borderBottom: "1px solid #e6e6e6", flexShrink: 0, height: TABS_H }}>
+      <div style={{ display: "flex", background: "#0C1E29", borderBottom: "1px solid #e6e6e6", flexShrink: 0, height: TABS_H }}>
         {(["map", "riders", "gep"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             style={{
               padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
               border: "none", borderBottom: tab === t ? "2px solid #1c69d4" : "2px solid transparent",
-              color: tab === t ? "#1c69d4" : "#6b6b6b", background: "transparent", cursor: "pointer",
+              color: tab === t ? "#FFFE15" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
             {t === "riders" ? `Riders (${riders.length})` : t.toUpperCase()}
@@ -432,7 +432,7 @@ export default function EventDetailPage() {
             style={{
               padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
               border: "none", borderBottom: tab === "settings" ? "2px solid #1c69d4" : "2px solid transparent",
-              color: tab === "settings" ? "#1c69d4" : "#6b6b6b", background: "transparent", cursor: "pointer",
+              color: tab === "settings" ? "#FFFE15" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
             SETTINGS
@@ -444,15 +444,15 @@ export default function EventDetailPage() {
       {tab === "map" && (
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
           {/* Sidebar */}
-          <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
+          <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
             {event.route_name && (
               <div style={{ padding: "10px 14px", borderBottom: "1px solid #e6e6e6", background: "#f0fdf4" }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#15803d", textTransform: "uppercase", margin: 0 }}>Planned Route</p>
-                <p style={{ fontSize: 12, color: "#262626", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
+                <p style={{ fontSize: 12, color: "#C8D4DC", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
               </div>
             )}
             {riders.length === 0 && (
-              <p style={{ fontSize: 12, color: "#9a9a9a", padding: "16px 14px", margin: 0 }}>No riders yet.</p>
+              <p style={{ fontSize: 12, color: "#7E93A0", padding: "16px 14px", margin: 0 }}>No riders yet.</p>
             )}
             {riders.map((rider, i) => {
               const color = RIDER_COLORS[i % RIDER_COLORS.length];
@@ -477,20 +477,20 @@ export default function EventDetailPage() {
                       {rider.display_name.slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "#262626", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#C8D4DC", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                       </p>
                       {rider.rider_class && (
-                        <p style={{ fontSize: 10, color: "#9a9a9a", margin: "1px 0 0", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                        <p style={{ fontSize: 10, color: "#7E93A0", margin: "1px 0 0", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
                           {rider.rider_class}
                         </p>
                       )}
                       {rider.latest ? (
-                        <p style={{ fontSize: 11, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#6b6b6b", margin: "1px 0 0" }}>
+                        <p style={{ fontSize: 11, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#7E93A0", margin: "1px 0 0" }}>
                           {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
                         </p>
                       ) : (
-                        <p style={{ fontSize: 11, color: "#9a9a9a", margin: "1px 0 0" }}>No data yet</p>
+                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "1px 0 0" }}>No data yet</p>
                       )}
                     </div>
                   </div>
@@ -504,12 +504,12 @@ export default function EventDetailPage() {
 
       {/* ── RIDERS TAB ── */}
       {tab === "riders" && (
-        <div style={{ flex: 1, overflowY: "auto", background: "#f7f7f7" }}>
+        <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
             <SectionLabel>Participants</SectionLabel>
-            <div style={{ background: "#fff", border: "1px solid #e6e6e6" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
               {riders.length === 0 ? (
-                <p style={{ padding: "24px", color: "#9a9a9a", fontSize: 13, margin: 0 }}>No riders have joined yet. Share the join code: <strong>{event.join_code}</strong></p>
+                <p style={{ padding: "24px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No riders have joined yet. Share the join code: <strong>{event.join_code}</strong></p>
               ) : riders.map((rider, i) => {
                 const color = RIDER_COLORS[i % RIDER_COLORS.length];
                 const minsAgo = rider.latest ? Math.round((Date.now() - new Date(rider.latest.recorded_at).getTime()) / 60000) : null;
@@ -520,26 +520,26 @@ export default function EventDetailPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: 0 }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
                           {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                         </p>
                         {rider.rider_class && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: "#6b6b6b", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#7E93A0", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
                             {rider.rider_class}
                           </span>
                         )}
                       </div>
                       {rider.latest ? (
-                        <p style={{ fontSize: 12, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#6b6b6b", margin: "2px 0 0" }}>
+                        <p style={{ fontSize: 12, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#7E93A0", margin: "2px 0 0" }}>
                           {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
                           {rider.latest.altitude_m ? ` · ${Math.round(rider.latest.altitude_m)}m` : ""}
                         </p>
                       ) : (
-                        <p style={{ fontSize: 12, color: "#9a9a9a", margin: "2px 0 0" }}>No position yet</p>
+                        <p style={{ fontSize: 12, color: "#7E93A0", margin: "2px 0 0" }}>No position yet</p>
                       )}
                     </div>
                     {rider.latest && (
-                      <Btn border="#e6e6e6" color="#6b6b6b" onClick={() => setTab("map")}>
+                      <Btn border="#1E3B4C" color="#7E93A0" onClick={() => setTab("map")}>
                         Find on Map
                       </Btn>
                     )}
@@ -553,14 +553,14 @@ export default function EventDetailPage() {
 
       {/* ── SETTINGS TAB ── */}
       {tab === "settings" && isOrganizer && (
-        <div style={{ flex: 1, overflowY: "auto", background: "#f7f7f7" }}>
+        <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 560, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
 
             {/* Classes */}
             <div>
               <SectionLabel>Rider Classes</SectionLabel>
-              <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 24 }}>
-                <p style={{ fontSize: 13, color: "#6b6b6b", margin: "0 0 20px", lineHeight: 1.6 }}>
+              <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 24 }}>
+                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.6 }}>
                   Define the class options riders see when joining this event. If left empty, the class field is hidden on the join screen.
                 </p>
 
@@ -570,7 +570,7 @@ export default function EventDetailPage() {
                     {(editedClasses ?? []).map((cls) => (
                       <div
                         key={cls}
-                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#1c69d4", color: "#fff", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#FFFE15", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
                       >
                         {cls}
                         <button
@@ -592,7 +592,7 @@ export default function EventDetailPage() {
                     onChange={(e) => setClassInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEditedClass(); } }}
                     placeholder="e.g. Moto, UTV, Car, Truck…"
-                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#1a2129", outline: "none" }}
+                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none" }}
                   />
                   <button
                     onClick={addEditedClass}
@@ -612,7 +612,7 @@ export default function EventDetailPage() {
                   onClick={saveClasses}
                   disabled={savingClasses}
                   style={{
-                    background: classesSaved ? "#22c55e" : "#1c69d4", color: "#fff",
+                    background: classesSaved ? "#CCFF00" : "#FFFE15", color: "#fff",
                     border: "none", padding: "11px 24px", fontSize: 11, fontWeight: 700,
                     letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: savingClasses ? "default" : "pointer",
@@ -629,28 +629,28 @@ export default function EventDetailPage() {
 
       {/* ── GEP TAB ── */}
       {tab === "gep" && (
-        <div style={{ flex: 1, overflowY: "auto", background: "#f7f7f7" }}>
+        <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
 
             {/* Your GEP link */}
             <div>
               <SectionLabel>Your GEP Link</SectionLabel>
-              <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 20 }}>
-                <p style={{ fontSize: 13, color: "#6b6b6b", margin: "0 0 14px", lineHeight: 1.6 }}>
+              <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 20 }}>
+                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
                   Open this in Google Earth Pro to see all riders live. Go to Add → Network Link, paste the URL in the Link field. This link is unique to you — do not share it.
                 </p>
                 {myGepUrl ? (
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       readOnly value={myGepUrl}
-                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #e6e6e6", fontSize: 12, color: "#1a2129", background: "#f7f7f7", outline: "none" }}
+                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #e6e6e6", fontSize: 12, color: "#FFFFFF", background: "#0A0A0A", outline: "none" }}
                     />
-                    <Btn onClick={() => copy(myGepUrl, "my-gep")} color={copyFeedback === "my-gep" ? "#22c55e" : "#1c69d4"}>
+                    <Btn onClick={() => copy(myGepUrl, "my-gep")} color={copyFeedback === "my-gep" ? "#CCFF00" : "#FFFE15"}>
                       {copyFeedback === "my-gep" ? "Copied!" : "Copy"}
                     </Btn>
                   </div>
                 ) : (
-                  <p style={{ fontSize: 12, color: "#9a9a9a", margin: 0 }}>GEP link not available yet.</p>
+                  <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>GEP link not available yet.</p>
                 )}
               </div>
             </div>
@@ -659,9 +659,9 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>GEP Viewers</SectionLabel>
-                <div style={{ background: "#fff", border: "1px solid #e6e6e6" }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
                   <div style={{ padding: "14px 20px", borderBottom: "1px solid #e6e6e6" }}>
-                    <p style={{ fontSize: 12, color: "#6b6b6b", margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 12, color: "#7E93A0", margin: 0, lineHeight: 1.6 }}>
                       Issue a named KML link to anyone watching in Google Earth Pro — marshals, crew, sponsors. Each link is unique and traceable. Revoking it kills their feed immediately.
                     </p>
                   </div>
@@ -672,13 +672,13 @@ export default function EventDetailPage() {
                     return (
                       <div key={cred.id} style={{ padding: "12px 20px", borderBottom: "1px solid #e6e6e6", display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: 0 }}>{cred.display_name}</p>
-                          <p style={{ fontSize: 11, color: "#9a9a9a", margin: "2px 0 0", fontFamily: "monospace" }}>…{cred.gep_token.slice(-10)}</p>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{cred.display_name}</p>
+                          <p style={{ fontSize: 11, color: "#7E93A0", margin: "2px 0 0", fontFamily: "monospace" }}>…{cred.gep_token.slice(-10)}</p>
                         </div>
-                        <Btn border="#1c69d4" color="#1c69d4" onClick={() => copy(url, copyKey)}>
+                        <Btn border="#FFFE15" color="#FFFE15" onClick={() => copy(url, copyKey)}>
                           {copyFeedback === copyKey ? "Copied!" : "Copy Link"}
                         </Btn>
-                        <Btn border="#cc3300" color="#cc3300" onClick={() => revokeViewer(cred.id, cred.display_name)}>
+                        <Btn border="#FF3B30" color="#FF3B30" onClick={() => revokeViewer(cred.id, cred.display_name)}>
                           Revoke
                         </Btn>
                       </div>
@@ -687,7 +687,7 @@ export default function EventDetailPage() {
 
                   {/* Add viewer */}
                   <div style={{ padding: "16px 20px" }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#9a9a9a", textTransform: "uppercase", margin: "0 0 10px" }}>Add Viewer</p>
+                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>Add Viewer</p>
                     <div style={{ display: "flex", gap: 8 }}>
                       <input
                         type="text"
@@ -695,7 +695,7 @@ export default function EventDetailPage() {
                         value={newViewerName}
                         onChange={(e) => setNewViewerName(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") addViewer(); }}
-                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #d4d4d4", fontSize: 14, color: "#1a2129", outline: "none" }}
+                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #d4d4d4", fontSize: 14, color: "#FFFFFF", outline: "none" }}
                       />
                       <Btn onClick={addViewer} disabled={addingViewer || !newViewerName.trim()}>
                         {addingViewer ? "Adding..." : "Add"}
@@ -710,18 +710,18 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>Planned Route</SectionLabel>
-                <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 20 }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 20 }}>
                   {event.route_name ? (
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: "0 0 6px" }}>📍 {event.route_name}</p>
-                      <p style={{ fontSize: 12, color: "#6b6b6b", margin: "0 0 14px" }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>📍 {event.route_name}</p>
+                      <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 14px" }}>
                         Shown as a dashed green line on the live map and in all GEP feeds.
                       </p>
-                      <Btn border="#e6e6e6" color="#6b6b6b" onClick={removeGpx}>Remove Route</Btn>
+                      <Btn border="#1E3B4C" color="#7E93A0" onClick={removeGpx}>Remove Route</Btn>
                     </div>
                   ) : (
                     <div>
-                      <p style={{ fontSize: 13, color: "#6b6b6b", margin: "0 0 14px", lineHeight: 1.6 }}>
+                      <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
                         Upload a .gpx file to show the planned route on the group map and in all GEP feeds.
                       </p>
                       <input
@@ -741,19 +741,19 @@ export default function EventDetailPage() {
             {isOrganizer && (
               <div>
                 <SectionLabel>GEP Access Log</SectionLabel>
-                <div style={{ background: "#fff", border: "1px solid #e6e6e6" }}>
+                <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6" }}>
                   {accessLog.length === 0 ? (
-                    <p style={{ padding: "20px", color: "#9a9a9a", fontSize: 13, margin: 0 }}>No GEP accesses yet.</p>
+                    <p style={{ padding: "20px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No GEP accesses yet.</p>
                   ) : accessLog.map((entry, i) => (
                     <div key={i} style={{ padding: "12px 20px", borderBottom: "1px solid #e6e6e6", display: "flex", gap: 16, alignItems: "flex-start" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2129", margin: 0 }}>{entry.display_name}</p>
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#9a9a9a", textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{entry.display_name}</p>
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#7E93A0", textTransform: "uppercase", border: "1px solid #e6e6e6", padding: "1px 6px" }}>
                             {entry.type === "credential" ? "GEP Viewer" : entry.role === "organizer" ? "Organizer" : "Rider"}
                           </span>
                         </div>
-                        <p style={{ fontSize: 11, color: "#6b6b6b", margin: "3px 0 0" }}>
+                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "3px 0 0" }}>
                           {entry.access_count} access{entry.access_count !== 1 ? "es" : ""} · {entry.unique_ips.length} IP{entry.unique_ips.length !== 1 ? "s" : ""} · Last: {entry.last_ip}
                         </p>
                         {entry.unique_ips.length > 1 && (
@@ -762,7 +762,7 @@ export default function EventDetailPage() {
                           </p>
                         )}
                       </div>
-                      <span style={{ fontSize: 11, color: "#9a9a9a", whiteSpace: "nowrap" }}>{entry.access_count}×</span>
+                      <span style={{ fontSize: 11, color: "#7E93A0", whiteSpace: "nowrap" }}>{entry.access_count}×</span>
                     </div>
                   ))}
                 </div>

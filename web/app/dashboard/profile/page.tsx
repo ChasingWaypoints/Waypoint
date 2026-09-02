@@ -87,7 +87,7 @@ const POLL_OPTIONS: Record<DeviceType, { label: string; value: number; note: str
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", margin: "0 0 12px" }}>
+    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 12px" }}>
       {children}
     </p>
   );
@@ -96,7 +96,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#6b6b6b", textTransform: "uppercase", marginBottom: 6 }}>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 6 }}>
         {label}
       </label>
       {children}
@@ -106,7 +106,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const INPUT: React.CSSProperties = {
   width: "100%", padding: "11px 14px", border: "1px solid #d4d4d4",
-  fontSize: 14, color: "#1a2129", outline: "none", boxSizing: "border-box",
+  fontSize: 14, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
   fontFamily: "system-ui",
 };
 
@@ -256,26 +256,26 @@ export default function ProfilePage() {
   const nameChanged = displayName.trim() !== savedName;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f7f7", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif" }}>
 
       {/* Nav */}
-      <nav style={{ background: "#1a2129", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
-        <Link href="/dashboard" style={{ color: "#8a9ab0", fontSize: 12, textDecoration: "none" }}>
+        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: 12, textDecoration: "none" }}>
           ← Dashboard
         </Link>
       </nav>
 
       <div style={{ maxWidth: 640, margin: "48px auto", padding: "0 24px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", margin: "0 0 6px" }}>Account</p>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1a2129", margin: "0 0 36px" }}>Profile &amp; Devices</h1>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Account</p>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: "0 0 36px" }}>Profile &amp; Devices</h1>
 
         {/* ── Profile ── */}
         <div style={{ marginBottom: 48 }}>
           <SectionLabel>Profile</SectionLabel>
-          <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: 28 }}>
+          <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: 28 }}>
             <Field label="Display Name">
               <div style={{ display: "flex", gap: 8 }}>
                 <input
@@ -289,7 +289,7 @@ export default function ProfilePage() {
                   onClick={saveName}
                   disabled={!nameChanged || savingName}
                   style={{
-                    background: nameChanged ? (nameSaved ? "#22c55e" : "#1c69d4") : "#d4d4d4",
+                    background: nameChanged ? (nameSaved ? "#CCFF00" : "#FFFE15") : "#d4d4d4",
                     color: "#fff", border: "none", padding: "11px 20px",
                     fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: nameChanged ? "pointer" : "default",
@@ -299,24 +299,24 @@ export default function ProfilePage() {
                   {savingName ? "Saving…" : nameSaved ? "Saved ✓" : "Save"}
                 </button>
               </div>
-              <p style={{ fontSize: 11, color: "#9a9a9a", margin: "6px 0 0" }}>
+              <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>
                 This is how you appear on group event maps.
               </p>
             </Field>
 
             <Field label="Email">
-              <p style={{ fontSize: 14, color: "#6b6b6b", margin: 0, padding: "11px 0" }}>{userEmail}</p>
+              <p style={{ fontSize: 14, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
             </Field>
 
             <div style={{ borderTop: "1px solid #e6e6e6", paddingTop: 20 }}>
               {resetSent ? (
-                <p style={{ fontSize: 13, color: "#22c55e", margin: 0 }}>
+                <p style={{ fontSize: 13, color: "#CCFF00", margin: 0 }}>
                   ✓ Reset email sent to {userEmail}
                 </p>
               ) : (
                 <button
                   onClick={sendPasswordReset}
-                  style={{ background: "transparent", border: "1px solid #e6e6e6", color: "#6b6b6b", padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                  style={{ background: "transparent", border: "1px solid #e6e6e6", color: "#7E93A0", padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
                   Send Password Reset Email
                 </button>
@@ -339,9 +339,9 @@ export default function ProfilePage() {
                   key={t}
                   onClick={() => openAddForm(t)}
                   style={{
-                    flex: 1, background: "#fff", border: "1px solid #d4d4d4",
+                    flex: 1, background: "#0C1E29", border: "1px solid #d4d4d4",
                     padding: "12px 8px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
-                    textTransform: "uppercase", cursor: "pointer", color: "#1a2129",
+                    textTransform: "uppercase", cursor: "pointer", color: "#FFFFFF",
                   }}
                 >
                   {DEVICE_META[t].icon} + {DEVICE_META[t].label}
@@ -352,19 +352,19 @@ export default function ProfilePage() {
 
           {/* Add device form */}
           {addOpen && (
-            <div style={{ background: "#fff", border: "1px solid #1c69d4", padding: 28, marginBottom: 16 }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1c69d4", padding: 28, marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#1a2129", margin: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
                   {DEVICE_META[addType].icon} Connect {DEVICE_META[addType].label}
                 </p>
-                <button onClick={closeAdd} style={{ background: "none", border: "none", color: "#9a9a9a", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                <button onClick={closeAdd} style={{ background: "none", border: "none", color: "#7E93A0", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>✕</button>
               </div>
 
               {/* Steps */}
-              <div style={{ background: "#f7f7f7", border: "1px solid #e6e6e6", padding: "16px 20px", marginBottom: 24 }}>
+              <div style={{ background: "#0A0A0A", border: "1px solid #e6e6e6", padding: "16px 20px", marginBottom: 24 }}>
                 {DEVICE_META[addType].steps.map((step, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < DEVICE_META[addType].steps.length - 1 ? 10 : 0 }}>
-                    <span style={{ width: 20, height: 20, background: "#1c69d4", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ width: 20, height: 20, background: "#FFFE15", color: "#0C1E29", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {i + 1}
                     </span>
                     <p style={{ fontSize: 12, color: "#4a4a4a", margin: 0, lineHeight: 1.6 }}>{step}</p>
@@ -385,13 +385,13 @@ export default function ProfilePage() {
                       onClick={() => setAddPoll(opt.value)}
                       style={{
                         flex: 1, padding: "10px 4px", border: "1px solid", borderRadius: 0,
-                        borderColor: addPoll === opt.value ? "#1c69d4" : "#e6e6e6",
-                        background: addPoll === opt.value ? "#1c69d4" : "#fff",
+                        borderColor: addPoll === opt.value ? "#FFFE15" : "#1E3B4C",
+                        background: addPoll === opt.value ? "#FFFE15" : "#fff",
                         cursor: "pointer",
                       }}
                     >
                       <div style={{ fontSize: 13, fontWeight: 700, color: addPoll === opt.value ? "#fff" : "#1a2129" }}>{opt.label}</div>
-                      <div style={{ fontSize: 10, color: addPoll === opt.value ? "#cce0ff" : "#9a9a9a", marginTop: 2 }}>{opt.note}</div>
+                      <div style={{ fontSize: 10, color: addPoll === opt.value ? "#cce0ff" : "#7E93A0", marginTop: 2 }}>{opt.note}</div>
                     </button>
                   ))}
                 </div>
@@ -406,7 +406,7 @@ export default function ProfilePage() {
                   autoCapitalize="off"
                   autoCorrect="off"
                 />
-                <p style={{ fontSize: 11, color: "#9a9a9a", margin: "6px 0 0" }}>{DEVICE_META[addType].hint}</p>
+                <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>{DEVICE_META[addType].hint}</p>
               </Field>
 
               {addType === "spot" && (
@@ -421,13 +421,13 @@ export default function ProfilePage() {
                 </Field>
               )}
 
-              {addError && <p style={{ color: "#cc3300", fontSize: 13, marginBottom: 12 }}>{addError}</p>}
+              {addError && <p style={{ color: "#FF3B30", fontSize: 13, marginBottom: 12 }}>{addError}</p>}
 
               <button
                 onClick={submitDevice}
                 disabled={addLoading}
                 style={{
-                  width: "100%", background: addLoading ? "#d4d4d4" : "#1c69d4", color: "#fff",
+                  width: "100%", background: addLoading ? "#d4d4d4" : "#FFFE15", color: "#fff",
                   border: "none", padding: "13px", fontSize: 12, fontWeight: 700,
                   letterSpacing: 0.5, textTransform: "uppercase", cursor: addLoading ? "default" : "pointer",
                 }}
@@ -439,40 +439,40 @@ export default function ProfilePage() {
 
           {/* Device list */}
           {devicesLoading ? (
-            <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: "24px", textAlign: "center", color: "#9a9a9a", fontSize: 13 }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "24px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>
               Loading devices…
             </div>
           ) : devices.length === 0 ? (
-            <div style={{ background: "#fff", border: "1px solid #e6e6e6", padding: "32px", textAlign: "center" }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #e6e6e6", padding: "32px", textAlign: "center" }}>
               <p style={{ fontSize: 24, margin: "0 0 8px" }}>📡</p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: "0 0 6px" }}>No satellite devices connected</p>
-              <p style={{ fontSize: 12, color: "#9a9a9a", margin: 0 }}>Add a Garmin inReach, SPOT, or ZOLEO above to track your location during trips.</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>No satellite devices connected</p>
+              <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>Add a Garmin inReach, SPOT, or ZOLEO above to track your location during trips.</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#e6e6e6", border: "1px solid #e6e6e6" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #e6e6e6" }}>
               {devices.map((device) => {
                 const meta = DEVICE_META[device.type as DeviceType];
                 const test = testResults[device.id];
                 return (
-                  <div key={device.id} style={{ background: "#fff", padding: "16px 20px" }}>
+                  <div key={device.id} style={{ background: "#0C1E29", padding: "16px 20px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <span style={{ fontSize: 22 }}>{meta?.icon ?? "📡"}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#1a2129", margin: 0 }}>{device.name}</p>
-                        <p style={{ fontSize: 11, color: "#9a9a9a", margin: "2px 0 0" }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{device.name}</p>
+                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "2px 0 0" }}>
                           {meta?.label ?? device.type}
                           {device.last_polled_at && ` · Last polled ${new Date(device.last_polled_at).toLocaleTimeString()}`}
                         </p>
                         {device.poll_error && (
-                          <p style={{ fontSize: 11, color: "#cc3300", margin: "3px 0 0" }}>⚠ {device.poll_error}</p>
+                          <p style={{ fontSize: 11, color: "#FF3B30", margin: "3px 0 0" }}>⚠ {device.poll_error}</p>
                         )}
                         {test && !test.testing && (
-                          <p style={{ fontSize: 11, color: test.ok ? "#16a34a" : "#cc3300", margin: "4px 0 0", fontWeight: 600 }}>
+                          <p style={{ fontSize: 11, color: test.ok ? "#16a34a" : "#FF3B30", margin: "4px 0 0", fontWeight: 600 }}>
                             {test.ok ? "✓" : "✗"} {test.message}
                           </p>
                         )}
                         {test?.testing && (
-                          <p style={{ fontSize: 11, color: "#9a9a9a", margin: "4px 0 0" }}>Testing connection…</p>
+                          <p style={{ fontSize: 11, color: "#7E93A0", margin: "4px 0 0" }}>Testing connection…</p>
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
@@ -480,7 +480,7 @@ export default function ProfilePage() {
                           onClick={() => testDevice(device.id)}
                           disabled={test?.testing}
                           style={{
-                            background: "transparent", border: "1px solid #1c69d4", color: "#1c69d4",
+                            background: "transparent", border: "1px solid #1c69d4", color: "#FFFE15",
                             padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
                             textTransform: "uppercase", cursor: test?.testing ? "default" : "pointer",
                           }}
@@ -490,7 +490,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => removeDevice(device.id)}
                           style={{
-                            background: "transparent", border: "1px solid #e6e6e6", color: "#9a9a9a",
+                            background: "transparent", border: "1px solid #e6e6e6", color: "#7E93A0",
                             padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
                             textTransform: "uppercase", cursor: "pointer",
                           }}
@@ -505,7 +505,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <p style={{ fontSize: 11, color: "#9a9a9a", margin: "12px 0 0", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 11, color: "#7E93A0", margin: "12px 0 0", lineHeight: 1.6 }}>
             Waypoint polls your satellite device for location updates during active trips. Use the Test button to confirm your device is on and reporting.
           </p>
         </div>

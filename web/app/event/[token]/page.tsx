@@ -9,7 +9,7 @@ import mapboxgl from "mapbox-gl";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const RIDER_COLORS = [
-  "#1c69d4", "#00aa44", "#cc3300", "#cc00aa",
+  "#FFFE15", "#00aa44", "#FF3B30", "#cc00aa",
   "#0099cc", "#ff6600", "#006699", "#cc6600",
 ];
 
@@ -110,7 +110,7 @@ export default function EventPage() {
           map.addLayer({
             id: "planned-route", type: "line", source: "planned-route",
             layout: { "line-join": "round", "line-cap": "round" },
-            paint: { "line-color": "#22c55e", "line-width": 3, "line-dasharray": [2, 2] },
+            paint: { "line-color": "#CCFF00", "line-width": 3, "line-dasharray": [2, 2] },
           });
         }
       }
@@ -194,12 +194,12 @@ export default function EventPage() {
 
   if (loading) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#6b6b6b", fontSize: 14 }}>Loading event...</p>
+      <p style={{ color: "#7E93A0", fontSize: 14 }}>Loading event...</p>
     </div>
   );
   if (error) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#dc2626", fontSize: 14 }}>{error}</p>
+      <p style={{ color: "#FF3B30", fontSize: 14 }}>{error}</p>
     </div>
   );
   if (!data) return null;
@@ -210,30 +210,30 @@ export default function EventPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "system-ui" }}>
       {/* Header */}
-      <div style={{ background: "#1a2129", color: "#fff", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ background: "#FFFE15", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#bbbbbb", textTransform: "uppercase", margin: 0 }}>Waypoint · Group Event</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint · Group Event</p>
           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0" }}>{event.name}</h1>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {isLive && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#22c55e", textTransform: "uppercase" }}>Live</span>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#CCFF00", textTransform: "uppercase" }}>Live</span>
             </div>
           )}
-          <span style={{ fontSize: 11, color: "#9a9a9a" }}>{riders.length} rider{riders.length !== 1 ? "s" : ""}</span>
+          <span style={{ fontSize: 11, color: "#7E93A0" }}>{riders.length} rider{riders.length !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
       {/* Rider sidebar + map */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Sidebar */}
-        <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
+        <div style={{ width: 220, background: "#0C1E29", borderRight: "1px solid #e6e6e6", overflowY: "auto", flexShrink: 0 }}>
           {event.route_name && (
             <div style={{ padding: "10px 14px", borderBottom: "1px solid #e6e6e6", background: "#f0fdf4" }}>
               <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#15803d", textTransform: "uppercase", margin: 0 }}>Planned Route</p>
-              <p style={{ fontSize: 12, color: "#262626", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
+              <p style={{ fontSize: 12, color: "#C8D4DC", margin: "2px 0 0", fontWeight: 600 }}>{event.route_name}</p>
             </div>
           )}
           {riders.map((rider, i) => {
@@ -267,15 +267,15 @@ export default function EventPage() {
                     {rider.display_name.slice(0, 2).toUpperCase()}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#262626", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#C8D4DC", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                     </p>
                     {rider.latest ? (
-                      <p style={{ fontSize: 11, color: isStale ? "#f59e0b" : "#6b6b6b", margin: "1px 0 0", fontWeight: 300 }}>
+                      <p style={{ fontSize: 11, color: isStale ? "#f59e0b" : "#7E93A0", margin: "1px 0 0", fontWeight: 300 }}>
                         {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
                       </p>
                     ) : (
-                      <p style={{ fontSize: 11, color: "#9a9a9a", margin: "1px 0 0" }}>No data yet</p>
+                      <p style={{ fontSize: 11, color: "#7E93A0", margin: "1px 0 0" }}>No data yet</p>
                     )}
                   </div>
                 </div>

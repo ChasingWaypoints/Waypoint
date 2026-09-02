@@ -1,30 +1,53 @@
 @import "tailwindcss";
 @import "mapbox-gl/dist/mapbox-gl.css";
 
+/* Waypoint palette — dark canvas, uniform-blue surfaces, palesun accent */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0A0A0A;
+  --foreground: #C8D4DC;
+  --surface: #0C1E29;
+  --surface-hi: #14303F;
+  --hairline: #1E3B4C;
+  --accent: #FFFE15;
+  --accent-ink: #0C1E29;
+  --track: #CCFF00;
+  --ink: #FFFFFF;
+  --muted: #7E93A0;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { background: var(--background); }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+a { color: inherit; }
+
+input, select, textarea {
+  color-scheme: dark;
+}
+
+/* Mapbox popups on a dark map */
+.mapboxgl-popup-content {
+  background: #0C1E29;
+  color: #fff;
+  border: 1px solid #1E3B4C;
+  box-shadow: 0 8px 28px rgba(0,0,0,.55);
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #0C1E29; }
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #0C1E29; }
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #0C1E29; }
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #0C1E29; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
