@@ -397,6 +397,12 @@ export default function EventDetailPage() {
             style={{ background: "transparent", border: "1px solid #3a4550", color: "#bbbbbb", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
             Public View ↗
           </a>
+          {isOrganizer && (
+            <Link href={`/dashboard/events/${id}/track`}
+              style={{ background: "#FFFE15", border: "1px solid #FFFE15", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+              Tracking Page
+            </Link>
+          )}
           {isOrganizer && isLive && (
             <button
               onClick={endEvent}

@@ -144,12 +144,22 @@ export default function DashboardPage() {
                       {ev.my_role === "organizer" ? "You are organizer" : "Participant"}
                     </p>
                   </div>
-                  <Link
-                    href={`/dashboard/events/${ev.id}`}
-                    style={{ background: "#1a2129", color: "#fff", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
-                  >
-                    Manage →
-                  </Link>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {ev.my_role === "organizer" && (
+                      <Link
+                        href={`/dashboard/events/${ev.id}/track`}
+                        style={{ background: "#FFFE15", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                      >
+                        Tracking
+                      </Link>
+                    )}
+                    <Link
+                      href={`/dashboard/events/${ev.id}`}
+                      style={{ background: "#1a2129", color: "#fff", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                    >
+                      Manage →
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
