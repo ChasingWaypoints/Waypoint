@@ -478,8 +478,20 @@ export default function TrackingMap({
           });
         }
         if (!m.getLayer(id)) {
+          // Rain: OpenWeather's precipitation tiles are pale, so we darken and
+          // deepen them (lower max brightness, more contrast/saturation) to read
+          // clearly over satellite. Temp keeps its natural colour ramp.
+          const paint =
+            id === "wx-rain"
+              ? {
+                  "raster-opacity": opacity,
+                  "raster-brightness-max": 0.55,
+                  "raster-contrast": 0.4,
+                  "raster-saturation": 0.6,
+                }
+              : { "raster-opacity": opacity };
           m.addLayer(
-            { id, type: "raster", source: id, paint: { "raster-opacity": opacity } },
+            { id, type: "raster", source: id, paint },
             beforeId && m.getLayer(beforeId) ? beforeId : undefined
           );
         }
