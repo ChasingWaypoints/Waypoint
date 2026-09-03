@@ -57,19 +57,41 @@ export async function GET(request: NextRequest) {
   const { user, supabase } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
-    .from("event_participants")
-    .select("role, joined_at, events(id, name, status, join_code, share_token, starts_at, organizer_id, created_at)")
-    .eq("user_id", user.id)
-    .order("joined_at", { ascending: false });
+  // Two sources, unioned: events the user has a participant row in, AND events
+  // they organize. An organizer can lose their participant row (e.g. removed
+  // from the roster) but still owns the event — it must never drop off their
+  // dashboard just because the membership row is gone.
+  const [partRes, ownRes] = await Promise.all([
+    supabase
+      .from("event_participants")
+      .select("role, joined_at, events(id, name, status, join_code, share_token, starts_at, organizer_id, created_at)")
+      .eq("user_id", user.id)
+      .order("joined_at", { ascending: false }),
+    supabase
+      .from("events")
+      .select("id, name, status, join_code, share_token, starts_at, organizer_id, created_at")
+      .eq("organizer_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (partRes.error) return NextResponse.json({ error: partRes.error.message }, { status: 500 });
+  if (ownRes.error) return NextResponse.json({ error: ownRes.error.message }, { status: 500 });
 
-  const events = (data ?? []).map((row: any) => ({
-    ...row.events,
-    my_role: row.role,
-    joined_at: row.joined_at,
-  }));
+  const byId = new Map<string, any>();
+  for (const row of partRes.data ?? []) {
+    const ev = (row as any).events;
+    if (!ev) continue;
+    byId.set(ev.id, { ...ev, my_role: (row as any).role, joined_at: (row as any).joined_at });
+  }
+  for (const ev of ownRes.data ?? []) {
+    const existing = byId.get(ev.id);
+    if (existing) existing.my_role = "organizer";
+    else byId.set(ev.id, { ...ev, my_role: "organizer", joined_at: ev.created_at });
+  }
+
+  const events = [...byId.values()].sort((a, b) =>
+    String(b.joined_at ?? "").localeCompare(String(a.joined_at ?? ""))
+  );
 
   return NextResponse.json(events);
 }
