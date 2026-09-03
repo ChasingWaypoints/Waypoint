@@ -205,6 +205,16 @@ export default function TrackingMap({
         el.addEventListener("click", (ev) => {
           ev.stopPropagation();
           const id = e.id;
+          // While measuring, clicking a rider drops that rider's exact
+          // position as a measure point instead of opening the card.
+          if (measuringRef.current) {
+            const mkm = markers.current.get(id);
+            if (mkm) {
+              const ll = mkm.getLngLat();
+              setMeasurePoints((prev) => [...prev, { lng: ll.lng, lat: ll.lat }]);
+            }
+            return;
+          }
           // Quick-reference popup: name, status, device, coordinates.
           if (!popup.current) {
             popup.current = new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "320px" });
