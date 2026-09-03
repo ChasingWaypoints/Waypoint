@@ -282,6 +282,7 @@ export default function TrackingMap({
           popup.current.setHTML(popupContent);
           wireCopyButtons(popup.current.getElement());
           wireEmergencyButtons(popup.current.getElement(), organizerEventId);
+          wireWeather(popup.current.getElement());
         }
       }
     }
@@ -490,7 +491,7 @@ export default function TrackingMap({
 
     // Temp is the broad colour field; rain sits above it, both under overlays.
     sync("wx-temp", "temp", weatherTemp, 0.72);
-    sync("wx-rain", "precipitation", weatherRain, 0.9);
+    sync("wx-rain", "precipitation", weatherRain, 1);
   }, [weatherRain, weatherTemp, ready, layerId]);
 
   // ── Measurement overlay ───────────────────────────────────────
@@ -713,25 +714,31 @@ const CHECK_ICON =
 // Fills the ".wp-wx" line with the current temperature at the rider's
 // location. Wired once on open (not on the periodic refresh) so we don't
 // re-hit the API every 30s while a popup sits open.
+// Rendered weather HTML, cached by ~1km cell so the 30s popup rebuild
+// re-injects the value instantly instead of reverting to the placeholder.
+const wxCache = new Map<string, string>();
+
 function wireWeather(root: HTMLElement | undefined) {
   if (!root) return;
   const el = root.querySelector<HTMLElement>(".wp-wx");
   if (!el) return;
-  const w = el as HTMLElement & { _wired?: boolean };
-  if (w._wired) return;
-  w._wired = true;
   const lat = el.getAttribute("data-lat");
   const lng = el.getAttribute("data-lng");
   if (!lat || !lng) { el.style.display = "none"; return; }
+  const key = `${(+lat).toFixed(2)},${(+lng).toFixed(2)}`;
+  const cached = wxCache.get(key);
+  if (cached) { el.innerHTML = cached; return; }
   fetch(`/api/weather/point?lat=${lat}&lng=${lng}`)
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
       if (!d || d.ok !== true || d.tempF == null) { el.style.display = "none"; return; }
       const desc = d.description ? " &middot; " + escapeHtml(String(d.description)) : "";
-      el.innerHTML =
+      const html =
         '<span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Weather</span> '
         + '<strong style="color:#CCFF00">' + Math.round(d.tempF) + "&deg;F</strong> / "
         + Math.round(d.tempC) + "&deg;C" + desc;
+      wxCache.set(key, html);
+      el.innerHTML = html;
     })
     .catch(() => { el.style.display = "none"; });
 }
