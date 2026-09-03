@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../../lib/supabase/auth";
-import { parseCSVWithHeader } from "../../../../../../lib/csv";
+import { parseCSVWithHeader, normaliseHeader } from "../../../../../../lib/csv";
+import * as XLSX from "xlsx";
 import { rowToEntrant, EntrantInput, RowError, CSV_TEMPLATE, waypointCodeFromRow } from "../../../../../../lib/entrants";
 
 const MAX_ROWS = 1000;
+
+// Parse the first sheet of an .xlsx/.xls workbook into rows keyed by the
+// same normalised headers parseCSVWithHeader produces, so the rest of the
+// importer treats a spreadsheet exactly like a CSV.
+function parseXlsxRows(buf: Buffer): Record<string, string>[] {
+  const wb = XLSX.read(buf, { type: "buffer" });
+  const sheetName = wb.SheetNames[0];
+  if (!sheetName) return [];
+  const sheet = wb.Sheets[sheetName];
+  const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    defval: "",
+    raw: false,
+  });
+  return raw.map((r) => {
+    const obj: Record<string, string> = {};
+    for (const [k, v] of Object.entries(r)) {
+      const nk = normaliseHeader(k);
+      if (nk) obj[nk] = String(v ?? "").trim();
+    }
+    return obj;
+  });
+}
 
 async function requireOrganizer(request: NextRequest, eventId: string) {
   const { user, supabase } = await getUserFromRequest(request);
@@ -53,9 +76,9 @@ export async function POST(
   if ("error" in guard) return guard.error;
 
   const contentType = request.headers.get("content-type") ?? "";
-  let csv = "";
   let dryRun = request.nextUrl.searchParams.get("dry_run") === "1";
   let replace = false;
+  let rows: Record<string, string>[] = [];
 
   if (contentType.includes("multipart/form-data")) {
     const form = await request.formData();
@@ -66,9 +89,29 @@ export async function POST(
     if (file.size > 2_000_000) {
       return NextResponse.json({ error: "File too large (2 MB max)" }, { status: 400 });
     }
-    csv = await file.text();
     if (form.get("dry_run")) dryRun = true;
     if (form.get("replace")) replace = true;
+
+    const name = (file.name || "").toLowerCase();
+    const isXlsx =
+      name.endsWith(".xlsx") ||
+      name.endsWith(".xls") ||
+      file.type.includes("spreadsheetml") ||
+      file.type.includes("ms-excel");
+    if (isXlsx) {
+      const buf = Buffer.from(await file.arrayBuffer());
+      try {
+        rows = parseXlsxRows(buf);
+      } catch {
+        return NextResponse.json({ error: "Could not read that spreadsheet." }, { status: 400 });
+      }
+    } else {
+      const csv = await file.text();
+      if (!csv.trim()) {
+        return NextResponse.json({ error: "Empty file" }, { status: 400 });
+      }
+      rows = parseCSVWithHeader(csv);
+    }
   } else {
     let body: { csv?: string; dry_run?: boolean; replace?: boolean };
     try {
@@ -76,16 +119,15 @@ export async function POST(
     } catch {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
-    csv = body.csv ?? "";
+    const csv = body.csv ?? "";
     if (body.dry_run) dryRun = true;
     if (body.replace) replace = true;
+    if (!csv.trim()) {
+      return NextResponse.json({ error: "Empty CSV" }, { status: 400 });
+    }
+    rows = parseCSVWithHeader(csv);
   }
 
-  if (!csv.trim()) {
-    return NextResponse.json({ error: "Empty CSV" }, { status: 400 });
-  }
-
-  const rows = parseCSVWithHeader(csv);
   if (rows.length === 0) {
     return NextResponse.json(
       { error: "No data rows found. The first line must be a header row." },

@@ -23,6 +23,9 @@ interface Entrant {
 
 interface DryRun {
   would_insert: number;
+  would_link?: number;
+  unlinked_codes?: string[];
+  already_in_event?: string[];
   errors: { line: number; message: string }[];
   duplicates: string[];
   preview: { display_name: string; rider_number: string | null; device_type: string | null }[];
@@ -40,7 +43,8 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState<DryRun | null>(null);
-  const [pendingCsv, setPendingCsv] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
   const [replace, setReplace] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -70,18 +74,20 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
   async function handleFile(file: File) {
     setBusy(true);
     setError(null);
+    setImportMsg(null);
     try {
-      const csv = await file.text();
-      setPendingCsv(csv);
-      const res = await authFetch(`/api/events/${eventId}/entrants/batch?dry_run=1`, {
+      setPendingFile(file);
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("dry_run", "1");
+      const res = await authFetch(`/api/events/${eventId}/entrants/batch`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv }),
+        body: fd,
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Could not read that file");
-        setPendingCsv(null);
+        setPendingFile(null);
         return;
       }
       setDryRun(data);
@@ -91,21 +97,28 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
   }
 
   async function confirmImport() {
-    if (!pendingCsv) return;
+    if (!pendingFile) return;
     setBusy(true);
     try {
+      const fd = new FormData();
+      fd.append("file", pendingFile);
+      if (replace) fd.append("replace", "1");
       const res = await authFetch(`/api/events/${eventId}/entrants/batch`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: pendingCsv, replace }),
+        body: fd,
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Import failed");
         return;
       }
+      const parts = [`Imported ${data.inserted} entrant${data.inserted === 1 ? "" : "s"}`];
+      if (data.linked) parts.push(`${data.linked} linked to Waypoint account${data.linked === 1 ? "" : "s"}`);
+      if (data.already_in_event?.length) parts.push(`${data.already_in_event.length} already in event (left unlinked)`);
+      if (data.unlinked_codes?.length) parts.push(`${data.unlinked_codes.length} Waypoint ID${data.unlinked_codes.length === 1 ? "" : "s"} not found`);
+      setImportMsg(parts.join(" · "));
       setDryRun(null);
-      setPendingCsv(null);
+      setPendingFile(null);
       setReplace(false);
       if (fileInput.current) fileInput.current.value = "";
       await load();
@@ -146,16 +159,19 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
       >
         <div style={{ fontWeight: 600, marginBottom: 6, color: theme.ink }}>Batch load a roster</div>
         <p style={{ margin: "0 0 12px", color: theme.muted, fontSize: 13 }}>
-          Upload a CSV with columns <code>name, number, class, device, feed</code>. The
-          feed is each entrant&rsquo;s public beacon share link — a Garmin MapShare URL or a
-          SPOT feed id. ZOLEO entrants need no feed; those units push to us directly.
+          Upload a <strong>CSV or Excel (.xlsx)</strong> file with columns{" "}
+          <code>name, number, class, device, feed</code>. The feed is each entrant&rsquo;s
+          public beacon share link — a Garmin MapShare URL or a SPOT feed id. ZOLEO entrants
+          need no feed; those units push to us directly. Add an optional{" "}
+          <code>waypoint_id</code> column with a rider&rsquo;s Waypoint ID to link their
+          account for emergency info.
         </p>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input
             ref={fileInput}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             disabled={busy}
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -185,6 +201,27 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
               Ready to import {dryRun.would_insert} entrant
               {dryRun.would_insert === 1 ? "" : "s"}
             </div>
+
+            {(dryRun.would_link || dryRun.unlinked_codes?.length || dryRun.already_in_event?.length) ? (
+              <div style={{ fontSize: 13, marginBottom: 10 }}>
+                {dryRun.would_link ? (
+                  <div style={{ color: theme.live }}>
+                    🔗 {dryRun.would_link} will link to a Waypoint account
+                  </div>
+                ) : null}
+                {dryRun.already_in_event?.length ? (
+                  <div style={{ color: theme.warn }}>
+                    {dryRun.already_in_event.length} already in this event — imported unlinked: {dryRun.already_in_event.slice(0, 5).join(", ")}
+                    {dryRun.already_in_event.length > 5 ? "…" : ""}
+                  </div>
+                ) : null}
+                {dryRun.unlinked_codes?.length ? (
+                  <div style={{ color: theme.muted }}>
+                    Waypoint ID{dryRun.unlinked_codes.length === 1 ? "" : "s"} not found: {dryRun.unlinked_codes.join(", ")}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {dryRun.preview.length > 0 && (
               <div style={{ fontSize: 13, color: theme.muted, marginBottom: 10 }}>
@@ -232,7 +269,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
               <button
                 onClick={() => {
                   setDryRun(null);
-                  setPendingCsv(null);
+                  setPendingFile(null);
                   if (fileInput.current) fileInput.current.value = "";
                 }}
                 style={secondaryBtn}
@@ -246,6 +283,12 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
 
       {error && (
         <div style={{ color: theme.danger, marginBottom: 14 }}>{error}</div>
+      )}
+
+      {importMsg && (
+        <div style={{ color: theme.live, marginBottom: 14, fontSize: 13, background: theme.canvas, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 14px" }}>
+          ✓ {importMsg}
+        </div>
       )}
 
       {/* ── Feed problems ──────────────────────────────────── */}
