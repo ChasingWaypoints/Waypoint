@@ -118,6 +118,8 @@ export default function TrackingMap({
   const [measurePoints, setMeasurePoints] = useState<LngLat[]>([]);
   const [unit, setUnit] = useState<"km" | "mi">("km");
   const [ready, setReady] = useState(false);
+  const [weatherRain, setWeatherRain] = useState(false);
+  const [weatherTemp, setWeatherTemp] = useState(false);
 
   // Keep the latest measuring state reachable from the map click handler,
   // which is registered once and would otherwise close over a stale value.
@@ -447,6 +449,44 @@ export default function TrackingMap({
     });
   }, [selectedTrack, ready, layerId]);
 
+  // ── Weather overlay (OpenWeather, proxied) ────────────────────
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready) return;
+
+    // Slip weather beneath our own vector overlays so tracks, the planned
+    // route and the markers stay readable over the rain/temp wash.
+    const OVERLAYS = ["event-route", "entrant-track", "stage-waypoints", "measure-"];
+    const beforeId = m.getStyle().layers?.find((l) =>
+      OVERLAYS.some((pfx) => l.id.startsWith(pfx))
+    )?.id;
+
+    const sync = (id: string, slug: string, on: boolean, opacity: number) => {
+      if (on) {
+        if (!m.getSource(id)) {
+          m.addSource(id, {
+            type: "raster",
+            tiles: [`/api/weather/${slug}/{z}/{x}/{y}`],
+            tileSize: 256,
+          });
+        }
+        if (!m.getLayer(id)) {
+          m.addLayer(
+            { id, type: "raster", source: id, paint: { "raster-opacity": opacity } },
+            beforeId && m.getLayer(beforeId) ? beforeId : undefined
+          );
+        }
+      } else {
+        if (m.getLayer(id)) m.removeLayer(id);
+        if (m.getSource(id)) m.removeSource(id);
+      }
+    };
+
+    // Temp is the broad colour field; rain sits above it, both under overlays.
+    sync("wx-temp", "temp", weatherTemp, 0.55);
+    sync("wx-rain", "precipitation", weatherRain, 0.7);
+  }, [weatherRain, weatherTemp, ready, layerId]);
+
   // ── Measurement overlay ───────────────────────────────────────
   useEffect(() => {
     const m = map.current;
@@ -527,6 +567,9 @@ export default function TrackingMap({
           aria-expanded={layerMenuOpen}
         >
           {getLayer(layerId).name}
+          {(weatherRain || weatherTemp) && (
+            <span style={{ marginLeft: 6, color: theme.accent, fontSize: 10, fontWeight: 700 }}>● WX</span>
+          )}
           <span style={{ marginLeft: 6, opacity: 0.6 }}>▾</span>
         </button>
 
@@ -548,6 +591,35 @@ export default function TrackingMap({
                 </div>
               </button>
             ))}
+            <div style={{ borderTop: `1px solid ${theme.hairline}`, marginTop: 4 }}>
+              <div style={{ padding: "8px 12px 4px", fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted }}>
+                Weather overlay
+              </div>
+              {([
+                ["Rain", weatherRain, () => setWeatherRain((v) => !v)],
+                ["Temperature", weatherTemp, () => setWeatherTemp((v) => !v)],
+              ] as [string, boolean, () => void][]).map(([label, on, toggle]) => (
+                <button
+                  key={label}
+                  onClick={toggle}
+                  style={{
+                    ...menuItemStyle,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: on ? theme.surfaceHi : "transparent",
+                  }}
+                >
+                  <span>{label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: on ? theme.accent : theme.muted }}>
+                    {on ? "ON" : "OFF"}
+                  </span>
+                </button>
+              ))}
+              <div style={{ padding: "4px 12px 8px", fontSize: 10, color: theme.muted }}>
+                OpenWeather · refreshes ~10 min
+              </div>
+            </div>
           </div>
         )}
       </div>
