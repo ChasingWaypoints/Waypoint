@@ -227,6 +227,7 @@ export default function TrackingMap({
             popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
             wireCopyButtons(popup.current.getElement());
             wireEmergencyButtons(popup.current.getElement(), organizerEventId);
+            wireWeather(popup.current.getElement());
           }
           onSelectEntrant?.(id);
         });
@@ -256,12 +257,17 @@ export default function TrackingMap({
                </div>`).join("")}
            </div>`
         : "";
+      // Live temperature/conditions at this rider, filled in when the popup opens.
+      const wxHtml = (e.lat !== null && e.lng !== null)
+        ? `<div class="wp-wx" data-lat="${e.lat}" data-lng="${e.lng}" style="margin-top:6px;font-size:12px;color:#9FB2BE"><span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Weather</span> &hellip;</div>`
+        : "";
       const popupContent =
         `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff;min-width:210px">
              <strong>${escapeHtml(e.name)}</strong>${e.number ? ` &middot; #${escapeHtml(e.number)}` : ""}
              ${e.class ? `<br><span style="color:#7E93A0">${escapeHtml(e.class)}</span>` : ""}
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
              ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
+             ${wxHtml}
              ${coordHtml}
              ${organizerEventId && e.linked ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px">
                <button class="wp-emergency" data-id="${e.id}" style="width:100%;background:#2A1214;color:#FF6B6B;border:1px solid #5A2530;border-radius:4px;font:700 11px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:7px;cursor:pointer">&#9888; Emergency info</button>
@@ -483,8 +489,8 @@ export default function TrackingMap({
     };
 
     // Temp is the broad colour field; rain sits above it, both under overlays.
-    sync("wx-temp", "temp", weatherTemp, 0.55);
-    sync("wx-rain", "precipitation", weatherRain, 0.7);
+    sync("wx-temp", "temp", weatherTemp, 0.72);
+    sync("wx-rain", "precipitation", weatherRain, 0.9);
   }, [weatherRain, weatherTemp, ready, layerId]);
 
   // ── Measurement overlay ───────────────────────────────────────
@@ -665,6 +671,20 @@ export default function TrackingMap({
         </div>
       )}
 
+      {/* Temperature legend — the temp tiles are a colour field, so this
+          gives the colours meaning. Numeric temps come from the popups. */}
+      {!compact && weatherTemp && (
+        <div style={{ position: "absolute", bottom: 30, left: 10, zIndex: 2, background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "6px 8px" }}>
+          <div style={{ font: `700 9px ${font.sans}`, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>
+            Temperature
+          </div>
+          <div style={{ width: 150, height: 8, borderRadius: 2, background: "linear-gradient(90deg,#2b59d6,#23c9e6,#37d13f,#f2e93f,#f5a623,#e6392e)" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2, font: `9px ${font.sans}`, color: theme.muted }}>
+            <span>0°F</span><span>32°</span><span>60°</span><span>100°F</span>
+          </div>
+        </div>
+      )}
+
       {/* Attribution for non-Mapbox rasters */}
       <div
         style={{
@@ -689,6 +709,32 @@ const COPY_ICON =
   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 const CHECK_ICON =
   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+// Fills the ".wp-wx" line with the current temperature at the rider's
+// location. Wired once on open (not on the periodic refresh) so we don't
+// re-hit the API every 30s while a popup sits open.
+function wireWeather(root: HTMLElement | undefined) {
+  if (!root) return;
+  const el = root.querySelector<HTMLElement>(".wp-wx");
+  if (!el) return;
+  const w = el as HTMLElement & { _wired?: boolean };
+  if (w._wired) return;
+  w._wired = true;
+  const lat = el.getAttribute("data-lat");
+  const lng = el.getAttribute("data-lng");
+  if (!lat || !lng) { el.style.display = "none"; return; }
+  fetch(`/api/weather/point?lat=${lat}&lng=${lng}`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d || d.ok !== true || d.tempF == null) { el.style.display = "none"; return; }
+      const desc = d.description ? " &middot; " + escapeHtml(String(d.description)) : "";
+      el.innerHTML =
+        '<span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Weather</span> '
+        + '<strong style="color:#CCFF00">' + Math.round(d.tempF) + "&deg;F</strong> / "
+        + Math.round(d.tempC) + "&deg;C" + desc;
+    })
+    .catch(() => { el.style.display = "none"; });
+}
 
 // Attaches copy-to-clipboard to every .wp-copy button inside a popup.
 // Copying a coordinate for a rescue crew must give a clear confirmation,
