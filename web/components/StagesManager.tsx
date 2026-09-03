@@ -37,7 +37,7 @@ export default function StagesManager({ eventId }: { eventId: string }) {
   useEffect(() => { load(); }, [load]);
 
   async function upload() {
-    if (!file) { setError("Choose a .gpx file first"); return; }
+    if (!file) { setError("Choose a .gpx, .kml, or .kmz file first"); return; }
     setBusy(true); setError(null);
     const fd = new FormData();
     fd.append("file", file);
@@ -70,9 +70,9 @@ export default function StagesManager({ eventId }: { eventId: string }) {
     <section>
       <p style={label}>Stages</p>
       <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 12px", lineHeight: 1.5 }}>
-        Upload a GPX per day or special stage and name it. OpenRally files bring their named
-        waypoints in automatically. Toggle each stage on or off, give it a colour — every visible
-        stage draws in its colour with its waypoint pins on all maps.
+        Upload a <strong>GPX, KML, or KMZ</strong> per day or special stage and name it. OpenRally
+        GPX files bring their named waypoints in automatically. Toggle each stage on or off, give it
+        a colour — every visible stage draws in its colour with its waypoint pins on all maps.
       </p>
 
       {stages.length > 0 && (
@@ -140,7 +140,7 @@ export default function StagesManager({ eventId }: { eventId: string }) {
           <input
             ref={fileInput}
             type="file"
-            accept=".gpx"
+            accept=".gpx,.kml,.kmz"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             style={{ fontSize: 13, color: "#C8D4DC" }}
           />

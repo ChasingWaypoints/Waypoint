@@ -297,3 +297,85 @@ export function initials(name: string): string {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+// ── KML / KMZ support ─────────────────────────────────────────
+// Rally organizers often have routes in Google Earth (KML) or a zipped
+// KMZ. We convert either to GPX on upload and reuse the GPX pipeline, so
+// everything downstream (route_line, waypoints, export) is unchanged.
+
+function decodeXml(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([^]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .trim();
+}
+
+/** Route geometry from a KML: LineString / LinearRing / gx:Track. */
+export function parseKMLCoordinates(kml: string): LngLat[] {
+  const out: LngLat[] = [];
+
+  const lineRe = new RegExp(
+    "<(?:gx:)?(?:LineString|LinearRing)[^>]*>[^]*?<coordinates>([^]*?)</coordinates>",
+    "gi"
+  );
+  let m: RegExpExecArray | null;
+  while ((m = lineRe.exec(kml)) !== null) {
+    for (const tuple of m[1].trim().split(/\s+/)) {
+      const [lng, lat] = tuple.split(",").map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) out.push({ lng, lat });
+    }
+  }
+
+  // gx:Track uses <gx:coord>lng lat alt</gx:coord> (space separated)
+  const trackRe = new RegExp("<gx:coord>([^<]+)</gx:coord>", "gi");
+  while ((m = trackRe.exec(kml)) !== null) {
+    const [lng, lat] = m[1].trim().split(/\s+/).map(Number);
+    if (!isNaN(lat) && !isNaN(lng)) out.push({ lng, lat });
+  }
+
+  return out;
+}
+
+/** Point placemarks from a KML become waypoints (no OpenRally scoring). */
+export function parseKMLWaypoints(kml: string): Waypoint[] {
+  const out: Waypoint[] = [];
+  const pmRe = new RegExp("<Placemark\\b[^>]*>([^]*?)</Placemark>", "gi");
+  let m: RegExpExecArray | null;
+  let seq = 0;
+  while ((m = pmRe.exec(kml)) !== null) {
+    const block = m[1];
+    const pt = block.match(/<Point\b[^]*?<coordinates>([^]*?)<\/coordinates>/i);
+    if (!pt) continue; // skip route placemarks (LineString etc.)
+    const first = pt[1].trim().split(/\s+/)[0] ?? "";
+    const [lng, lat] = first.split(",").map(Number);
+    if (isNaN(lat) || isNaN(lng)) continue;
+    seq++;
+    const nameM = block.match(/<name>([^]*?)<\/name>/i);
+    const name = nameM ? decodeXml(nameM[1]) || `WP${seq}` : `WP${seq}`;
+    const descM = block.match(/<description>([^]*?)<\/description>/i);
+    const digits = (name.match(/(\d+)\s*$/) || [])[1];
+    const num = (digits ? digits : String(seq)).padStart(3, "0").slice(-3);
+    out.push({ lat, lng, name, type: null, num, label: num, desc: descM ? decodeXml(descM[1]) : null });
+  }
+  return out;
+}
+
+/** Convert a KML document to a minimal, valid GPX string. */
+export function kmlToGPX(kml: string, routeName: string): string {
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const coords = parseKMLCoordinates(kml);
+  const wpts = parseKMLWaypoints(kml);
+  const wptXml = wpts
+    .map((w) => `  <wpt lat="${w.lat}" lon="${w.lng}"><name>${esc(w.name)}</name></wpt>`)
+    .join("\n");
+  const trkpts = coords.map((c) => `      <trkpt lat="${c.lat}" lon="${c.lng}"></trkpt>`).join("\n");
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<gpx version="1.1" creator="Waypoint" xmlns="http://www.topografix.com/GPX/1/1">\n' +
+    (wptXml ? wptXml + "\n" : "") +
+    `  <trk><name>${esc(routeName || "Route")}</name><trkseg>\n` +
+    trkpts +
+    "\n  </trkseg></trk>\n</gpx>\n"
+  );
+}

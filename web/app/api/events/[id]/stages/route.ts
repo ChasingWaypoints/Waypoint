@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../../lib/supabase/auth";
-import { parseGPXWaypoints, parseGPXCoordinates } from "../../../../../lib/geo";
+import { parseGPXWaypoints, parseGPXCoordinates, kmlToGPX } from "../../../../../lib/geo";
+import { unzipSync, strFromU8 } from "fflate";
 
 async function requireOrganizer(request: NextRequest, eventId: string) {
   const { user, supabase } = await getUserFromRequest(request);
@@ -50,14 +51,36 @@ export async function POST(
     const form = await request.formData();
     const file = form.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    if (!file.name.toLowerCase().endsWith(".gpx")) {
-      return NextResponse.json({ error: "File must be a .gpx file" }, { status: 400 });
+    const lower = file.name.toLowerCase();
+    const isGpx = lower.endsWith(".gpx");
+    const isKml = lower.endsWith(".kml");
+    const isKmz = lower.endsWith(".kmz");
+    if (!isGpx && !isKml && !isKmz) {
+      return NextResponse.json({ error: "File must be a .gpx, .kml, or .kmz file" }, { status: 400 });
     }
     if (file.size > 10_000_000) {
       return NextResponse.json({ error: "File too large (10 MB max)" }, { status: 400 });
     }
-    gpx = await file.text();
-    name = ((form.get("name") as string) || file.name.replace(/\.gpx$/i, "")).trim();
+    name = ((form.get("name") as string) || file.name.replace(/\.(gpx|kml|kmz)$/i, "")).trim();
+    if (isGpx) {
+      gpx = await file.text();
+    } else if (isKml) {
+      gpx = kmlToGPX(await file.text(), name);
+    } else {
+      // KMZ = zipped KML; extract the first .kml entry (usually doc.kml)
+      try {
+        const files = unzipSync(new Uint8Array(await file.arrayBuffer()));
+        const kmlName =
+          Object.keys(files).find((n) => n.toLowerCase() === "doc.kml") ||
+          Object.keys(files).find((n) => n.toLowerCase().endsWith(".kml"));
+        if (!kmlName) {
+          return NextResponse.json({ error: "That KMZ has no KML inside it." }, { status: 400 });
+        }
+        gpx = kmlToGPX(strFromU8(files[kmlName]), name);
+      } catch {
+        return NextResponse.json({ error: "Could not read that KMZ file." }, { status: 400 });
+      }
+    }
   } else {
     const body = await request.json();
     gpx = body.gpx ?? "";
