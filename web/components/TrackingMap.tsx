@@ -229,7 +229,9 @@ export default function TrackingMap({
       el.textContent = label;
       el.title = `${e.name}${e.number ? ` #${e.number}` : ""} — ${STATUS_LABEL[status]}`;
 
-      const coordRows = (e.lat !== null && e.lng !== null)
+      // Precise coordinates are shown only in the organizer's own view.
+      // Public spectators get name/class/status but not exact rider positions.
+      const coordRows = (organizerEventId && e.lat !== null && e.lng !== null)
         ? allCoordFormats(e.lat, e.lng)
         : [];
       const coordHtml = coordRows.length
