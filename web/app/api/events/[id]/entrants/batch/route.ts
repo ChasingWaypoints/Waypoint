@@ -121,7 +121,37 @@ export async function POST(
   const linkFor = (code: string | null): string | null =>
     code ? codeToUser.get(code.toUpperCase()) ?? null : null;
   const unlinkedCodes = uniqueCodes.filter((c) => !codeToUser.get(c));
-  const linkedCount = valid.filter((v) => linkFor(v.code)).length;
+
+  // Collision-safe linking: a Waypoint account already in this event (or
+  // appearing twice in this file) can't be linked to a second entry. Such
+  // rows still import — just unlinked — and are reported back.
+  const resolvedIds = [
+    ...new Set(valid.map((v) => linkFor(v.code)).filter((u): u is string => !!u)),
+  ];
+  const existingUserIds = new Set<string>();
+  if (resolvedIds.length) {
+    const { data: existing } = await guard.supabase!
+      .from("event_participants")
+      .select("user_id")
+      .eq("event_id", id)
+      .in("user_id", resolvedIds);
+    for (const r of (existing ?? []) as { user_id: string | null }[]) {
+      if (r.user_id) existingUserIds.add(r.user_id);
+    }
+  }
+  const usedInBatch = new Set<string>();
+  const alreadyInEvent: string[] = [];
+  const insertRows = valid.map((v) => {
+    let uid = linkFor(v.code);
+    if (uid && (existingUserIds.has(uid) || usedInBatch.has(uid))) {
+      alreadyInEvent.push(v.entrant.display_name);
+      uid = null;
+    } else if (uid) {
+      usedInBatch.add(uid);
+    }
+    return { ...v.entrant, event_id: id, user_id: uid };
+  });
+  const linkedCount = insertRows.filter((r) => r.user_id).length;
 
   // ── Flag duplicates inside the file ─────────────────────────
   const seen = new Map<string, number>();
@@ -140,6 +170,7 @@ export async function POST(
       would_insert: valid.length,
       would_link: linkedCount,
       unlinked_codes: unlinkedCodes,
+      already_in_event: alreadyInEvent,
       errors,
       duplicates,
       preview: valid.slice(0, 10).map((v) => v.entrant),
@@ -172,7 +203,7 @@ export async function POST(
 
   const { data, error } = await guard.supabase!
     .from("event_participants")
-    .insert(valid.map((v) => ({ ...v.entrant, event_id: id, user_id: linkFor(v.code) })))
+    .insert(insertRows)
     .select("id, display_name, rider_number, rider_class, device_type, gep_token");
 
   if (error) {
@@ -186,6 +217,7 @@ export async function POST(
     inserted: data?.length ?? 0,
     linked: linkedCount,
     unlinked_codes: unlinkedCodes,
+    already_in_event: alreadyInEvent,
     skipped: errors.length,
     errors,
     duplicates,

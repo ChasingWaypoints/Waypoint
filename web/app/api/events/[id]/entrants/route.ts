@@ -114,6 +114,12 @@ export async function POST(
     .single();
 
   if (error) {
+    if (error.code === "23505" || /ep_unique_event_user|duplicate key/i.test(error.message)) {
+      return NextResponse.json(
+        { error: "That Waypoint account is already a participant in this event." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

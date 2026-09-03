@@ -91,6 +91,12 @@ export async function PATCH(
     .single();
 
   if (error) {
+    if (error.code === "23505" || /ep_unique_event_user|duplicate key/i.test(error.message)) {
+      return NextResponse.json(
+        { error: "That Waypoint account is already linked to another entry in this event." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   if (!data) {
