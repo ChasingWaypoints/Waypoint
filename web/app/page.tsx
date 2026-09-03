@@ -79,7 +79,12 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "96px 28px 72px" }}>
+      <div style={{
+        backgroundImage: "linear-gradient(180deg, rgba(10,10,10,0.45) 0%, rgba(10,10,10,0.68) 55%, rgba(10,10,10,0.97) 100%), url(/hero.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center 28%",
+      }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "120px 28px 100px" }}>
         <div style={{ color: C.accent, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 20 }}>
           Live event tracking
         </div>
@@ -115,6 +120,7 @@ export default function LandingPage() {
           <span style={{ color: C.muted, fontSize: 14 }}>· no app required</span>
         </div>
       </section>
+      </div>
 
       {/* ── Map strip ────────────────────────────────────────── */}
       <section style={{ borderTop: `1px solid ${C.hairline}`, borderBottom: `1px solid ${C.hairline}`, background: C.surface }}>
