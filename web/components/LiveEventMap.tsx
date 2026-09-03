@@ -36,6 +36,7 @@ export default function LiveEventMap({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [classFilter, setClassFilter] = useState<Set<string>>(new Set());
 
   const selectedRef = useRef(selected);
   useEffect(() => {
@@ -100,6 +101,49 @@ export default function LiveEventMap({
 
   const withFix = entrants.filter((e) => e.lat !== null);
 
+  // ── Class grouping / filtering ──
+  const classKey = (e: Entrant) => (e.class && e.class.trim() ? e.class.trim() : "Unclassified");
+  const classes = Array.from(new Set(entrants.map(classKey))).sort((a, b) =>
+    a === "Unclassified" ? 1 : b === "Unclassified" ? -1 : a.localeCompare(b)
+  );
+  const visible = classFilter.size === 0 ? entrants : entrants.filter((e) => classFilter.has(classKey(e)));
+  const toggleClass = (c: string) =>
+    setClassFilter((prev) => {
+      const n = new Set(prev);
+      if (n.has(c)) n.delete(c); else n.add(c);
+      return n;
+    });
+
+  const renderEntrant = (e: Entrant) => {
+    const mins = e.last_seen_at ? (Date.now() - new Date(e.last_seen_at).getTime()) / 60000 : null;
+    const color = mins === null ? theme.noFix : mins <= 15 ? theme.live : mins <= 60 ? theme.stale : theme.dark;
+    return (
+      <button
+        key={e.id}
+        onClick={() => selectEntrant(e.id)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+          padding: "10px 16px", border: "none", borderBottom: `1px solid ${theme.hairlineSoft}`,
+          background: selected === e.id ? theme.surfaceHi : "transparent", cursor: "pointer",
+          font: `13px ${font.sans}`, color: theme.body,
+        }}
+      >
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontWeight: 600, color: theme.ink }}>
+            {e.number ? `#${e.number} ` : ""}
+            {e.name}
+          </span>
+          <br />
+          <span style={{ color: theme.muted, fontSize: 12 }}>
+            {e.class ? `${e.class} · ` : ""}
+            {timeAgo(e.last_seen_at)}
+          </span>
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div style={{ display: "flex", height: "100%", width: "100%", background: theme.canvas }}>
       {!compact && (
@@ -131,52 +175,44 @@ export default function LiveEventMap({
                 No entrants have reported a position yet.
               </div>
             )}
-            {entrants.map((e) => {
-              const mins = e.last_seen_at
-                ? (Date.now() - new Date(e.last_seen_at).getTime()) / 60000
-                : null;
-              const color =
-                mins === null ? theme.noFix : mins <= 15 ? theme.live : mins <= 60 ? theme.stale : theme.dark;
+
+            {classes.length > 1 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px", borderBottom: `1px solid ${theme.hairline}` }}>
+                {[{ c: "", label: "All" }, ...classes.map((c) => ({ c, label: c }))].map(({ c, label }) => {
+                  const active = c === "" ? classFilter.size === 0 : classFilter.has(c);
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => (c === "" ? setClassFilter(new Set()) : toggleClass(c))}
+                      style={{
+                        font: `600 11px ${font.sans}`,
+                        padding: "4px 10px",
+                        borderRadius: 12,
+                        cursor: "pointer",
+                        border: `1px solid ${active ? theme.accent : theme.hairline}`,
+                        background: active ? theme.accent : "transparent",
+                        color: active ? theme.accentInk : theme.body,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {classes.map((c) => {
+              const items = visible.filter((e) => classKey(e) === c);
+              if (items.length === 0) return null;
               return (
-                <button
-                  key={e.id}
-                  onClick={() => selectEntrant(e.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "10px 16px",
-                    border: "none",
-                    borderBottom: `1px solid ${theme.hairlineSoft}`,
-                    background: selected === e.id ? theme.surfaceHi : "transparent",
-                    cursor: "pointer",
-                    font: `13px ${font.sans}`,
-                    color: theme.body,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: color,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, color: theme.ink }}>
-                      {e.number ? `#${e.number} ` : ""}
-                      {e.name}
-                    </span>
-                    <br />
-                    <span style={{ color: theme.muted, fontSize: 12 }}>
-                      {e.class ? `${e.class} · ` : ""}
-                      {timeAgo(e.last_seen_at)}
-                    </span>
-                  </span>
-                </button>
+                <div key={c}>
+                  {classes.length > 1 && (
+                    <div style={{ padding: "8px 16px", background: theme.canvas, color: theme.muted, font: `700 11px ${font.sans}`, letterSpacing: 1, textTransform: "uppercase" }}>
+                      {c} <span style={{ color: theme.faint }}>({items.length})</span>
+                    </div>
+                  )}
+                  {items.map(renderEntrant)}
+                </div>
               );
             })}
           </div>
@@ -198,7 +234,7 @@ export default function LiveEventMap({
 
       <div style={{ flex: 1, position: "relative" }}>
         <TrackingMap
-          entrants={entrants}
+          entrants={visible}
           routeGpx={event?.route_gpx}
           stages={stages}
           routeName={event?.route_name}
