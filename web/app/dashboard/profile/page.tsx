@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -158,6 +159,7 @@ export default function ProfilePage() {
   const [wpCopied, setWpCopied] = useState(false);
   const [iceToken, setIceToken] = useState("");
   const [iceCopied, setIceCopied] = useState(false);
+  const [iceQr, setIceQr] = useState("");
   const [origin, setOrigin] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -237,6 +239,13 @@ export default function ProfilePage() {
     setIceCopied(true);
     setTimeout(() => setIceCopied(false), 1800);
   }
+
+  useEffect(() => {
+    if (!iceUrl) { setIceQr(""); return; }
+    QRCode.toDataURL(iceUrl, { width: 240, margin: 1, color: { dark: "#0C1E29", light: "#FFFFFF" } })
+      .then(setIceQr)
+      .catch(() => setIceQr(""));
+  }, [iceUrl]);
 
   async function saveProfile() {
     setSavingProfile(true);
@@ -561,6 +570,30 @@ export default function ProfilePage() {
             <p style={{ fontSize: 11, color: "#54697A", margin: "10px 0 0" }}>
               Tip: fill in your blood type and emergency contact above so the card is useful.
             </p>
+
+            {iceQr && (
+              <div style={{ marginTop: 20, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                <img
+                  src={iceQr}
+                  alt="ICE card QR code"
+                  width={140}
+                  height={140}
+                  style={{ background: "#fff", borderRadius: 8, padding: 8, border: "1px solid #1E3B4C" }}
+                />
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <p style={{ fontSize: 12, color: "#C8D4DC", margin: "0 0 10px", lineHeight: 1.5 }}>
+                    Scan to open the card. Print it on a bracelet, helmet, or bike sticker so a responder can reach your info fast.
+                  </p>
+                  <a
+                    href={iceQr}
+                    download="waypoint-ice-qr.png"
+                    style={{ display: "inline-block", background: "#14303F", color: "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                  >
+                    Download QR
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
