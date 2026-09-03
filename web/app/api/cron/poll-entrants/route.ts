@@ -45,6 +45,11 @@ interface Feed {
   last_seen_at: string | null;
 }
 
+// QStash (and most schedulers) POST by default; accept either method.
+export async function POST(request: NextRequest) {
+  return GET(request);
+}
+
 export async function GET(request: NextRequest) {
   // Vercel Cron sends a bearer token when CRON_SECRET is configured.
   // If the secret is set we require it; if not, the route stays open
