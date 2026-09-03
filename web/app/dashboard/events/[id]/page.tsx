@@ -165,6 +165,16 @@ export default function EventDetailPage() {
     await load();
   }
 
+  async function goLive() {
+    if (!session || !event) return;
+    await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ status: "active" }),
+    });
+    await load();
+  }
+
   async function addViewer() {
     const name = newViewerName.trim();
     if (!name || !session) return;
@@ -291,6 +301,14 @@ export default function EventDetailPage() {
               style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
               Tracking Page
             </Link>
+          )}
+          {isOrganizer && !isLive && event.status !== "completed" && event.status !== "cancelled" && (
+            <button
+              onClick={goLive}
+              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            >
+              ● Go Live
+            </button>
           )}
           {isOrganizer && isLive && (
             <button
