@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { authFetch } from "../../../../../lib/authFetch";
 import LiveEventMap from "../../../../../components/LiveEventMap";
-import EntrantManager from "../../../../../components/EntrantManager";
 import EventShareLinks from "../../../../../components/EventShareLinks";
 import { theme, font } from "../../../../../lib/theme";
 
@@ -16,7 +15,7 @@ import { theme, font } from "../../../../../lib/theme";
  * purposes for an event" — everything for one event in one place.
  */
 
-type Tab = "map" | "entrants" | "share";
+type Tab = "map" | "share";
 
 export default function EventTrackPage({
   params,
@@ -89,7 +88,7 @@ export default function EventTrackPage({
         </div>
 
         <nav style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
-          {(["map", "entrants", "share"] as Tab[]).map((t) => (
+          {(["map", "share"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -112,11 +111,6 @@ export default function EventTrackPage({
 
       <main style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto" }}>
         {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} />}
-        {tab === "entrants" && (
-          <div style={{ padding: 24, maxWidth: 1100 }}>
-            <EntrantManager eventId={id} />
-          </div>
-        )}
         {tab === "share" && (
           <div style={{ padding: 24, maxWidth: 800 }}>
             <EventShareLinks eventId={id} shareToken={event.share_token} origin={origin} />

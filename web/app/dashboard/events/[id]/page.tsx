@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import StagesManager from "../../../../components/StagesManager";
 import LiveEventMap from "../../../../components/LiveEventMap";
+import EntrantManager from "../../../../components/EntrantManager";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
@@ -331,7 +332,7 @@ export default function EventDetailPage() {
               color: tab === t ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
           >
-            {t === "riders" ? `Riders (${riders.length})` : t.toUpperCase()}
+            {t === "riders" ? "Entrants" : t.toUpperCase()}
           </button>
         ))}
       </div>
@@ -346,7 +347,9 @@ export default function EventDetailPage() {
       {/* ── RIDERS TAB ── */}
       {tab === "riders" && (
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
+            {isOrganizer && <EntrantManager eventId={event.id} />}
+            {!isOrganizer && (<>
             <SectionLabel>Participants</SectionLabel>
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
               {riders.length === 0 ? (
@@ -393,6 +396,7 @@ export default function EventDetailPage() {
                 );
               })}
             </div>
+            </>)}
           </div>
         </div>
       )}
