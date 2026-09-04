@@ -249,7 +249,12 @@ export default function TrackingMap({
         : [];
       const coordHtml = coordRows.length
         ? `<div style="margin-top:6px;border-top:1px solid #1E3B4C;padding-top:6px">
-             ${coordRows.map((c, i) => `
+             ${coordRows.map((c, i) => c.href ? `
+               <div style="display:flex;gap:6px;align-items:center;margin:3px 0">
+                 <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:44px;flex-shrink:0">${c.label}</span>
+                 <a href="${escapeHtml(c.href)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:0;color:#4DA6FF;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">&#8599; ${escapeHtml(c.value)}</a>
+                 <button class="wp-copy" data-copy="${escapeHtml(c.href)}" title="Copy Google Maps link" aria-label="Copy Google Maps link" style="flex-shrink:0;background:#14303F;color:#C8D4DC;border:1px solid #1E3B4C;border-radius:4px;padding:4px 6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:0">${COPY_ICON}</button>
+               </div>` : `
                <div style="display:flex;gap:6px;align-items:center;margin:3px 0">
                  <span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;width:44px;flex-shrink:0">${c.label}</span>
                  <code style="flex:1;min-width:0;color:${i === 0 ? "#CCFF00" : "#C8D4DC"};font-size:${i === 0 ? "12px" : "11px"};font-weight:${i === 0 ? 700 : 400};user-select:all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.value}</code>

@@ -281,12 +281,16 @@ export function formatUTM(lat: number, lng: number): string {
 }
 
 /** All formats for a coordinate, decimal first. */
-export function allCoordFormats(lat: number, lng: number): { label: string; value: string }[] {
+export function allCoordFormats(
+  lat: number,
+  lng: number
+): { label: string; value: string; href?: string }[] {
   return [
     { label: "Decimal", value: formatDecimal(lat, lng) },
     { label: "DMS", value: formatDMS(lat, lng) },
     { label: "DDM", value: formatDDM(lat, lng) },
-    { label: "UTM", value: formatUTM(lat, lng) },
+    // A tappable Google Maps link — hand a crew the exact spot in one tap.
+    { label: "Maps", value: "Open in Google Maps", href: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` },
   ];
 }
 
