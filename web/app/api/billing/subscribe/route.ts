@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
 import { getStripe } from "../../../../lib/stripe";
+import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 
@@ -33,9 +34,10 @@ export async function POST(request: NextRequest) {
         },
       }],
       metadata: { user_id: user.id, plan: isAnnual ? "annual" : "quarterly", kind: "subscription" },
+      managed_payments: { enabled: false },
       success_url: `${origin}/dashboard?subscribed=1`,
       cancel_url: `${origin}/dashboard`,
-    });
+    } as Stripe.Checkout.SessionCreateParams);
     return NextResponse.json({ url: session.url });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

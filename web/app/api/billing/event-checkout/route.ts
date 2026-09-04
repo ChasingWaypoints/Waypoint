@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
 import { getStripe, eventPriceCents } from "../../../../lib/stripe";
+import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 
@@ -45,9 +46,12 @@ export async function POST(request: NextRequest) {
         },
       }],
       metadata: { event_id: eventId, kind: "event" },
+      // Managed Payments is enabled by default on this Stripe account and would
+      // require a per-item tax_code; we charge a flat fee, so opt the session out.
+      managed_payments: { enabled: false },
       success_url: `${origin}/dashboard/events/${eventId}?paid=1`,
       cancel_url: `${origin}/dashboard/events/${eventId}`,
-    });
+    } as Stripe.Checkout.SessionCreateParams);
     return NextResponse.json({ url: session.url });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
