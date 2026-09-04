@@ -16,7 +16,7 @@ interface Trip {
 
 interface Event {
   id: string; name: string; status: string;
-  join_code: string; my_role: string; created_at: string;
+  join_code: string; my_role: string; created_at: string; rider_count?: number;
 }
 
 const TRIP_STATUS_COLOR: Record<string, string> = {
@@ -205,6 +205,14 @@ export default function DashboardPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", display: "inline-block" }} />
                       <h3 style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{ev.name}</h3>
+                      {(() => {
+                        const isEvent = (ev.rider_count ?? 0) > 10;
+                        return (
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: isEvent ? "#CCFF00" : "#7E93A0", border: `1px solid ${isEvent ? "#CCFF00" : "#3a4550"}`, borderRadius: 10, padding: "1px 8px" }}>
+                            {isEvent ? "Event" : "Ride"}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>
                       Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong>

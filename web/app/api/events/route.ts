@@ -89,6 +89,20 @@ export async function GET(request: NextRequest) {
     else byId.set(ev.id, { ...ev, my_role: "organizer", joined_at: ev.created_at });
   }
 
+  // Rider count per event — drives the Ride (<=10) vs Event (>10) label.
+  const ids = [...byId.keys()];
+  if (ids.length) {
+    const { data: parts } = await supabase
+      .from("event_participants")
+      .select("event_id")
+      .in("event_id", ids);
+    const counts = new Map<string, number>();
+    for (const r of (parts ?? []) as { event_id: string }[]) {
+      counts.set(r.event_id, (counts.get(r.event_id) ?? 0) + 1);
+    }
+    for (const [eid, ev] of byId) ev.rider_count = counts.get(eid) ?? 0;
+  }
+
   const events = [...byId.values()].sort((a, b) =>
     String(b.joined_at ?? "").localeCompare(String(a.joined_at ?? ""))
   );
