@@ -225,7 +225,11 @@ export default function DashboardPage() {
                       })()}
                     </div>
                     <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>
-                      Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong>
+                      {(ev.rider_count ?? 0) <= 10 ? (
+                        <>Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong></>
+                      ) : (
+                        <>{ev.rider_count} riders</>
+                      )}
                       {" · "}
                       <span style={{ fontWeight: 700, color: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 11 }}>{ev.status}</span>
                       {" · "}

@@ -291,8 +291,10 @@ export default function EventDetailPage() {
           <div>
             <h1 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{event.name}</h1>
             <p style={{ fontSize: 11, color: "#7E93A0", margin: 0 }}>
-              Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>
-              {" · "}{riders.length} rider{riders.length !== 1 ? "s" : ""}
+              {riders.length <= 10 && (
+                <>Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>{" · "}</>
+              )}
+              {riders.length} rider{riders.length !== 1 ? "s" : ""}
               {" · "}<span style={{ color: isLive ? "#CCFF00" : "#7E93A0", fontWeight: 700, textTransform: "uppercase" }}>{event.status}</span>
             </p>
           </div>
