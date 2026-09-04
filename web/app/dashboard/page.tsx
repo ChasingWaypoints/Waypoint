@@ -57,6 +57,9 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -85,6 +88,32 @@ export default function DashboardPage() {
   async function signOut() {
     await supabase.auth.signOut();
     router.push("/");
+  }
+
+  async function joinEvent() {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
+    setJoining(true);
+    setJoinError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch("/api/events/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setJoinError(data.error ?? "Could not join. Check the code and try again.");
+        return;
+      }
+      router.push(`/dashboard/events/${data.event_id}`);
+    } catch {
+      setJoinError("Something went wrong. Please try again.");
+    } finally {
+      setJoining(false);
+    }
   }
 
   async function deleteTrip(id: string, name: string) {
@@ -124,6 +153,32 @@ export default function DashboardPage() {
             >
               + Create Event
             </Link>
+          </div>
+
+          {/* Join with a code — the rider workflow */}
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF" }}>Join a ride or event</div>
+              <div style={{ fontSize: 12, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+                Got a join code from an organizer? Enter it to hop on their live map.
+              </div>
+            </div>
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") joinEvent(); }}
+              placeholder="CODE"
+              maxLength={12}
+              style={{ width: 130, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#FFFFFF", fontSize: 15, fontWeight: 700, letterSpacing: 2, textAlign: "center", outline: "none", textTransform: "uppercase" }}
+            />
+            <button
+              onClick={joinEvent}
+              disabled={joining || !joinCode.trim()}
+              style={{ background: joinCode.trim() ? "#CCFF00" : "#1E3B4C", color: joinCode.trim() ? "#0C1E29" : "#7E93A0", border: "none", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: joining || !joinCode.trim() ? "default" : "pointer" }}
+            >
+              {joining ? "Joining…" : "Join"}
+            </button>
+            {joinError && <div style={{ flexBasis: "100%", color: "#FF6B6B", fontSize: 12 }}>{joinError}</div>}
           </div>
 
           {loading ? (

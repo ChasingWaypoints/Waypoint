@@ -263,6 +263,12 @@ export default function EventDetailPage() {
   const publicUrl = `${gepBase}/event/${event.share_token}`;
   const embedUrl = `${gepBase}/embed/${event.share_token}`;
   const embedCode = `<iframe src="${embedUrl}" width="100%" height="600" style="border:0" allow="fullscreen"></iframe>`;
+  // Group ride (≤10 riders) vs event (>10) — drives the shared wording.
+  const groupNoun = riders.length > 10 ? "event" : "ride";
+  const inviteText =
+    `You're invited to ${event.name} on Waypoint.\n\n` +
+    `Already a Waypoint user? Open your dashboard, tap \u201cJoin a ride or event\u201d, and enter code: ${event.join_code}\n\n` +
+    `New to Waypoint or just following along? Watch the live map: ${publicUrl}`;
 
   const NAV_H = 48;
   const HEADER_H = 56;
@@ -347,6 +353,15 @@ export default function EventDetailPage() {
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <div style={{ font: "800 26px system-ui", letterSpacing: 4, color: "#CCFF00", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 6, padding: "10px 16px", flex: 1, textAlign: "center" }}>{event.join_code}</div>
                 <button onClick={() => copy(event.join_code, "code-only")} style={modalBtn}>{copyFeedback === "code-only" ? "Copied!" : "Copy"}</button>
+              </div>
+            </div>
+
+            <div style={shareSection}>
+              <div style={shareLabel}>Invite message — {groupNoun}</div>
+              <p style={shareHelp}>A ready-to-send note for the riders you're inviting to this {groupNoun}.</p>
+              <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{inviteText}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button onClick={() => copy(inviteText, "invite")} style={modalBtn}>{copyFeedback === "invite" ? "Copied!" : "Copy invite"}</button>
               </div>
             </div>
 
