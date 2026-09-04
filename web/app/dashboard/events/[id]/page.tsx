@@ -24,7 +24,7 @@ interface AccessEntry { display_name: string; type: string; role?: string; acces
 interface EventDetail {
   id: string; name: string; status: string; join_code: string; share_token: string;
   route_gpx: string | null; route_name: string | null; organizer_id: string;
-  rider_classes: string[];
+  rider_classes: string[]; paid?: boolean; comped?: boolean;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -178,6 +178,18 @@ export default function EventDetailPage() {
     await load();
   }
 
+  async function startEventCheckout() {
+    if (!session) return;
+    const res = await fetch("/api/billing/event-checkout", {
+      method: "POST",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ eventId: id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.url) window.location.href = data.url;
+    else alert(data.error ?? "Could not start checkout. Please try again.");
+  }
+
   async function addViewer() {
     const name = newViewerName.trim();
     if (!name || !session) return;
@@ -300,6 +312,21 @@ export default function EventDetailPage() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {isOrganizer && event.paid && (
+            <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
+          )}
+          {isOrganizer && !event.paid && event.comped && (
+            <span style={{ border: "1px solid #4A5A25", color: "#CCFF00", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>★ Sponsored</span>
+          )}
+          {isOrganizer && !event.paid && !event.comped && (
+            <button
+              onClick={startEventCheckout}
+              title="Upgrade this ride to a paid event (needed past 10 riders)"
+              style={{ background: "#FFFE15", border: "1px solid #FFFE15", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            >
+              Upgrade $200
+            </button>
+          )}
           <button
             onClick={() => setShowShare(true)}
             style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}

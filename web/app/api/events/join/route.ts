@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   // Look up event by join code
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, status, organizer_id")
+    .select("id, name, status, organizer_id, paid, comped")
     .eq("join_code", code)
     .maybeSingle();
 
@@ -59,6 +59,22 @@ export async function POST(request: NextRequest) {
   if (existing) {
     // Already joined — return the event ID so the app can navigate there
     return NextResponse.json({ event_id: event.id, already_joined: true });
+  }
+
+  // Free-ride cap: a group ride is capped at 10 riders. Beyond that the event
+  // must be paid (or comped by the platform). Already-joined riders are never
+  // blocked (handled above); this only gates a NEW joiner past the limit.
+  if (!event.paid && !event.comped) {
+    const { count } = await supabase
+      .from("event_participants")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", event.id);
+    if ((count ?? 0) >= 10) {
+      return NextResponse.json(
+        { error: "This ride has reached its 10-rider limit. Ask the organizer to upgrade it to a paid event.", code: "cap_reached" },
+        { status: 402 }
+      );
+    }
   }
 
   const displayName =
