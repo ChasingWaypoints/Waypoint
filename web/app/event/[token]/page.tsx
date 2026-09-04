@@ -17,7 +17,7 @@ export default function EventPage() {
   const { token } = useParams<{ token: string }>();
   const [name, setName] = useState<string>("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [sponsors, setSponsors] = useState<{ name?: string; logo_url: string }[]>([]);
+  const [sponsors, setSponsors] = useState<{ name?: string; logo_url: string; url?: string; headline?: boolean }[]>([]);
 
   // Pull the event name for the header/title; the map loads its own data.
   useEffect(() => {
@@ -73,23 +73,64 @@ export default function EventPage() {
           </span>
         </div>
 
-        {/* Sponsor strip — right side of the header (branding feature). */}
+        {/* Headline sponsors — right side of the header. */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-          {sponsors.map((sp, i) =>
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={sp.logo_url}
-              alt={sp.name ?? ""}
-              title={sp.name ?? ""}
-              style={{ height: 30, width: "auto", maxWidth: 120, objectFit: "contain" }}
-            />
-          )}
+          {sponsors.filter((sp) => sp.headline).map((sp, i) => (
+            <SponsorLogo key={i} sp={sp} height={32} />
+          ))}
         </div>
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>
         <LiveEventMap shareToken={token} />
       </div>
+
+      {sponsors.some((sp) => !sp.headline) && (
+        <div
+          style={{
+            background: "#0C1E29",
+            borderTop: "1px solid #1E3B4C",
+            height: 52,
+            padding: "0 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            flexShrink: 0,
+            overflowX: "auto",
+          }}
+        >
+          <span style={{ color: "#7E93A0", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
+            Presented&nbsp;by
+          </span>
+          {sponsors.filter((sp) => !sp.headline).map((sp, i) => (
+            <SponsorLogo key={i} sp={sp} height={28} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function SponsorLogo({
+  sp,
+  height,
+}: {
+  sp: { name?: string; logo_url: string; url?: string };
+  height: number;
+}) {
+  // eslint-disable-next-line @next/next/no-img-element
+  const img = (
+    <img
+      src={sp.logo_url}
+      alt={sp.name ?? ""}
+      title={sp.name ?? ""}
+      style={{ height, width: "auto", maxWidth: 130, objectFit: "contain", flexShrink: 0, display: "block" }}
+    />
+  );
+  return sp.url ? (
+    <a href={sp.url} target="_blank" rel="noopener noreferrer sponsored" style={{ display: "block", flexShrink: 0 }}>
+      {img}
+    </a>
+  ) : (
+    img
   );
 }

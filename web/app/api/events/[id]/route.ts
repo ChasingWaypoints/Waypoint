@@ -91,6 +91,24 @@ export async function PATCH(
       : [];
   }
 
+  // Branding: event logo URL + sponsor list (validated/sanitised).
+  if ("logo_url" in body) {
+    updates.logo_url = body.logo_url ? String(body.logo_url) : null;
+  }
+  if ("sponsors" in body) {
+    updates.sponsors = Array.isArray(body.sponsors)
+      ? body.sponsors
+          .filter((sp: { logo_url?: unknown }) => sp && typeof sp.logo_url === "string" && sp.logo_url)
+          .slice(0, 24)
+          .map((sp: { name?: unknown; logo_url: string; url?: unknown; headline?: unknown }) => ({
+            name: sp.name ? String(sp.name).slice(0, 80) : "",
+            logo_url: String(sp.logo_url),
+            url: sp.url ? String(sp.url).slice(0, 300) : "",
+            headline: !!sp.headline,
+          }))
+      : [];
+  }
+
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);

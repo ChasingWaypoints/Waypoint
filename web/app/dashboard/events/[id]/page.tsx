@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import StagesManager from "../../../../components/StagesManager";
+import EventBranding from "../../../../components/EventBranding";
 import LiveEventMap from "../../../../components/LiveEventMap";
 import EntrantManager from "../../../../components/EntrantManager";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -405,6 +406,9 @@ export default function EventDetailPage() {
       {tab === "admin" && isOrganizer && (
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* Branding: event logo + sponsors */}
+            <EventBranding eventId={id} />
 
             {/* Stages */}
             <StagesManager eventId={id} />
