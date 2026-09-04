@@ -47,6 +47,9 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [replace, setReplace] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editClassId, setEditClassId] = useState<string | null>(null);
+  const [classDraft, setClassDraft] = useState("");
+  const [savingClass, setSavingClass] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -131,6 +134,32 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
     if (!confirm(`Remove ${name} from this event?`)) return;
     await authFetch(`/api/events/${eventId}/entrants/${id}`, { method: "DELETE" });
     await load();
+  }
+
+  // Inline class edit — organizers fix a class on the fly (mistakes, or a
+  // rider switches class last-minute). PATCH merges onto the current row.
+  async function saveClass(id: string) {
+    const value = classDraft.trim();
+    const current = entrants.find((e) => e.id === id)?.rider_class ?? "";
+    setEditClassId(null);
+    if (value === (current ?? "")) return; // no-op
+    setSavingClass(true);
+    try {
+      const res = await authFetch(`/api/events/${eventId}/entrants/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ class: value }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? "Could not update the class");
+        return;
+      }
+      setError(null);
+      setEntrants((prev) => prev.map((e) => (e.id === id ? { ...e, rider_class: value || null } : e)));
+    } finally {
+      setSavingClass(false);
+    }
   }
 
   const reporting = entrants.filter((e) => e.status === "live").length;
@@ -344,7 +373,31 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
                   <tr key={e.id} style={{ borderBottom: `1px solid ${theme.hairlineSoft}` }}>
                     <td style={td}>{e.rider_number ?? "—"}</td>
                     <td style={{ ...td, fontWeight: 600, color: theme.ink }}>{e.display_name}</td>
-                    <td style={td}>{e.rider_class ?? "—"}</td>
+                    <td style={td}>
+                      {editClassId === e.id ? (
+                        <input
+                          autoFocus
+                          value={classDraft}
+                          disabled={savingClass}
+                          onChange={(ev) => setClassDraft(ev.target.value)}
+                          onKeyDown={(ev) => {
+                            if (ev.key === "Enter") saveClass(e.id);
+                            if (ev.key === "Escape") setEditClassId(null);
+                          }}
+                          onBlur={() => saveClass(e.id)}
+                          placeholder="Class"
+                          style={{ width: 92, font: `13px ${font.sans}`, padding: "3px 6px", background: theme.canvas, color: theme.ink, border: `1px solid ${theme.accent}`, borderRadius: 4 }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => { setEditClassId(e.id); setClassDraft(e.rider_class ?? ""); }}
+                          title="Click to edit class"
+                          style={{ background: "transparent", border: "none", color: theme.body, cursor: "pointer", font: `13px ${font.sans}`, padding: "2px 4px", borderRadius: 4, textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}
+                        >
+                          {e.rider_class ?? "—"}
+                        </button>
+                      )}
+                    </td>
                     <td style={td}>{e.device_type ?? "—"}</td>
                     <td style={td}>
                       <span style={{ color: s.color }}>&#9679;</span> {s.label}

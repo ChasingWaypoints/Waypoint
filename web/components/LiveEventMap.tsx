@@ -37,6 +37,10 @@ export default function LiveEventMap({
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [classFilter, setClassFilter] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(
+    () => (typeof window !== "undefined" ? window.innerWidth >= 768 : true)
+  );
 
   const selectedRef = useRef(selected);
   useEffect(() => {
@@ -107,6 +111,16 @@ export default function LiveEventMap({
     a === "Unclassified" ? 1 : b === "Unclassified" ? -1 : a.localeCompare(b)
   );
   const visible = classFilter.size === 0 ? entrants : entrants.filter((e) => classFilter.has(classKey(e)));
+  // The search box narrows only the sidebar list — the map still shows every
+  // class-filtered entrant, so you can find someone in the list and fly to them.
+  const q = search.trim().toLowerCase();
+  const listVisible = q
+    ? visible.filter(
+        (e) =>
+          (e.name && e.name.toLowerCase().includes(q)) ||
+          (e.number != null && String(e.number).toLowerCase().includes(q))
+      )
+    : visible;
   const toggleClass = (c: string) =>
     setClassFilter((prev) => {
       const n = new Set(prev);
@@ -145,8 +159,8 @@ export default function LiveEventMap({
   };
 
   return (
-    <div style={{ display: "flex", height: "100%", width: "100%", background: theme.canvas }}>
-      {!compact && (
+    <div style={{ display: "flex", height: "100%", width: "100%", background: theme.canvas, position: "relative" }}>
+      {!compact && sidebarOpen && (
         <aside
           style={{
             width: 300,
@@ -159,20 +173,53 @@ export default function LiveEventMap({
             color: theme.body,
           }}
         >
-          <div style={{ padding: "14px 16px", borderBottom: `1px solid ${theme.hairline}` }}>
-            <div style={{ font: `700 16px ${font.sans}`, color: theme.ink }}>
-              {event?.name}
+          <div style={{ padding: "14px 16px", borderBottom: `1px solid ${theme.hairline}`, display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ font: `700 16px ${font.sans}`, color: theme.ink }}>
+                {event?.name}
+              </div>
+              <div style={{ color: theme.muted, marginTop: 4 }}>
+                {withFix.length} of {entrants.length} reporting
+                {lastRefresh && <> &middot; updated {lastRefresh.toLocaleTimeString()}</>}
+              </div>
             </div>
-            <div style={{ color: theme.muted, marginTop: 4 }}>
-              {withFix.length} of {entrants.length} reporting
-              {lastRefresh && <> &middot; updated {lastRefresh.toLocaleTimeString()}</>}
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              title="Hide roster"
+              aria-label="Hide roster"
+              style={{
+                flexShrink: 0, width: 26, height: 26, borderRadius: 4, cursor: "pointer",
+                border: `1px solid ${theme.hairline}`, background: "transparent",
+                color: theme.body, font: `700 14px ${font.sans}`, lineHeight: 1,
+              }}
+            >
+              &#8249;
+            </button>
+          </div>
+
+          <div style={{ padding: "10px 12px", borderBottom: `1px solid ${theme.hairline}` }}>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search competitors…"
+              style={{
+                width: "100%", boxSizing: "border-box", padding: "7px 10px",
+                font: `13px ${font.sans}`, color: theme.ink, background: theme.canvas,
+                border: `1px solid ${theme.hairline}`, borderRadius: 6, outline: "none",
+              }}
+            />
           </div>
 
           <div style={{ overflowY: "auto", flex: 1 }}>
             {entrants.length === 0 && (
               <div style={{ padding: 16, color: theme.muted }}>
                 No entrants have reported a position yet.
+              </div>
+            )}
+
+            {entrants.length > 0 && q && listVisible.length === 0 && (
+              <div style={{ padding: 16, color: theme.muted }}>
+                No competitors match &ldquo;{search}&rdquo;.
               </div>
             )}
 
@@ -202,7 +249,7 @@ export default function LiveEventMap({
             )}
 
             {classes.map((c) => {
-              const items = visible.filter((e) => classKey(e) === c);
+              const items = listVisible.filter((e) => classKey(e) === c);
               if (items.length === 0) return null;
               return (
                 <div key={c}>
@@ -230,6 +277,23 @@ export default function LiveEventMap({
             </div>
           )}
         </aside>
+      )}
+
+      {!compact && !sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          title="Show roster"
+          aria-label="Show roster"
+          style={{
+            position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
+            zIndex: 3, cursor: "pointer", border: `1px solid ${theme.hairline}`,
+            borderLeft: "none", borderTopRightRadius: 6, borderBottomRightRadius: 6,
+            background: theme.surface, color: theme.ink, padding: "14px 6px",
+            font: `700 12px ${font.sans}`, writingMode: "vertical-rl", letterSpacing: 1,
+          }}
+        >
+          &#8250; Riders
+        </button>
       )}
 
       <div style={{ flex: 1, position: "relative" }}>
