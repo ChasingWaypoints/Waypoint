@@ -26,7 +26,7 @@ const EVENT_STATUS_COLOR: Record<string, string> = {
   active: "#CCFF00", completed: "#7E93A0", cancelled: "#FF3B30",
 };
 
-function Nav({ email, onSignOut }: { email: string; onSignOut: () => void }) {
+function Nav({ email, onSignOut, isAdmin }: { email: string; onSignOut: () => void; isAdmin?: boolean }) {
   return (
     <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
       <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
@@ -34,6 +34,14 @@ function Nav({ email, onSignOut }: { email: string; onSignOut: () => void }) {
       </Link>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ color: "#7E93A0", fontSize: 13 }}>{email}</span>
+        {isAdmin && (
+          <Link
+            href="/dashboard/admin"
+            style={{ background: "transparent", border: "1px solid #CCFF00", color: "#CCFF00", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          >
+            Admin
+          </Link>
+        )}
         <Link
           href="/dashboard/profile"
           style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
@@ -60,11 +68,13 @@ export default function DashboardPage() {
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) { window.location.href = "/auth/login"; return; }
       setUserEmail(session.user.email ?? "");
+      supabase.rpc("am_i_super_admin").then(({ data }) => setIsAdmin(data === true));
 
       const token = session.access_token;
 
@@ -136,7 +146,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
-      <Nav email={userEmail} onSignOut={signOut} />
+      <Nav email={userEmail} onSignOut={signOut} isAdmin={isAdmin} />
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "40px 24px", width: "100%" }}>
 
