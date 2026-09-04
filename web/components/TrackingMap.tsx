@@ -485,7 +485,7 @@ export default function TrackingMap({
             id === "wx-rain"
               ? {
                   "raster-opacity": opacity,
-                  "raster-brightness-max": 0.2,
+                  "raster-brightness-max": 0.05,
                   "raster-contrast": 0.4,
                   "raster-saturation": 0.6,
                 }
