@@ -81,6 +81,7 @@ export default function EventDetailPage() {
   const [newViewerName, setNewViewerName] = useState("");
   const [addingViewer, setAddingViewer] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string>("");
+  const [showShare, setShowShare] = useState(false);
 
   // Settings tab — class editor
   const [classInput, setClassInput] = useState("");
@@ -259,6 +260,9 @@ export default function EventDetailPage() {
   const isLive = event.status === "active";
   const gepBase = typeof window !== "undefined" ? window.location.origin : "";
   const myGepUrl = myGepToken ? `${gepBase}/api/events/${event.id}/gep/${myGepToken}/network-link.kml` : null;
+  const publicUrl = `${gepBase}/event/${event.share_token}`;
+  const embedUrl = `${gepBase}/embed/${event.share_token}`;
+  const embedCode = `<iframe src="${embedUrl}" width="100%" height="600" style="border:0" allow="fullscreen"></iframe>`;
 
   const NAV_H = 48;
   const HEADER_H = 56;
@@ -289,10 +293,10 @@ export default function EventDetailPage() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
-            onClick={() => copy(`Join code: ${event.join_code}\n\nFollow live: ${gepBase}/event/${event.share_token}`, "join-code")}
-            style={{ background: "transparent", border: "1px solid #3a4550", color: copyFeedback === "join-code" ? "#CCFF00" : "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            onClick={() => setShowShare(true)}
+            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
           >
-            {copyFeedback === "join-code" ? "Copied!" : "Share Code"}
+            Share
           </button>
           <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer"
             style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
@@ -322,6 +326,52 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {showShare && (
+        <div
+          onClick={() => setShowShare(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 540, background: "#0C1E29", border: "1px solid #1E3B4C", borderRadius: 8, padding: 24, color: "#C8D4DC", maxHeight: "90vh", overflowY: "auto" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Share this event</h2>
+              <button onClick={() => setShowShare(false)} aria-label="Close" style={{ background: "transparent", border: "none", color: "#7E93A0", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <div style={shareSection}>
+              <div style={shareLabel}>Join code — for riders</div>
+              <p style={shareHelp}>Riders enter this code in the app to join the event and start sharing their location.</p>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <div style={{ font: "800 26px system-ui", letterSpacing: 4, color: "#CCFF00", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 6, padding: "10px 16px", flex: 1, textAlign: "center" }}>{event.join_code}</div>
+                <button onClick={() => copy(event.join_code, "code-only")} style={modalBtn}>{copyFeedback === "code-only" ? "Copied!" : "Copy"}</button>
+              </div>
+            </div>
+
+            <div style={shareSection}>
+              <div style={shareLabel}>Public spectator link</div>
+              <p style={shareHelp}>Anyone with this link can watch the live map — no account needed.</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input readOnly value={publicUrl} style={shareInput} onFocus={(e) => e.currentTarget.select()} />
+                <button onClick={() => copy(publicUrl, "pub")} style={modalBtn}>{copyFeedback === "pub" ? "Copied!" : "Copy"}</button>
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Open</a>
+              </div>
+            </div>
+
+            <div style={{ ...shareSection, marginBottom: 0, borderBottom: "none" }}>
+              <div style={shareLabel}>Embed on your website</div>
+              <p style={shareHelp}>Paste this into your event site — the map stays live and updates itself. Adjust width/height to taste.</p>
+              <code style={shareCode}>{embedCode}</code>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button onClick={() => copy(embedCode, "embed")} style={modalBtn}>{copyFeedback === "embed" ? "Copied!" : "Copy embed code"}</button>
+                <a href={embedUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Preview</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tab bar */}
       <div style={{ display: "flex", background: "#0C1E29", borderBottom: "1px solid #1E3B4C", flexShrink: 0, height: TABS_H }}>
@@ -592,3 +642,11 @@ export default function EventDetailPage() {
     </div>
   );
 }
+
+const shareSection: React.CSSProperties = { paddingBottom: 18, marginBottom: 18, borderBottom: "1px solid #1E3B4C" };
+const shareLabel: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#7E93A0", marginBottom: 4 };
+const shareHelp: React.CSSProperties = { fontSize: 13, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 };
+const shareInput: React.CSSProperties = { flex: 1, minWidth: 0, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#fff", fontSize: 13, borderRadius: 4, outline: "none" };
+const shareCode: React.CSSProperties = { display: "block", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: 12, fontFamily: "monospace", wordBreak: "break-all", whiteSpace: "pre-wrap" };
+const modalBtn: React.CSSProperties = { background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 };
+const modalLinkBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 };
