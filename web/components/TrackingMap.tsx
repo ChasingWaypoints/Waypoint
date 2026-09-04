@@ -484,10 +484,13 @@ export default function TrackingMap({
           const paint =
             id === "wx-rain"
               ? {
+                  // Vivid, saturated rain: keep the colour (near-full brightness)
+                  // and push saturation/contrast so precipitation reads by hue
+                  // against the tan/green satellite base rather than as a dark blob.
                   "raster-opacity": opacity,
-                  "raster-brightness-max": 0.1,
-                  "raster-contrast": 0.4,
-                  "raster-saturation": 0.6,
+                  "raster-brightness-max": 0.9,
+                  "raster-contrast": 0.5,
+                  "raster-saturation": 1,
                 }
               : { "raster-opacity": opacity };
           m.addLayer(
@@ -500,6 +503,34 @@ export default function TrackingMap({
         if (m.getSource(id)) m.removeSource(id);
       }
     };
+
+    // Base-mute: a translucent fill inserted above the satellite but below the
+    // weather layers, so the busy imagery quiets down (lightly) while the vivid
+    // precipitation stays bright — added first so it sits lowest of the three.
+    if (weatherRain || weatherTemp) {
+      if (!m.getSource("wx-dim")) {
+        m.addSource("wx-dim", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]],
+            },
+          },
+        });
+      }
+      if (!m.getLayer("wx-dim")) {
+        m.addLayer(
+          { id: "wx-dim", type: "fill", source: "wx-dim", paint: { "fill-color": "#060A0E", "fill-opacity": 0.2 } },
+          beforeId && m.getLayer(beforeId) ? beforeId : undefined
+        );
+      }
+    } else {
+      if (m.getLayer("wx-dim")) m.removeLayer("wx-dim");
+      if (m.getSource("wx-dim")) m.removeSource("wx-dim");
+    }
 
     // Temp is the broad colour field; rain sits above it, both under overlays.
     sync("wx-temp", "temp", weatherTemp, 0.72);
