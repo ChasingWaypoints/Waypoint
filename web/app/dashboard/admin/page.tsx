@@ -19,6 +19,8 @@ interface AdminEvent {
   organizer_email: string | null;
   participant_count: number;
   reporting_count: number;
+  paid: boolean;
+  comped: boolean;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -59,6 +61,21 @@ export default function AdminPage() {
         e.join_code.toLowerCase().includes(s)
     );
   }, [events, q]);
+
+  async function toggleComp(e: AdminEvent) {
+    const next = !e.comped;
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/admin/events/${e.id}/comp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+      body: JSON.stringify({ comped: next, reason: next ? "Platform-sponsored" : null }),
+    });
+    if (res.ok) {
+      setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, comped: next } : x)));
+    } else {
+      setError("Could not update comp status.");
+    }
+  }
 
   const stats = useMemo(() => {
     const active = events.filter((e) => e.status === "active").length;
@@ -114,12 +131,13 @@ export default function AdminPage() {
               <th style={th}>Status</th>
               <th style={th}>Created</th>
               <th style={th}>Flags</th>
+              <th style={th}>Billing</th>
               <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td style={td} colSpan={8}><span style={{ color: "#7E93A0" }}>No events match.</span></td></tr>
+              <tr><td style={td} colSpan={9}><span style={{ color: "#7E93A0" }}>No events match.</span></td></tr>
             ) : filtered.map((e) => {
               const isEvent = e.participant_count > 10;
               const overCap = e.participant_count > 60;
@@ -147,7 +165,25 @@ export default function AdminPage() {
                     {isEvent && !overCap && <span style={flag("#FFCF6B", "#2A2410", "#5A4A25")}>paid tier</span>}
                     {!isEvent && <span style={{ color: "#54697A", fontSize: 11 }}>—</span>}
                   </td>
+                  <td style={td}>
+                    {e.paid ? (
+                      <span style={flag("#1FE0A0", "#0E2A22", "#1F5A47")}>Paid</span>
+                    ) : e.comped ? (
+                      <span style={flag("#CCFF00", "#26330A", "#4A5A25")}>Comped</span>
+                    ) : isEvent ? (
+                      <span style={{ color: "#FFCF6B", fontSize: 11, fontWeight: 700 }}>Unpaid</span>
+                    ) : (
+                      <span style={{ color: "#54697A", fontSize: 11 }}>Free</span>
+                    )}
+                  </td>
                   <td style={{ ...td, whiteSpace: "nowrap" }}>
+                    <button
+                      onClick={() => toggleComp(e)}
+                      title={e.comped ? "Remove comp" : "Sponsor / comp this event"}
+                      style={{ background: "transparent", border: `1px solid ${e.comped ? "#CCFF00" : "#3a4550"}`, color: e.comped ? "#CCFF00" : "#C8D4DC", padding: "4px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
+                    >
+                      {e.comped ? "Uncomp" : "Comp"}
+                    </button>
                     <a href={`/event/${e.share_token}`} target="_blank" rel="noopener noreferrer" style={{ color: "#CCFF00", textDecoration: "none", fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>
                       View ↗
                     </a>
