@@ -101,7 +101,7 @@ export default function EventShareLinks({
         {creds.length > 0 && (
           <ul style={{ margin: "14px 0 0", padding: 0, listStyle: "none" }}>
             {creds.map((c) => {
-              const url = `${origin}/api/events/${eventId}/gep/${c.gep_token}/network-link.kml`;
+              const url = `${origin}/api/events/${eventId}/gep/${c.gep_token}/track.kml`;
               return (
                 <li
                   key={c.id}

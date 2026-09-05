@@ -406,7 +406,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
                     <td style={td}>
                       {e.gep_token ? (
                         <a
-                          href={`/api/events/${eventId}/gep/${e.gep_token}/network-link.kml`}
+                          href={`/api/events/${eventId}/gep/${e.gep_token}/track.kml`}
                           style={{ color: theme.accent }}
                         >
                           KML
