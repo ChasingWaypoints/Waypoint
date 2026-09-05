@@ -338,9 +338,9 @@ export default function DashboardPage() {
               <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Your Trips</p>
               <h2 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Track History</h2>
             </div>
-            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "10px 16px", maxWidth: 320, fontSize: 12, color: "#7E93A0", lineHeight: 1.5 }}>
-              Personal trips are recorded from the mobile app. For an event, use <strong style={{ color: "#CCFF00" }}>Create Event</strong> above.
-            </div>
+            <Link href="/track" style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", whiteSpace: "nowrap" }}>
+              ● Track from this phone
+            </Link>
           </div>
 
           {loading ? (

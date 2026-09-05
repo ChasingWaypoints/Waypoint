@@ -98,3 +98,6 @@ input, select, textarea {
   .wp-nav-actions { gap: 8px !important; flex-wrap: wrap; justify-content: flex-end; }
   .wp-nav-email { display: none !important; }
 }
+
+/* Live-tracking pulse dot (browser /track). */
+.wp-pulse { animation: pulse 1.5s ease-in-out infinite; }
