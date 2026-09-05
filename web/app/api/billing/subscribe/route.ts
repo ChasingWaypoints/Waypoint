@@ -5,18 +5,19 @@ import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 
-// POST /api/billing/subscribe { plan: "annual" | "quarterly" }
-// Personal subscription: $24/yr or $15 per 3 months. Returns a Checkout URL.
+// POST /api/billing/subscribe { plan: "individual" | "individual_plus" }
+// Personal subscription: Individual $15/yr or Individual Plus $29/yr. Returns a
+// Checkout URL.
 export async function POST(request: NextRequest) {
   const { user } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { plan } = await request.json().catch(() => ({}));
-  const isAnnual = plan !== "quarterly";
-  const recurring: { interval: "year" | "month"; interval_count: number } = isAnnual
-    ? { interval: "year", interval_count: 1 }
-    : { interval: "month", interval_count: 3 };
-  const amount = isAnnual ? 2400 : 1500;
+  const isPlus = plan === "individual_plus";
+  const recurring: { interval: "year" | "month"; interval_count: number } = {
+    interval: "year", interval_count: 1,
+  };
+  const amount = isPlus ? 2900 : 1500;
 
   const origin = request.headers.get("origin") ?? new URL(request.url).origin;
   try {
@@ -30,10 +31,10 @@ export async function POST(request: NextRequest) {
           currency: "usd",
           unit_amount: amount,
           recurring,
-          product_data: { name: `Waypoint Personal — ${isAnnual ? "Annual" : "3-month"}` },
+          product_data: { name: isPlus ? "Waypoint Individual Plus" : "Waypoint Individual" },
         },
       }],
-      metadata: { user_id: user.id, plan: isAnnual ? "annual" : "quarterly", kind: "subscription" },
+      metadata: { user_id: user.id, plan: isPlus ? "individual_plus" : "individual", kind: "subscription" },
       managed_payments: { enabled: false },
       success_url: `${origin}/dashboard?subscribed=1`,
       cancel_url: `${origin}/dashboard`,

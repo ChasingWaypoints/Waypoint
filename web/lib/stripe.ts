@@ -10,12 +10,12 @@ export function getStripe(): Stripe {
 }
 
 // ── Event seat pricing ──────────────────────────────────────────────────────
-// $200 base unlocks 60 seats. Capacity beyond that is bought in blocks of 20
-// seats for $40 ($2/seat). The join route enforces seats_paid as a hard cap,
+// $200 base unlocks 40 seats. Capacity beyond that is bought in blocks of 10
+// seats for $40 ($4/seat). The join route enforces seats_paid as a hard cap,
 // so overage can never leak on for free.
-export const BASE_SEATS = 60;
+export const BASE_SEATS = 40;
 export const BASE_CENTS = 20000;
-export const SEATS_PER_BLOCK = 20;
+export const SEATS_PER_BLOCK = 10;
 export const SEAT_BLOCK_CENTS = 4000;
 
 /** Blocks of 20 needed to cover `count` entrants beyond the 60 base. */

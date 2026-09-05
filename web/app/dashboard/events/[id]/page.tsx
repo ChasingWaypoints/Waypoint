@@ -330,10 +330,10 @@ export default function EventDetailPage() {
               <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
               <button
                 onClick={startAddSeats}
-                title="Add 20 more rider seats for $40"
+                title="Add 10 more rider seats for $40"
                 style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
               >
-                + 20 seats · $40
+                + 10 seats · $40
               </button>
             </>
           )}

@@ -129,7 +129,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function startSubscribe(plan: "annual" | "quarterly") {
+  async function startSubscribe(plan: "individual" | "individual_plus") {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch("/api/billing/subscribe", {
       method: "POST",
@@ -282,8 +282,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => startSubscribe("annual")} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$24 / year</button>
-              <button onClick={() => startSubscribe("quarterly")} style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$15 / 3 mo</button>
+              <button onClick={() => startSubscribe("individual")} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$15 / year</button>
+              <button onClick={() => startSubscribe("individual_plus")} style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Plus · $29 / year</button>
             </div>
           </div>
         )}
