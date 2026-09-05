@@ -103,6 +103,12 @@ export async function GET(
     return new NextResponse("Invalid or expired GEP token", { status: 401 });
   }
 
+  // Suspended events go dark on every feed, not just the public page.
+  const { data: susp } = await supabase.from("events").select("suspended_at").eq("id", id).maybeSingle();
+  if (susp?.suspended_at) {
+    return new NextResponse("This event is currently unavailable.", { status: 403 });
+  }
+
   const holderName: string = tokenData.holder_name;
   const participantId: string | null = tokenData.participant_id ?? null;
   const credentialId: string | null = tokenData.credential_id ?? null;

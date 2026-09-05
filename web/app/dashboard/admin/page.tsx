@@ -22,6 +22,8 @@ interface AdminEvent {
   reporting_count: number;
   paid: boolean;
   comped: boolean;
+  suspended?: boolean;
+  suspend_reason?: string | null;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -75,6 +77,26 @@ export default function AdminPage() {
       setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, comped: next } : x)));
     } else {
       setError("Could not update comp status.");
+    }
+  }
+
+  async function toggleSuspend(e: AdminEvent) {
+    const next = !e.suspended;
+    let reason: string | null = null;
+    if (next) {
+      reason = window.prompt("Reason for suspending this event? (T&C violation, etc.)");
+      if (reason === null) return; // cancelled
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/admin/events/${e.id}/suspend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+      body: JSON.stringify({ suspended: next, reason }),
+    });
+    if (res.ok) {
+      setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, suspended: next, suspend_reason: reason } : x)));
+    } else {
+      setError("Could not update suspension.");
     }
   }
 
@@ -164,6 +186,7 @@ export default function AdminPage() {
                   <td style={td}>
                     {overCap && <span style={flag("#FF6B6B", "#2A1214", "#5A2530")}>60+ overage</span>}
                     {isEvent && !overCap && <span style={flag("#FFCF6B", "#2A2410", "#5A4A25")}>paid tier</span>}
+                    {e.suspended && <span style={flag("#FF3B30", "#2A1214", "#5A2525")} title={e.suspend_reason ?? undefined}>suspended</span>}
                     {!isEvent && <span style={{ color: "#54697A", fontSize: 11 }}>—</span>}
                   </td>
                   <td style={td}>
@@ -184,6 +207,13 @@ export default function AdminPage() {
                       style={{ background: "transparent", border: `1px solid ${e.comped ? "#CCFF00" : "#3a4550"}`, color: e.comped ? "#CCFF00" : "#C8D4DC", padding: "4px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
                     >
                       {e.comped ? "Uncomp" : "Comp"}
+                    </button>
+                    <button
+                      onClick={() => toggleSuspend(e)}
+                      title={e.suspended ? "Restore this event" : "Suspend this event (goes dark immediately)"}
+                      style={{ background: "transparent", border: `1px solid ${e.suspended ? "#FF3B30" : "#3a4550"}`, color: e.suspended ? "#FF3B30" : "#C8D4DC", padding: "4px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
+                    >
+                      {e.suspended ? "Unsuspend" : "Suspend"}
                     </button>
                     <a href={`/event/${e.share_token}`} target="_blank" rel="noopener noreferrer" style={{ color: "#CCFF00", textDecoration: "none", fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>
                       View ↗
