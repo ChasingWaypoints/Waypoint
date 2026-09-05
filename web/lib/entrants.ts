@@ -11,6 +11,11 @@ export interface EntrantInput {
   feed_id: string | null;
   feed_password: string | null;
   notes: string | null;
+  email: string | null;
+  ice_name: string | null;
+  ice_phone: string | null;
+  blood_type: string | null;
+  allergies: string | null;
 }
 
 export interface RowError {
@@ -33,6 +38,11 @@ export const CSV_COLUMNS = {
   password: ["password", "feed_password", "spot_password"],
   waypoint: ["waypoint_id", "waypoint id", "waypointid", "wp_id", "wpid", "waypoint_code", "waypoint", "account_id", "account id"],
   notes: ["notes", "note", "comment", "comments"],
+  email: ["email", "e-mail", "email_address", "rider_email"],
+  ice_name: ["ice_name", "ice name", "emergency_contact", "emergency contact", "ice_contact", "next_of_kin", "emergency_name"],
+  ice_phone: ["ice_phone", "ice phone", "emergency_phone", "emergency phone", "emergency_contact_phone", "ice_number"],
+  blood_type: ["blood_type", "blood type", "blood", "bloodtype", "blood_group"],
+  allergies: ["allergies", "allergy", "medical", "medical_notes", "conditions"],
 };
 
 /** The Waypoint account code from a roster row, if the organizer supplied one. */
@@ -42,11 +52,11 @@ export function waypointCodeFromRow(row: Record<string, string>): string | null 
 }
 
 export const CSV_TEMPLATE =
-  "name,number,class,device,feed,password,waypoint_id,notes\n" +
-  "Skyler Howes,42,RallyPro,garmin,https://share.garmin.com/SkylerH,,WPX7K2,\n" +
-  "Mason Klein,7,RallyPro,spot,0AbCdEfGhIjKlMnOpQrStUvWxYz123456,,,\n" +
-  "Ace Nilson,113,Rally1,garmin,https://share.garmin.com/Feed/Share/acenilson,,,\n" +
-  "Jacob Argubright,88,Adventure Bike,zoleo,,,,ZOLEO pushes by webhook — no feed needed\n";
+  "name,number,class,device,feed,password,waypoint_id,email,ice_name,ice_phone,blood_type,allergies,notes\n" +
+  "Skyler Howes,42,RallyPro,garmin,https://share.garmin.com/SkylerH,,WPX7K2,skyler@example.com,Jane Howes,+1 555 0101,O+,None,\n" +
+  "Mason Klein,7,RallyPro,spot,0AbCdEfGhIjKlMnOpQrStUvWxYz123456,,,,,,,,\n" +
+  "Ace Nilson,113,Rally1,garmin,https://share.garmin.com/Feed/Share/acenilson,,,,,,A-,Penicillin,\n" +
+  "Jacob Argubright,88,Adventure Bike,zoleo,,,,,,,,,ZOLEO pushes by webhook — no feed needed\n";
 
 /**
  * Garmin MapShare links come in several shapes. All of these are valid
@@ -139,6 +149,11 @@ export function rowToEntrant(
     feed_id: null,
     feed_password: pick(row, ...CSV_COLUMNS.password) || null,
     notes: pick(row, ...CSV_COLUMNS.notes) || null,
+    email: pick(row, ...CSV_COLUMNS.email) || null,
+    ice_name: pick(row, ...CSV_COLUMNS.ice_name) || null,
+    ice_phone: pick(row, ...CSV_COLUMNS.ice_phone) || null,
+    blood_type: pick(row, ...CSV_COLUMNS.blood_type) || null,
+    allergies: pick(row, ...CSV_COLUMNS.allergies) || null,
   };
 
   if (deviceType === "garmin") {
