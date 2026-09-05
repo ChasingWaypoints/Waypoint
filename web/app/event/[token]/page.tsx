@@ -18,6 +18,7 @@ export default function EventPage() {
   const [name, setName] = useState<string>("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [sponsors, setSponsors] = useState<{ name?: string; logo_url: string; url?: string; headline?: boolean }[]>([]);
+  const [whitelabel, setWhitelabel] = useState(false);
 
   // Pull the event name for the header/title; the map loads its own data.
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function EventPage() {
           }
           setLogoUrl(d.event.logo_url ?? null);
           setSponsors(Array.isArray(d.event.sponsors) ? d.event.sponsors : []);
+          setWhitelabel(!!d.event.whitelabel);
         }
       })
       .catch(() => {});
@@ -69,7 +71,7 @@ export default function EventPage() {
           </span>
           <span style={{ color: "#7E93A0", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />
-            Live · Waypoint
+            {whitelabel ? "Live · powered by Waypoint" : "Live · Waypoint"}
           </span>
         </div>
 

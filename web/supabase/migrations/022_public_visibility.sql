@@ -9,7 +9,7 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare v_event record; v_result jsonb; v_stages jsonb;
 begin
   select id, name, status, route_name, starts_at, logo_url, sponsors,
-         payment_mode, suspended_at, public_show_route, public_show_waypoints
+         payment_mode, suspended_at, public_show_route, public_show_waypoints, organizer_id
     into v_event from events where share_token = p_share_token limit 1;
   if v_event.id is null then return null; end if;
   if v_event.suspended_at is not null then return null; end if;  -- suspended = dark
@@ -25,7 +25,8 @@ begin
   select jsonb_build_object(
     'event', jsonb_build_object('name', v_event.name, 'status', v_event.status,
       'route_name', v_event.route_name, 'starts_at', v_event.starts_at,
-      'logo_url', v_event.logo_url, 'sponsors', coalesce(v_event.sponsors, '[]'::jsonb)),
+      'logo_url', v_event.logo_url, 'sponsors', coalesce(v_event.sponsors, '[]'::jsonb),
+      'whitelabel', coalesce(user_has_org(v_event.organizer_id), false)),
     'stages', v_stages,
     'entrants', coalesce(jsonb_agg(
       jsonb_build_object('id', ep.id, 'name', ep.display_name, 'number', ep.rider_number,
