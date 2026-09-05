@@ -8,6 +8,7 @@ export interface TrackPoint {
   recorded_at: string;
   message: string | null;
   source: "garmin" | "spot" | "zoleo" | "phone";
+  sos?: boolean;
 }
 
 export function parseGarminKML(xml: string): TrackPoint[] {
@@ -56,6 +57,10 @@ export function parseGarminKML(xml: string): TrackPoint[] {
         recorded_at: new Date(timeStr).toISOString(),
         message: dataMap["Text"] || null,
         source: "garmin",
+        // inReach KML flags an active SOS via "In Emergency" (true) or an
+        // Event mentioning SOS/emergency.
+        sos: (dataMap["In Emergency"] || "").toLowerCase() === "true"
+          || /\b(sos|emergency)\b/i.test(dataMap["Event"] || ""),
       });
     } catch {
       continue;

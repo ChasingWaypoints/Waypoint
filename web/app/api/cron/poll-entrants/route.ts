@@ -181,6 +181,7 @@ async function pollEntrant(
       p_speed_kmh: p.speed_kmh,
       p_message: p.message,
       p_source: feed.device_type,
+      p_sos: p.sos ?? false,
     });
     if (!error && data === true) inserted++;
   }

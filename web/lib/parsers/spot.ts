@@ -36,6 +36,8 @@ export function parseSPOTXML(xml: string): TrackPoint[] {
         recorded_at: new Date(unixTime * 1000).toISOString(),
         message: item.messageContent || null,
         source: "spot",
+        // SPOT emergency messages come through as messageType HELP or SOS.
+        sos: ["HELP", "SOS"].includes(String(item.messageType || "").toUpperCase()),
       });
     } catch {
       continue;
