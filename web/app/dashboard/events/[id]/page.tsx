@@ -81,6 +81,7 @@ export default function EventDetailPage() {
   const isMobile = useIsMobile(640);
   const [payMode, setPayMode] = useState<"organizer" | "entrant">("organizer");
   const [payFee, setPayFee] = useState<string>("10");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [newViewerName, setNewViewerName] = useState("");
   const [addingViewer, setAddingViewer] = useState(false);
@@ -348,7 +349,8 @@ export default function EventDetailPage() {
             </p>
           </div>
         </div>
-        <div className="wp-actionbar" style={{ display: "flex", gap: 8, alignItems: "center", ...(isMobile ? { overflowX: "auto", maxWidth: "100%", paddingBottom: 2 } : {}) }}>
+        {!isMobile && (
+        <div className="wp-actionbar" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {isOrganizer && event.paid && (
             <>
               <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
@@ -406,6 +408,37 @@ export default function EventDetailPage() {
             </button>
           )}
         </div>
+        )}
+
+        {isMobile && (
+          <div style={{ position: "relative", alignSelf: "flex-end" }}>
+            <button onClick={() => setMenuOpen((o) => !o)} aria-label="Actions" aria-expanded={menuOpen}
+              style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 16px", fontSize: 13, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", borderRadius: 999 }}>
+              ⋯ Menu
+            </button>
+            {menuOpen && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20, background: "#0C1E29", border: "1px solid #1E3B4C", borderRadius: 10, boxShadow: "0 8px 28px rgba(0,0,0,.55)", minWidth: 210, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                {isOrganizer && !event.paid && !event.comped && (
+                  <button onClick={() => { setMenuOpen(false); startEventCheckout(); }} style={menuItem}>Upgrade $200</button>
+                )}
+                {isOrganizer && event.paid && (
+                  <button onClick={() => { setMenuOpen(false); startAddSeats(); }} style={menuItem}>+ 10 seats · $40</button>
+                )}
+                <button onClick={() => { setMenuOpen(false); setShowShare(true); }} style={menuItem}>Share</button>
+                <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={menuItem}>Public View ↗</a>
+                {isOrganizer && (
+                  <Link href={`/dashboard/events/${id}/track`} onClick={() => setMenuOpen(false)} style={menuItem}>Tracking Page</Link>
+                )}
+                {isOrganizer && !isLive && event.status !== "completed" && event.status !== "cancelled" && (
+                  <button onClick={() => { setMenuOpen(false); goLive(); }} style={menuItem}>● Go Live</button>
+                )}
+                {isOrganizer && isLive && (
+                  <button onClick={() => { setMenuOpen(false); endEvent(); }} style={{ ...menuItem, color: "#FF3B30" }}>End Event</button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showShare && (
@@ -771,6 +804,13 @@ const modalBtn: React.CSSProperties = { background: "#CCFF00", color: "#0C1E29",
 const modalLinkBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 };
 
 // Small responsive helper — true when the viewport is at or below `bp` px.
+const menuItem: React.CSSProperties = {
+  background: "transparent", border: "none", borderBottom: "1px solid #14303F",
+  color: "#C8D4DC", padding: "13px 16px", fontSize: 13, fontWeight: 700,
+  letterSpacing: 0.3, textTransform: "uppercase", textAlign: "left",
+  textDecoration: "none", cursor: "pointer", width: "100%",
+};
+
 function useIsMobile(bp = 640): boolean {
   const [m, setM] = useState(false);
   useEffect(() => {
