@@ -82,18 +82,20 @@ export const btnMap: React.CSSProperties = {
   background: theme.surface,
   color: theme.ink,
   border: `1px solid ${theme.hairline}`,
-  borderRadius: 4,
-  padding: "8px 12px",
+  borderRadius: 999,
+  padding: "8px 15px",
   font: `600 13px ${font.sans}`,
   cursor: "pointer",
   boxShadow: "0 2px 10px rgba(0,0,0,.5)",
+  display: "inline-flex",
+  alignItems: "center",
 };
 
 export const panel: React.CSSProperties = {
   marginTop: 6,
   background: theme.surface,
   border: `1px solid ${theme.hairline}`,
-  borderRadius: 4,
+  borderRadius: 10,
   boxShadow: "0 8px 28px rgba(0,0,0,.55)",
   minWidth: 240,
   overflow: "hidden",

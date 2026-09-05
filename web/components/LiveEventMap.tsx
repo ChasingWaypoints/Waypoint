@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import TrackingMap, { Entrant, StageLine } from "./TrackingMap";
 import { LngLat, timeAgo } from "../lib/geo";
 import { theme, font } from "../lib/theme";
+import { Skeleton } from "./Skeleton";
 
 interface EventMeta {
   name: string;
@@ -97,7 +98,31 @@ export default function LiveEventMap({
   );
 
   if (loading) {
-    return <div style={centered}>Loading event…</div>;
+    if (compact) return <div style={{ width: "100%", height: "100%", background: theme.canvas }} aria-label="Loading map" />;
+    return (
+      <div style={{ display: "flex", width: "100%", height: "100%", background: theme.canvas }} role="status" aria-label="Loading event">
+        <div style={{ width: 300, flexShrink: 0, borderRight: `1px solid ${theme.hairline}`, background: theme.surface, padding: "14px 16px" }}>
+          <Skeleton width="70%" height={16} />
+          <Skeleton width="45%" height={10} style={{ marginTop: 8 }} />
+          <Skeleton width="100%" height={34} radius={8} style={{ marginTop: 16 }} />
+          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+            {[52, 40, 64].map((w, i) => <Skeleton key={i} width={w} height={22} radius={999} />)}
+          </div>
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <Skeleton width={10} height={10} radius={999} />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width={`${55 + ((i * 11) % 30)}%`} height={12} />
+                  <Skeleton width={`${35 + ((i * 13) % 20)}%`} height={9} style={{ marginTop: 6 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, background: theme.canvas }} />
+      </div>
+    );
   }
   if (error) {
     return <div style={{ ...centered, color: theme.danger }}>{error}</div>;

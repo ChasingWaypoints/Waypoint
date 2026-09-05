@@ -234,7 +234,7 @@ export default function TrackingMap({
 
         markers.current.set(e.id, marker);
       } else {
-        marker.setLngLat([e.lng, e.lat]);
+        animateMarkerTo(marker, e.lng, e.lat);
       }
 
       const el = marker.getElement();
@@ -913,6 +913,27 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!)
   );
+}
+
+// Glide a marker from its current position to a new fix instead of teleporting.
+// Rally beacons report every ~30s; a short ease reads as movement, not a jump.
+function animateMarkerTo(marker: mapboxgl.Marker, toLng: number, toLat: number) {
+  const from = marker.getLngLat();
+  if (from.lng === toLng && from.lat === toLat) return;
+  const el = marker.getElement() as HTMLElement & { __anim?: number };
+  if (el.__anim) cancelAnimationFrame(el.__anim);
+  const start = performance.now();
+  const DUR = 700;
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / DUR);
+    const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+    marker.setLngLat([
+      from.lng + (toLng - from.lng) * ease,
+      from.lat + (toLat - from.lat) * ease,
+    ]);
+    if (t < 1) el.__anim = requestAnimationFrame(step);
+  };
+  el.__anim = requestAnimationFrame(step);
 }
 
 const btnStyle = btnMap;

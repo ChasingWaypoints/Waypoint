@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { SkeletonRows } from "../../components/Skeleton";
 
 const supabase = getSupabaseClient();
 
@@ -206,7 +207,7 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
+            <SkeletonRows rows={2} />
           ) : events.length === 0 ? (
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🏁</div>
@@ -300,7 +301,7 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>Loading...</div>
+            <SkeletonRows rows={2} />
           ) : trips.length === 0 ? (
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>

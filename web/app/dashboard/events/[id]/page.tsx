@@ -77,6 +77,7 @@ export default function EventDetailPage() {
   const [credentials, setCredentials] = useState<GepCredential[]>([]);
   const [accessLog, setAccessLog] = useState<AccessEntry[]>([]);
   const [tab, setTab] = useState<Tab>("map");
+  const isMobile = useIsMobile(640);
   const [loading, setLoading] = useState(true);
   const [newViewerName, setNewViewerName] = useState("");
   const [addingViewer, setAddingViewer] = useState(false);
@@ -309,11 +310,11 @@ export default function EventDetailPage() {
       </nav>
 
       {/* Event header */}
-      <div style={{ background: "#14303F", padding: "0 24px", height: HEADER_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ background: "#14303F", padding: isMobile ? "8px 12px" : "0 24px", minHeight: HEADER_H, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 8 : 0, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {isLive && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />}
           <div>
-            <h1 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{event.name}</h1>
+            <h1 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: isMobile ? "78vw" : "none" }}>{event.name}</h1>
             <p style={{ fontSize: 11, color: "#7E93A0", margin: 0 }}>
               {riders.length <= 10 && (
                 <>Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>{" · "}</>
@@ -323,7 +324,7 @@ export default function EventDetailPage() {
             </p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="wp-actionbar" style={{ display: "flex", gap: 8, alignItems: "center", ...(isMobile ? { overflowX: "auto", maxWidth: "100%", paddingBottom: 2 } : {}) }}>
           {isOrganizer && event.paid && (
             <>
               <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
@@ -715,3 +716,16 @@ const shareInput: React.CSSProperties = { flex: 1, minWidth: 0, padding: "9px 12
 const shareCode: React.CSSProperties = { display: "block", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: 12, fontFamily: "monospace", wordBreak: "break-all", whiteSpace: "pre-wrap" };
 const modalBtn: React.CSSProperties = { background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 };
 const modalLinkBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 };
+
+// Small responsive helper — true when the viewport is at or below `bp` px.
+function useIsMobile(bp = 640): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${bp}px)`);
+    const on = () => setM(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [bp]);
+  return m;
+}

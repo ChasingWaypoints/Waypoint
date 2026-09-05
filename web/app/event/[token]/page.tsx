@@ -73,8 +73,9 @@ export default function EventPage() {
           </span>
         </div>
 
-        {/* Headline sponsors — right side of the header. */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+        {/* Headline sponsors — right side of the header (hidden on phones;
+            they still appear in the bottom "Presented by" strip). */}
+        <div className="wp-header-sponsors" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
           {sponsors.filter((sp) => sp.headline).map((sp, i) => (
             <SponsorLogo key={i} sp={sp} height={32} />
           ))}

@@ -42,7 +42,9 @@ input, select, textarea {
   background: #0C1E29 !important;
   color: #fff !important;
   border: 1px solid #1E3B4C;
-  box-shadow: 0 8px 28px rgba(0,0,0,.55);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6);
 }
 .mapboxgl-popup-close-button { color: #fff !important; }
 .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #0C1E29 !important; }
@@ -57,4 +59,31 @@ input, select, textarea {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+
+/* ── Skeleton loaders ─────────────────────────────────────────── */
+@keyframes wp-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.wp-skel {
+  background: linear-gradient(90deg, #12293a 25%, #1b3a4e 37%, #12293a 63%);
+  background-size: 200% 100%;
+  animation: wp-shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wp-skel { animation: none; }
+}
+
+/* Horizontally scrollable action strip (mobile event header). Children keep
+   their size and the row swipes instead of overflowing the viewport. */
+.wp-actionbar { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.wp-actionbar::-webkit-scrollbar { display: none; }
+.wp-actionbar > * { flex: 0 0 auto; }
+
+/* Public event header: headline sponsor logos take too much room on a phone;
+   hide them here — they still render in the bottom "Presented by" strip. */
+@media (max-width: 640px) {
+  .wp-header-sponsors { display: none !important; }
 }
