@@ -25,6 +25,7 @@ interface EventDetail {
   id: string; name: string; status: string; join_code: string; share_token: string;
   route_gpx: string | null; route_name: string | null; organizer_id: string;
   rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
+  payment_mode?: string; entrant_fee_cents?: number | null;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -78,6 +79,8 @@ export default function EventDetailPage() {
   const [accessLog, setAccessLog] = useState<AccessEntry[]>([]);
   const [tab, setTab] = useState<Tab>("map");
   const isMobile = useIsMobile(640);
+  const [payMode, setPayMode] = useState<"organizer" | "entrant">("organizer");
+  const [payFee, setPayFee] = useState<string>("10");
   const [loading, setLoading] = useState(true);
   const [newViewerName, setNewViewerName] = useState("");
   const [addingViewer, setAddingViewer] = useState(false);
@@ -177,6 +180,27 @@ export default function EventDetailPage() {
       body: JSON.stringify({ status: "active" }),
     });
     await load();
+  }
+
+  useEffect(() => {
+    if (!event) return;
+    setPayMode(event.payment_mode === "entrant" ? "entrant" : "organizer");
+    setPayFee(event.entrant_fee_cents ? String(Math.round(event.entrant_fee_cents / 100)) : "10");
+  }, [event?.payment_mode, event?.entrant_fee_cents]);
+
+  async function savePayment() {
+    if (!session) return;
+    const fee = Math.min(15, Math.max(8, Math.round(Number(payFee) || 10)));
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({
+        payment_mode: payMode,
+        ...(payMode === "entrant" ? { entrant_fee_cents: fee * 100 } : {}),
+      }),
+    });
+    if (res.ok) { await load(); }
+    else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Could not save payment settings."); }
   }
 
   async function startEventCheckout() {
@@ -525,6 +549,35 @@ export default function EventDetailPage() {
 
             {/* Branding: event logo + sponsors */}
             <EventBranding eventId={id} />
+
+            {/* Payment */}
+            <div>
+              <SectionLabel>Payment</SectionLabel>
+              <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
+                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
+                  Choose who pays for this event. <strong style={{ color: "#C8D4DC" }}>Organizer pays</strong> uses your $200 / 40-seat purchase; <strong style={{ color: "#C8D4DC" }}>entrants pay</strong> charges each rider a fee when they join.
+                </p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <select value={payMode} onChange={(e) => setPayMode(e.target.value as "organizer" | "entrant")}
+                    style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: 13 }}>
+                    <option value="organizer">Organizer pays</option>
+                    <option value="entrant">Entrants pay at join</option>
+                  </select>
+                  {payMode === "entrant" && (
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#C8D4DC" }}>
+                      Fee $
+                      <input value={payFee} onChange={(e) => setPayFee(e.target.value.replace(/[^0-9]/g, ""))}
+                        inputMode="numeric" style={{ width: 56, background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 10px", fontSize: 13, textAlign: "center" }} />
+                      <span style={{ color: "#7E93A0" }}>/ rider ($8–15)</span>
+                    </label>
+                  )}
+                  <button onClick={savePayment}
+                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Stages */}
             <StagesManager eventId={id} />

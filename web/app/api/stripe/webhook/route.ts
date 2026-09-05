@@ -71,6 +71,18 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           });
         }
+      } else if (kind === "entrant_paid" && s.metadata?.participant_id) {
+        await admin.from("event_participants")
+          .update({ paid_at: new Date().toISOString() })
+          .eq("id", s.metadata.participant_id);
+        if (s.metadata?.event_id) {
+          await admin.from("event_payments").insert({
+            event_id: s.metadata.event_id,
+            amount_cents: s.amount_total ?? 0,
+            status: "paid",
+            stripe_session_id: s.id,
+          });
+        }
       } else if (kind === "org") {
         const userId = s.metadata?.user_id ?? s.client_reference_id ?? null;
         if (userId && s.subscription) {

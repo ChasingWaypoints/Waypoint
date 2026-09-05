@@ -123,6 +123,7 @@ export default function DashboardPage() {
         setJoinError(data.error ?? "Could not join. Check the code and try again.");
         return;
       }
+      if (data.requires_payment && data.url) { window.location.href = data.url; return; }
       router.push(`/dashboard/events/${data.event_id}`);
     } catch {
       setJoinError("Something went wrong. Please try again.");

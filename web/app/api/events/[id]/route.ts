@@ -109,6 +109,15 @@ export async function PATCH(
       : [];
   }
 
+  // Payment mode + entrant fee (entrant-paid events). Fee clamped to $8–$15.
+  if ("payment_mode" in body) {
+    updates.payment_mode = body.payment_mode === "entrant" ? "entrant" : "organizer";
+  }
+  if ("entrant_fee_cents" in body) {
+    const n = Math.round(Number(body.entrant_fee_cents));
+    updates.entrant_fee_cents = Number.isFinite(n) ? Math.min(1500, Math.max(800, n)) : null;
+  }
+
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
