@@ -83,8 +83,8 @@ export default function DashboardPage() {
 
       const token = session.access_token;
 
-      // Load trips and events in parallel
-      const [tripsRes, eventsRes] = await Promise.all([
+      // Load trips, events, and onboarding state in parallel
+      const [tripsRes, eventsRes, profRes] = await Promise.all([
         supabase
           .from("trips")
           .select("id, name, status, is_public, share_token, started_at, created_at")
@@ -92,10 +92,21 @@ export default function DashboardPage() {
           .is("deleted_at", null)
           .order("created_at", { ascending: false }),
         fetch("/api/events", { headers: { Authorization: `Bearer ${token}` } }),
+        supabase.from("profiles").select("onboarded_at").eq("id", session.user.id).maybeSingle(),
       ]);
 
-      if (tripsRes.data) setTrips(tripsRes.data);
-      if (eventsRes.ok) setEvents(await eventsRes.json());
+      const tripList = tripsRes.data ?? [];
+      const eventList = eventsRes.ok ? await eventsRes.json() : [];
+
+      // First-run: send brand-new users (no trips, no events, never onboarded) to
+      // the onboarding flow. Established users are never bounced.
+      if (profRes.data && profRes.data.onboarded_at == null && tripList.length === 0 && eventList.length === 0) {
+        router.push("/onboarding");
+        return;
+      }
+
+      setTrips(tripList);
+      setEvents(eventList);
       setLoading(false);
     });
   }, []);
