@@ -24,7 +24,7 @@ interface AccessEntry { display_name: string; type: string; role?: string; acces
 interface EventDetail {
   id: string; name: string; status: string; join_code: string; share_token: string;
   route_gpx: string | null; route_name: string | null; organizer_id: string;
-  rider_classes: string[]; paid?: boolean; comped?: boolean;
+  rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -190,6 +190,18 @@ export default function EventDetailPage() {
     else alert(data.error ?? "Could not start checkout. Please try again.");
   }
 
+  async function startAddSeats() {
+    if (!session) return;
+    const res = await fetch("/api/billing/event-seats", {
+      method: "POST",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ eventId: id, blocks: 1 }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.url) window.location.href = data.url;
+    else alert(data.error ?? "Could not start checkout. Please try again.");
+  }
+
   async function addViewer() {
     const name = newViewerName.trim();
     if (!name || !session) return;
@@ -306,14 +318,23 @@ export default function EventDetailPage() {
               {riders.length <= 10 && (
                 <>Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>{" · "}</>
               )}
-              {riders.length} rider{riders.length !== 1 ? "s" : ""}
+              {riders.length}{event.paid && event.seats_paid ? ` / ${event.seats_paid}` : ""} rider{riders.length !== 1 ? "s" : ""}
               {" · "}<span style={{ color: isLive ? "#CCFF00" : "#7E93A0", fontWeight: 700, textTransform: "uppercase" }}>{event.status}</span>
             </p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {isOrganizer && event.paid && (
-            <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
+            <>
+              <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
+              <button
+                onClick={startAddSeats}
+                title="Add 20 more rider seats for $40"
+                style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+              >
+                + 20 seats · $40
+              </button>
+            </>
           )}
           {isOrganizer && !event.paid && event.comped && (
             <span style={{ border: "1px solid #4A5A25", color: "#CCFF00", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>★ Sponsored</span>

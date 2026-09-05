@@ -32,7 +32,25 @@ export async function POST(request: NextRequest) {
       const s = evt.data.object as Stripe.Checkout.Session;
       const kind = s.metadata?.kind;
       if (kind === "event" && s.metadata?.event_id) {
-        await admin.from("events").update({ paid: true, paid_at: new Date().toISOString() }).eq("id", s.metadata.event_id);
+        const seats = parseInt(s.metadata?.seats ?? "60", 10) || 60;
+        await admin.from("events")
+          .update({ paid: true, paid_at: new Date().toISOString(), seats_paid: seats })
+          .eq("id", s.metadata.event_id);
+        await admin.from("event_payments").insert({
+          event_id: s.metadata.event_id,
+          amount_cents: s.amount_total ?? 0,
+          status: "paid",
+          stripe_session_id: s.id,
+        });
+      } else if (kind === "seats" && s.metadata?.event_id) {
+        // Add-seats top-up: increment the paid capacity by the purchased seats.
+        const added = parseInt(s.metadata?.seats ?? "0", 10) || 0;
+        const { data: ev } = await admin
+          .from("events").select("seats_paid").eq("id", s.metadata.event_id).single();
+        const current = ev?.seats_paid ?? 60;
+        await admin.from("events")
+          .update({ seats_paid: current + added })
+          .eq("id", s.metadata.event_id);
         await admin.from("event_payments").insert({
           event_id: s.metadata.event_id,
           amount_cents: s.amount_total ?? 0,

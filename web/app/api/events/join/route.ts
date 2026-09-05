@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   // Look up event by join code
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, status, organizer_id, paid, comped")
+    .select("id, name, status, organizer_id, paid, comped, seats_paid")
     .eq("join_code", code)
     .maybeSingle();
 
@@ -61,19 +61,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ event_id: event.id, already_joined: true });
   }
 
-  // Free-ride cap: a group ride is capped at 10 riders. Beyond that the event
-  // must be paid (or comped by the platform). Already-joined riders are never
-  // blocked (handled above); this only gates a NEW joiner past the limit.
-  if (!event.paid && !event.comped) {
+  // Capacity cap (already-joined riders are never blocked; handled above):
+  //   • comped events  → unlimited (platform-sponsored)
+  //   • paid events    → capped at seats_paid (60 base + $40/20-seat blocks)
+  //   • free rides     → capped at 10 riders
+  if (!event.comped) {
+    const limit = event.paid ? (event.seats_paid ?? 60) : 10;
     const { count } = await supabase
       .from("event_participants")
       .select("id", { count: "exact", head: true })
       .eq("event_id", event.id);
-    if ((count ?? 0) >= 10) {
-      return NextResponse.json(
-        { error: "This ride has reached its 10-rider limit. Ask the organizer to upgrade it to a paid event.", code: "cap_reached" },
-        { status: 402 }
-      );
+    if ((count ?? 0) >= limit) {
+      const msg = event.paid
+        ? `This event is full (${limit} seats). Ask the organizer to add more seats.`
+        : "This ride has reached its 10-rider limit. Ask the organizer to upgrade it to a paid event.";
+      return NextResponse.json({ error: msg, code: "cap_reached" }, { status: 402 });
     }
   }
 
