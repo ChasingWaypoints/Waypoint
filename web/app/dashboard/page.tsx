@@ -212,7 +212,7 @@ export default function DashboardPage() {
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🏁</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No events yet</h3>
-              <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", fontWeight: 300 }}>
+              <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", fontWeight: 400 }}>
                 Create a group event and share a join code with your riders.
               </p>
               <Link
@@ -306,7 +306,7 @@ export default function DashboardPage() {
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No trips yet</h3>
-              <p style={{ fontSize: 13, color: "#7E93A0", margin: 0, fontWeight: 300 }}>
+              <p style={{ fontSize: 13, color: "#7E93A0", margin: 0, fontWeight: 400 }}>
                 Start your first trip in the Waypoint mobile app — it'll appear here automatically.
               </p>
             </div>

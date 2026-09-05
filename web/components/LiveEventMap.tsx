@@ -160,9 +160,10 @@ export default function LiveEventMap({
       <button
         key={e.id}
         onClick={() => selectEntrant(e.id)}
+        className="wp-roster-row"
         style={{
           display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-          padding: "10px 16px", border: "none", borderBottom: `1px solid ${theme.hairlineSoft}`,
+          padding: "12px 16px", border: "none", borderBottom: `1px solid ${theme.hairlineSoft}`,
           background: selected === e.id ? theme.surfaceHi : "transparent", cursor: "pointer",
           font: `13px ${font.sans}`, color: theme.body,
         }}

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { SkeletonRows } from "../../../components/Skeleton";
 
 const supabase = getSupabaseClient();
 
@@ -84,7 +85,7 @@ export default function AdminPage() {
     return { total: events.length, active, riders, overCap };
   }, [events]);
 
-  if (loading) return <Shell><p style={{ color: "#7E93A0", fontSize: 14 }}>Loading…</p></Shell>;
+  if (loading) return <Shell><SkeletonRows rows={4} /></Shell>;
   if (forbidden) return (
     <Shell>
       <h1 style={{ color: "#fff", fontSize: 20, margin: "0 0 8px" }}>Not authorized</h1>

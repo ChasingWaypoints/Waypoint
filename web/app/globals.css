@@ -87,3 +87,6 @@ input, select, textarea {
 @media (max-width: 640px) {
   .wp-header-sponsors { display: none !important; }
 }
+
+/* Roster rows: hover affordance (selected rows keep their inline surface-hi). */
+.wp-roster-row:hover { background: #14303F !important; }

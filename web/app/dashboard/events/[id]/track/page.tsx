@@ -27,6 +27,7 @@ export default function EventTrackPage({
   const [event, setEvent] = useState<{ name: string; share_token: string; status: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const isMobile = useIsMobile(640);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -50,12 +51,13 @@ export default function EventTrackPage({
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: theme.canvas }}>
       <header
         style={{
-          padding: "14px 24px",
+          padding: isMobile ? "10px 14px" : "14px 24px",
           borderBottom: `1px solid ${theme.hairline}`,
           background: theme.surface,
           display: "flex",
-          alignItems: "center",
-          gap: 20,
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "stretch" : "center",
+          gap: isMobile ? 10 : 20,
           flexShrink: 0,
         }}
       >
@@ -72,14 +74,15 @@ export default function EventTrackPage({
             padding: "8px 14px",
             font: `600 13px ${font.sans}`,
             whiteSpace: "nowrap",
+            alignSelf: isMobile ? "flex-start" : "auto",
           }}
           title="Back to event setup"
         >
           ← Event dashboard
         </Link>
 
-        <div>
-          <h1 style={{ font: `700 20px ${font.sans}`, color: theme.ink, margin: 0 }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ font: `700 ${isMobile ? 18 : 20}px ${font.sans}`, color: theme.ink, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {event.name}
           </h1>
           <div style={{ font: `13px ${font.sans}`, color: event.status === "active" ? theme.live : theme.muted, marginTop: 2 }}>
@@ -87,7 +90,7 @@ export default function EventTrackPage({
           </div>
         </div>
 
-        <nav style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+        <nav style={{ display: "flex", gap: 4, marginLeft: isMobile ? 0 : "auto" }}>
           {(["map", "share"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -101,6 +104,7 @@ export default function EventTrackPage({
                 font: `${tab === t ? 700 : 500} 13px ${font.sans}`,
                 cursor: "pointer",
                 textTransform: "capitalize",
+                flex: isMobile ? 1 : "none",
               }}
             >
               {t === "map" ? "Live map" : t}
@@ -119,4 +123,16 @@ export default function EventTrackPage({
       </main>
     </div>
   );
+}
+
+function useIsMobile(bp = 640): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${bp}px)`);
+    const on = () => setM(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [bp]);
+  return m;
 }

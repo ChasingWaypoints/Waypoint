@@ -50,6 +50,18 @@ export const theme = {
   warn: "#FFAA00",
 } as const;
 
+// Type scale — the sizes already in de-facto use across the app, named so new
+// and refactored code can stay on the scale instead of picking numbers ad hoc.
+export const text = {
+  xs: 11,   // labels, chips, meta
+  sm: 12,   // secondary text
+  base: 13, // body / controls
+  md: 14,   // emphasized body
+  lg: 15,   // card titles
+  xl: 18,   // section headings
+  xxl: 22,  // page headings
+} as const;
+
 export const font = {
   sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   mono: "ui-monospace, SFMono-Regular, Menlo, monospace",

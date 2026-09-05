@@ -614,8 +614,10 @@ export default function TrackingMap({
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <div ref={container} style={{ width: "100%", height: "100%" }} />
 
-      {/* Layer switcher */}
-      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 2 }}>
+      {/* Map controls — layer switcher + measure share one row so a long base
+          layer name or the WX badge can't run under the Measure button. */}
+      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 2, display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <div style={{ position: "relative" }}>
         <button
           onClick={() => setLayerMenuOpen((o) => !o)}
           style={btnStyle}
@@ -677,11 +679,11 @@ export default function TrackingMap({
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Measure tool */}
-      {!compact && (
-        <div style={{ position: "absolute", top: 10, left: 150, zIndex: 2 }}>
+        {/* Measure tool */}
+        {!compact && (
+        <div style={{ position: "relative" }}>
           <button
             onClick={() => {
               setMeasuring((v) => !v);
@@ -718,7 +720,8 @@ export default function TrackingMap({
             </div>
           )}
         </div>
-      )}
+        )}
+      </div>
 
       {/* Temperature legend — the temp tiles are a colour field, so this
           gives the colours meaning. Numeric temps come from the popups. */}
