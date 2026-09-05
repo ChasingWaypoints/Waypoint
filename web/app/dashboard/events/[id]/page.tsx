@@ -26,6 +26,7 @@ interface EventDetail {
   route_gpx: string | null; route_name: string | null; organizer_id: string;
   rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
   payment_mode?: string; entrant_fee_cents?: number | null;
+  public_show_route?: boolean; public_show_waypoints?: boolean;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -202,6 +203,17 @@ export default function EventDetailPage() {
     });
     if (res.ok) { await load(); }
     else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Could not save payment settings."); }
+  }
+
+  async function savePublicVis(field: "public_show_route" | "public_show_waypoints", value: boolean) {
+    if (!session) return;
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ [field]: value }),
+    });
+    if (res.ok) { await load(); }
+    else { alert("Could not save visibility settings."); }
   }
 
   async function startEventCheckout() {
@@ -609,6 +621,25 @@ export default function EventDetailPage() {
                     Save
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Public map visibility */}
+            <div>
+              <SectionLabel>Public map</SectionLabel>
+              <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
+                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
+                  Control what spectators see on the public link. Riders are always shown; the course can be hidden if it is sensitive. Organizer and command views always see everything.
+                </p>
+                {([
+                  ["public_show_route", "Show the route line", event.public_show_route !== false],
+                  ["public_show_waypoints", "Show the waypoints", event.public_show_waypoints !== false],
+                ] as [("public_show_route" | "public_show_waypoints"), string, boolean][]).map(([field, label, on]) => (
+                  <label key={field} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", fontSize: 14, color: "#C8D4DC" }}>
+                    <input type="checkbox" checked={on} onChange={(e) => savePublicVis(field, e.target.checked)} style={{ width: 16, height: 16, accentColor: "#CCFF00" }} />
+                    {label}
+                  </label>
+                ))}
               </div>
             </div>
 

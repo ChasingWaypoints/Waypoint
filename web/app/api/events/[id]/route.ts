@@ -117,6 +117,8 @@ export async function PATCH(
     const n = Math.round(Number(body.entrant_fee_cents));
     updates.entrant_fee_cents = Number.isFinite(n) ? Math.min(1500, Math.max(800, n)) : null;
   }
+  if ("public_show_route" in body) updates.public_show_route = !!body.public_show_route;
+  if ("public_show_waypoints" in body) updates.public_show_waypoints = !!body.public_show_waypoints;
 
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
