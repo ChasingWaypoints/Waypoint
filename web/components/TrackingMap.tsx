@@ -35,6 +35,8 @@ export interface Entrant {
   last_seen_at: string | null;
   device_type: string | null;
   linked?: boolean;
+  sos?: boolean;
+  ice?: { name?: string | null; phone?: string | null; blood_type?: string | null; allergies?: string | null } | null;
 }
 
 export interface StageWaypoint {
@@ -69,6 +71,8 @@ interface Props {
    *  gains an Emergency-info button that fetches SAR details for linked
    *  riders. Never pass on public/embed maps. */
   organizerEventId?: string;
+  commandMode?: boolean;
+  focusEntrantId?: string;
 }
 
 type Status = "live" | "stale" | "dark" | "no_fix";
@@ -104,6 +108,8 @@ export default function TrackingMap({
   onSelectEntrant,
   selectedTrack,
   organizerEventId,
+  commandMode = false,
+  focusEntrantId,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -238,13 +244,15 @@ export default function TrackingMap({
       }
 
       const el = marker.getElement();
-      el.style.background = color;
+      el.style.background = e.sos ? "#FF3B30" : color;
       el.textContent = label;
-      el.title = `${e.name}${e.number ? ` #${e.number}` : ""} — ${STATUS_LABEL[status]}`;
+      el.title = `${e.name}${e.number ? ` #${e.number}` : ""} — ${e.sos ? "SOS" : STATUS_LABEL[status]}`;
+      if (e.sos) el.classList.add("wp-marker-sos"); else el.classList.remove("wp-marker-sos");
 
       // Precise coordinates are shown only in the organizer's own view.
       // Public spectators get name/class/status but not exact rider positions.
-      const coordRows = (organizerEventId && e.lat !== null && e.lng !== null)
+      const privileged = !!organizerEventId || commandMode;
+      const coordRows = (privileged && e.lat !== null && e.lng !== null)
         ? allCoordFormats(e.lat, e.lng)
         : [];
       const coordHtml = coordRows.length
@@ -266,13 +274,28 @@ export default function TrackingMap({
       const wxHtml = (e.lat !== null && e.lng !== null)
         ? `<div class="wp-wx" data-lat="${e.lat}" data-lng="${e.lng}" style="margin-top:6px;font-size:12px;color:#9FB2BE"><span style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Weather</span> &hellip;</div>`
         : "";
+      const sosHtml = e.sos
+        ? `<div style="background:#FF3B30;color:#fff;font:800 12px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:6px 8px;border-radius:4px;margin-bottom:8px;text-align:center">&#9888; SOS active</div>`
+        : "";
+      const ice = e.ice;
+      const iceHtml = (privileged && ice && (ice.name || ice.phone || ice.blood_type || ice.allergies))
+        ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px;font-size:12px">
+             <div style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">ICE</div>
+             ${ice.name ? `<div>Contact: ${escapeHtml(ice.name)}</div>` : ""}
+             ${ice.phone ? `<div>Phone: <a href="tel:${escapeHtml(ice.phone)}" style="color:#4DA6FF">${escapeHtml(ice.phone)}</a></div>` : ""}
+             ${ice.blood_type ? `<div>Blood type: ${escapeHtml(ice.blood_type)}</div>` : ""}
+             ${ice.allergies ? `<div>Allergies: ${escapeHtml(ice.allergies)}</div>` : ""}
+           </div>`
+        : "";
       const popupContent =
         `<div style="font:13px/1.4 system-ui,sans-serif;color:#fff;min-width:210px">
+             ${sosHtml}
              <strong>${escapeHtml(e.name)}</strong>${e.number ? ` &middot; #${escapeHtml(e.number)}` : ""}
              ${e.class ? `<br><span style="color:#7E93A0">${escapeHtml(e.class)}</span>` : ""}
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
              ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
              ${wxHtml}
+             ${iceHtml}
              ${coordHtml}
              ${organizerEventId && e.linked ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px">
                <button class="wp-emergency" data-id="${e.id}" style="width:100%;background:#2A1214;color:#FF6B6B;border:1px solid #5A2530;border-radius:4px;font:700 11px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:7px;cursor:pointer">&#9888; Emergency info</button>
@@ -313,6 +336,24 @@ export default function TrackingMap({
       }
     }
   }, [entrants, onSelectEntrant]);
+
+  // Auto-open (and ease to) a specific entrant's popup — used to surface an SOS.
+  useEffect(() => {
+    if (!focusEntrantId || !ready) return;
+    const m = map.current;
+    const mk = markers.current.get(focusEntrantId);
+    const html = popupHtml.current.get(focusEntrantId);
+    if (!m || !mk || !html) return;
+    if (!popup.current) {
+      popup.current = new mapboxgl.Popup({ offset: 18, closeButton: true, maxWidth: "320px" });
+    }
+    m.easeTo({ center: mk.getLngLat(), duration: 600, zoom: Math.max(m.getZoom(), 11) });
+    popup.current.setLngLat(mk.getLngLat()).setHTML(html).addTo(m);
+    wireCopyButtons(popup.current.getElement());
+    wireEmergencyButtons(popup.current.getElement(), organizerEventId);
+    wireWeather(popup.current.getElement());
+    onSelectEntrant?.(focusEntrantId);
+  }, [focusEntrantId, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Event route from the organizer's GPX ──────────────────────
   const routeKey = (stages && stages.length

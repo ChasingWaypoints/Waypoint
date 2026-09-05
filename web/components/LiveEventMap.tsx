@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import TrackingMap, { Entrant, StageLine } from "./TrackingMap";
 import { LngLat, timeAgo } from "../lib/geo";
 import { theme, font } from "../lib/theme";
+import { authFetch } from "../lib/authFetch";
 import { Skeleton } from "./Skeleton";
 
 interface EventMeta {
@@ -43,6 +44,8 @@ export default function LiveEventMap({
     () => (typeof window !== "undefined" ? window.innerWidth >= 768 : true)
   );
 
+  const [sosFocus, setSosFocus] = useState<string | undefined>(undefined);
+  const seenSosRef = useRef<Set<string>>(new Set());
   const selectedRef = useRef(selected);
   useEffect(() => {
     selectedRef.current = selected;
@@ -59,7 +62,25 @@ export default function LiveEventMap({
       const data = await res.json();
       setEvent(data.event);
       setStages(data.stages ?? []);
-      setEntrants(data.entrants ?? []);
+      let list: Entrant[] = data.entrants ?? [];
+      // Organizer view: overlay SOS + ICE from the credentialed command feed.
+      if (organizerEventId) {
+        try {
+          const cRes = await authFetch(`/api/events/${organizerEventId}/command`);
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            const overlay = new Map<string, { sos?: boolean; ice?: Entrant["ice"] }>();
+            for (const ce of (cData.entrants ?? []) as Entrant[]) overlay.set(ce.id, { sos: ce.sos, ice: ce.ice });
+            list = list.map((e) => ({ ...e, ...(overlay.get(e.id) ?? {}) }));
+            // Auto-focus a newly-raised SOS.
+            const active = list.filter((e) => e.sos);
+            const fresh = active.find((e) => !seenSosRef.current.has(e.id));
+            if (fresh) setSosFocus(fresh.id);
+            seenSosRef.current = new Set(active.map((e) => e.id));
+          }
+        } catch { /* keep base list if the command feed is unavailable */ }
+      }
+      setEntrants(list);
       if (data.track) {
         setTrack(data.track.map((p: LngLat) => ({ lat: p.lat, lng: p.lng })));
       } else {
@@ -97,6 +118,18 @@ export default function LiveEventMap({
     [load]
   );
 
+  async function acknowledgeSos(id: string) {
+    if (!organizerEventId) return;
+    await authFetch(`/api/events/${organizerEventId}/sos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participant_id: id }),
+    });
+    seenSosRef.current.delete(id);
+    setSosFocus(undefined);
+    load();
+  }
+
   if (loading) {
     if (compact) return <div style={{ width: "100%", height: "100%", background: theme.canvas }} aria-label="Loading map" />;
     return (
@@ -129,6 +162,7 @@ export default function LiveEventMap({
   }
 
   const withFix = entrants.filter((e) => e.lat !== null);
+  const sosEntrants = entrants.filter((e) => e.sos);
 
   // ── Class grouping / filtering ──
   const classKey = (e: Entrant) => (e.class && e.class.trim() ? e.class.trim() : "Unclassified");
@@ -323,6 +357,21 @@ export default function LiveEventMap({
       )}
 
       <div style={{ flex: 1, position: "relative" }}>
+        {organizerEventId && sosEntrants.length > 0 && (
+          <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 6, width: "min(92%, 460px)", display: "flex", flexDirection: "column", gap: 6 }}>
+            {sosEntrants.map((e) => (
+              <div key={e.id} className="wp-pulse" style={{ background: "#FF3B30", color: "#fff", borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 6px 20px rgba(0,0,0,.5)" }}>
+                <span style={{ fontSize: 18 }}>&#9888;</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: 0.3 }}>SOS — {e.number ? `#${e.number} ` : ""}{e.name}</div>
+                  <div style={{ fontSize: 11, opacity: 0.85 }}>Tap Locate to see position &amp; ICE.</div>
+                </div>
+                <button onClick={() => { setSosFocus(e.id); selectEntrant(e.id); }} style={{ background: "#fff", color: "#B3261E", border: "none", borderRadius: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Locate</button>
+                <button onClick={() => acknowledgeSos(e.id)} style={{ background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.6)", borderRadius: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Ack</button>
+              </div>
+            ))}
+          </div>
+        )}
         <TrackingMap
           entrants={visible}
           routeGpx={event?.route_gpx}
@@ -332,6 +381,7 @@ export default function LiveEventMap({
           onSelectEntrant={selectEntrant}
           selectedTrack={track}
           organizerEventId={organizerEventId}
+          focusEntrantId={sosFocus}
         />
       </div>
     </div>

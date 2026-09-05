@@ -102,6 +102,7 @@ export default function EventShareLinks({
           <ul style={{ margin: "14px 0 0", padding: 0, listStyle: "none" }}>
             {creds.map((c) => {
               const url = `${origin}/api/events/${eventId}/gep/${c.gep_token}/track.kml`;
+              const cmdUrl = `${origin}/command/${c.gep_token}`;
               return (
                 <li
                   key={c.id}
@@ -111,14 +112,21 @@ export default function EventShareLinks({
                     gap: 10,
                     padding: "8px 0",
                     borderTop: `1px solid ${theme.hairlineSoft}`,
+                    flexWrap: "wrap",
                   }}
                 >
                   <strong style={{ minWidth: 140, color: theme.ink }}>{c.display_name}</strong>
-                  <a href={url} style={{ color: theme.accent, fontSize: 13 }}>
-                    Download .kml
+                  <a href={cmdUrl} target="_blank" rel="noopener noreferrer" style={{ color: theme.track, fontSize: 13, fontWeight: 700 }}>
+                    Open Command View ↗
+                  </a>
+                  <button onClick={() => copy(cmdUrl, c.id + "-cmd")} style={{ ...linkBtn, padding: "4px 10px" }}>
+                    {copied === c.id + "-cmd" ? "Copied" : "Copy command link"}
+                  </button>
+                  <a href={url} style={{ color: theme.muted, fontSize: 12 }}>
+                    .kml (Earth Pro)
                   </a>
                   <button onClick={() => copy(url, c.id)} style={{ ...linkBtn, padding: "4px 10px" }}>
-                    {copied === c.id ? "Copied" : "Copy link"}
+                    {copied === c.id ? "Copied" : "Copy .kml"}
                   </button>
                 </li>
               );
