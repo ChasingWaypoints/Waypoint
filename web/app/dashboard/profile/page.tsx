@@ -435,7 +435,7 @@ export default function ProfilePage() {
                 </button>
               </div>
               <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>
-                Give this to an event organizer to link your account \u2014 it lets them reach your emergency info if something goes wrong.
+                Give this to an event organizer to link your account — it lets them reach your emergency info if something goes wrong.
               </p>
             </Field>
 
