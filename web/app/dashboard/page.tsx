@@ -29,12 +29,12 @@ const EVENT_STATUS_COLOR: Record<string, string> = {
 
 function Nav({ email, onSignOut, isAdmin }: { email: string; onSignOut: () => void; isAdmin?: boolean }) {
   return (
-    <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+    <nav className="wp-topnav" style={{ background: "#0C1E29", padding: "0 24px", minHeight: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
       <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
         Waypoint
       </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ color: "#7E93A0", fontSize: 13 }}>{email}</span>
+      <div className="wp-nav-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span className="wp-nav-email" style={{ color: "#7E93A0", fontSize: 13 }}>{email}</span>
         {isAdmin && (
           <Link
             href="/dashboard/admin"

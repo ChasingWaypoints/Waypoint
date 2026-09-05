@@ -90,3 +90,11 @@ input, select, textarea {
 
 /* Roster rows: hover affordance (selected rows keep their inline surface-hi). */
 .wp-roster-row:hover { background: #14303F !important; }
+
+/* Dashboard top nav: on small screens hide the email and tighten spacing so
+   the WAYPOINT / Admin / Profile / Sign Out row can't overflow the viewport. */
+@media (max-width: 560px) {
+  .wp-topnav { padding-left: 12px !important; padding-right: 12px !important; }
+  .wp-nav-actions { gap: 8px !important; flex-wrap: wrap; justify-content: flex-end; }
+  .wp-nav-email { display: none !important; }
+}
