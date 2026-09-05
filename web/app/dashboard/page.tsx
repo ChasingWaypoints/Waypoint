@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const [joinError, setJoinError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasSub, setHasSub] = useState<boolean | null>(null);
+  const [hasOrg, setHasOrg] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -78,6 +79,7 @@ export default function DashboardPage() {
       setUserEmail(session.user.email ?? "");
       supabase.rpc("am_i_super_admin").then(({ data }) => setIsAdmin(data === true));
       supabase.rpc("user_has_subscription", { p_user_id: session.user.id }).then(({ data }) => setHasSub(data === true));
+      supabase.rpc("user_has_org", { p_user_id: session.user.id }).then(({ data }) => setHasOrg(data === true));
 
       const token = session.access_token;
 
@@ -139,6 +141,28 @@ export default function DashboardPage() {
     const data = await res.json().catch(() => ({}));
     if (data.url) window.location.href = data.url;
     else alert(data.error ?? "Could not start checkout. Please try again.");
+  }
+
+  async function startOrgCheckout() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/billing/org-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.url) window.location.href = data.url;
+    else alert(data.error ?? "Could not start checkout. Please try again.");
+  }
+
+  async function openBillingPortal() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/billing/portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.url) window.location.href = data.url;
+    else alert(data.error ?? "No billing account yet.");
   }
 
   async function deleteTrip(id: string, name: string) {
@@ -285,6 +309,24 @@ export default function DashboardPage() {
               <button onClick={() => startSubscribe("individual")} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$15 / year</button>
               <button onClick={() => startSubscribe("individual_plus")} style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Plus · $29 / year</button>
             </div>
+          </div>
+        )}
+
+        {hasOrg === false && (
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF" }}>Waypoint Organization</div>
+              <div style={{ fontSize: 12, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+                Unlimited events, a shared 1,500-entrant pool, white-label branding, and command credentials.
+              </div>
+            </div>
+            <button onClick={startOrgCheckout} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$3,500 / year</button>
+          </div>
+        )}
+
+        {(hasSub || hasOrg) && (
+          <div style={{ marginBottom: 40 }}>
+            <button onClick={openBillingPortal} style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Manage billing</button>
           </div>
         )}
 

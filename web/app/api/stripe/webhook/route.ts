@@ -71,6 +71,21 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           });
         }
+      } else if (kind === "org") {
+        const userId = s.metadata?.user_id ?? s.client_reference_id ?? null;
+        if (userId && s.subscription) {
+          const sub = await getStripe().subscriptions.retrieve(s.subscription as string);
+          await admin.from("org_subscriptions").upsert({
+            user_id: userId,
+            status: normStatus(sub.status),
+            current_period_end: periodEndISO(sub),
+            entrant_pool: 1500,
+            entrants_used: 0,
+            stripe_customer_id: (sub.customer as string) ?? null,
+            stripe_subscription_id: sub.id,
+            updated_at: new Date().toISOString(),
+          });
+        }
       }
     } else if (evt.type === "customer.subscription.updated" || evt.type === "customer.subscription.deleted") {
       const sub = evt.data.object as Stripe.Subscription;
@@ -79,6 +94,22 @@ export async function POST(request: NextRequest) {
         current_period_end: periodEndISO(sub),
         updated_at: new Date().toISOString(),
       }).eq("stripe_subscription_id", sub.id);
+
+      // Org subscription: mirror status/period, and reset the entrant pool when
+      // the billing period rolls forward (annual renewal).
+      const { data: orgRow } = await admin.from("org_subscriptions")
+        .select("current_period_end").eq("stripe_subscription_id", sub.id).maybeSingle();
+      if (orgRow) {
+        const newEnd = periodEndISO(sub);
+        const renewed = !!orgRow.current_period_end && !!newEnd
+          && new Date(newEnd) > new Date(orgRow.current_period_end);
+        await admin.from("org_subscriptions").update({
+          status: evt.type === "customer.subscription.deleted" ? "canceled" : normStatus(sub.status),
+          current_period_end: newEnd,
+          ...(renewed ? { entrants_used: 0 } : {}),
+          updated_at: new Date().toISOString(),
+        }).eq("stripe_subscription_id", sub.id);
+      }
     }
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
