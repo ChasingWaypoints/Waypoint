@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../lib/theme";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { authFetch } from "../lib/authFetch";
@@ -149,7 +150,7 @@ export default function EventBranding({ eventId }: { eventId: string }) {
   const headlineCount = sponsors.filter((s) => s.headline).length;
 
   if (loading) {
-    return <div style={{ color: C.muted, fontSize: 13 }}>Loading branding…</div>;
+    return <div style={{ color: C.muted, fontSize: text.base }}>Loading branding…</div>;
   }
 
   return (
@@ -157,7 +158,7 @@ export default function EventBranding({ eventId }: { eventId: string }) {
       <div style={label}>Branding</div>
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: 24, display: "flex", flexDirection: "column", gap: 28 }}>
         {error && (
-          <div style={{ color: C.danger, fontSize: 13, background: "#2A1214", border: `1px solid #5A2530`, borderRadius: 4, padding: "8px 12px" }}>
+          <div style={{ color: C.danger, fontSize: text.base, background: "#2A1214", border: `1px solid #5A2530`, borderRadius: 4, padding: "8px 12px" }}>
             {error}
           </div>
         )}
@@ -184,7 +185,7 @@ export default function EventBranding({ eventId }: { eventId: string }) {
                   const f = e.target.files?.[0];
                   if (f) onLogoFile(f);
                 }}
-                style={{ fontSize: 13, color: C.ink }}
+                style={{ fontSize: text.base, color: C.ink }}
               />
               <span style={spec}>{LOGO_SPEC}</span>
             </div>
@@ -193,7 +194,7 @@ export default function EventBranding({ eventId }: { eventId: string }) {
                 Remove
               </button>
             )}
-            {busy === "logo" && <span style={{ color: C.muted, fontSize: 12 }}>Uploading…</span>}
+            {busy === "logo" && <span style={{ color: C.muted, fontSize: text.sm }}>Uploading…</span>}
           </div>
         </div>
 
@@ -214,12 +215,12 @@ export default function EventBranding({ eventId }: { eventId: string }) {
                     <img src={sp.logo_url} alt={sp.name} style={{ maxHeight: 32, maxWidth: 64, objectFit: "contain" }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: C.ink, fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ color: C.ink, fontSize: text.base, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {sp.name || <span style={{ color: C.muted }}>(no name)</span>}
                     </div>
-                    {sp.url && <div style={{ color: C.muted, fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.url}</div>}
+                    {sp.url && <div style={{ color: C.muted, fontSize: text.xs, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.url}</div>}
                   </div>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted, cursor: "pointer", flexShrink: 0 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: text.sm, color: C.muted, cursor: "pointer", flexShrink: 0 }}>
                     <input
                       type="checkbox"
                       checked={sp.headline}
@@ -235,14 +236,14 @@ export default function EventBranding({ eventId }: { eventId: string }) {
           )}
 
           <div style={{ border: `1px dashed ${C.border}`, borderRadius: 4, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: 0.5, textTransform: "uppercase" }}>Add a sponsor</div>
+            <div style={{ fontSize: text.sm, fontWeight: 700, color: C.ink, letterSpacing: 0.5, textTransform: "uppercase" }}>Add a sponsor</div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <div style={{ width: 64, height: 34, display: "flex", alignItems: "center", justifyContent: "center", background: "#0A0A0A", border: `1px solid ${C.border}`, borderRadius: 4, flexShrink: 0 }}>
                 {draft.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={draft.logo_url} alt="" style={{ maxHeight: 30, maxWidth: 60, objectFit: "contain" }} />
                 ) : (
-                  <span style={{ color: C.muted, fontSize: 10 }}>logo</span>
+                  <span style={{ color: C.muted, fontSize: text.xxs }}>logo</span>
                 )}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -255,11 +256,11 @@ export default function EventBranding({ eventId }: { eventId: string }) {
                     const f = e.target.files?.[0];
                     if (f) onDraftLogoFile(f);
                   }}
-                  style={{ fontSize: 13, color: C.ink }}
+                  style={{ fontSize: text.base, color: C.ink }}
                 />
                 <span style={spec}>{SPEC}</span>
               </div>
-              {busy === "draft" && <span style={{ color: C.muted, fontSize: 12 }}>Uploading…</span>}
+              {busy === "draft" && <span style={{ color: C.muted, fontSize: text.sm }}>Uploading…</span>}
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <input
@@ -278,7 +279,7 @@ export default function EventBranding({ eventId }: { eventId: string }) {
               />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted, cursor: "pointer" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: text.sm, color: C.muted, cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={draft.headline}
@@ -299,23 +300,23 @@ export default function EventBranding({ eventId }: { eventId: string }) {
 }
 
 const label: React.CSSProperties = {
-  fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase",
+  fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase",
   color: "#7E93A0", margin: "0 0 10px",
 };
-const subhead: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#FFFFFF", marginBottom: 4 };
-const help: React.CSSProperties = { fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 };
-const spec: React.CSSProperties = { fontSize: 11, color: "#54697A" };
+const subhead: React.CSSProperties = { fontSize: text.md, fontWeight: 700, color: "#FFFFFF", marginBottom: 4 };
+const help: React.CSSProperties = { fontSize: text.base, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 };
+const spec: React.CSSProperties = { fontSize: text.xs, color: "#54697A" };
 const field: React.CSSProperties = {
   padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A",
-  fontSize: 13, color: "#FFFFFF", outline: "none", borderRadius: 4,
+  fontSize: text.base, color: "#FFFFFF", outline: "none", borderRadius: 4,
 };
 const ghostBtn: React.CSSProperties = {
   background: "transparent", border: "1px solid #5A2530", color: "#FF6B6B",
-  padding: "5px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+  padding: "5px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
   textTransform: "uppercase", cursor: "pointer", borderRadius: 4, flexShrink: 0,
 };
 const primaryBtn: React.CSSProperties = {
   background: "#CCFF00", color: "#0C1E29", border: "none",
-  padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+  padding: "9px 18px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
   textTransform: "uppercase", borderRadius: 4,
 };

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { theme, font } from "../../lib/theme";
+import { theme, font, text } from "../../lib/theme";
 
 /**
  * Browser tracking — the interim "track from your phone, no app" path until the
@@ -154,29 +154,29 @@ export default function BrowserTrackPage() {
   return (
     <div style={{ minHeight: "100vh", background: theme.canvas, color: theme.body, font: `14px ${font.sans}`, display: "flex", flexDirection: "column" }}>
       <nav style={{ background: theme.surface, padding: "0 16px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, borderBottom: `1px solid ${theme.hairline}` }}>
-        <Link href="/" style={{ color: theme.ink, fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
-        <Link href="/dashboard" style={{ color: theme.muted, fontSize: 12, textDecoration: "none" }}>← Dashboard</Link>
+        <Link href="/" style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/dashboard" style={{ color: theme.muted, fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 
       <div style={{ maxWidth: 460, width: "100%", margin: "0 auto", padding: "28px 16px", boxSizing: "border-box" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", margin: "0 0 4px" }}>Track from this phone</p>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: theme.ink, margin: "0 0 20px" }}>Live tracking</h1>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", margin: "0 0 4px" }}>Track from this phone</p>
+        <h1 style={{ fontSize: text.xxl, fontWeight: 700, color: theme.ink, margin: "0 0 20px" }}>Live tracking</h1>
 
         {error && (
-          <div style={{ background: theme.dangerSurface, border: `1px solid ${theme.danger}`, color: "#FFC9C4", padding: "10px 12px", borderRadius: 6, fontSize: 13, marginBottom: 16 }}>{error}</div>
+          <div style={{ background: theme.dangerSurface, border: `1px solid ${theme.danger}`, color: "#FFC9C4", padding: "10px 12px", borderRadius: 6, fontSize: text.base, marginBottom: 16 }}>{error}</div>
         )}
 
         {phase === "idle" && (
           <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 8, padding: 20 }}>
-            <label style={{ display: "block", fontSize: 12, color: theme.muted, marginBottom: 6 }}>Trip name</label>
+            <label style={{ display: "block", fontSize: text.sm, color: theme.muted, marginBottom: 6 }}>Trip name</label>
             <input value={tripName} onChange={(e) => setTripName(e.target.value)}
-              style={{ width: "100%", boxSizing: "border-box", background: theme.canvas, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 12px", fontSize: 14, marginBottom: 18 }} />
+              style={{ width: "100%", boxSizing: "border-box", background: theme.canvas, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 12px", fontSize: text.md, marginBottom: 18 }} />
 
-            <label style={{ display: "block", fontSize: 12, color: theme.muted, marginBottom: 8 }}>Update every</label>
+            <label style={{ display: "block", fontSize: text.sm, color: theme.muted, marginBottom: 8 }}>Update every</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
               {INTERVALS.map((m) => (
                 <button key={m} onClick={() => setIntervalMin(m)}
-                  style={{ flex: "1 1 auto", padding: "10px 0", borderRadius: 999, cursor: "pointer", fontWeight: 700, fontSize: 13,
+                  style={{ flex: "1 1 auto", padding: "10px 0", borderRadius: 999, cursor: "pointer", fontWeight: 700, fontSize: text.base,
                     border: `1px solid ${intervalMin === m ? theme.accent : theme.hairline}`,
                     background: intervalMin === m ? theme.accent : "transparent",
                     color: intervalMin === m ? theme.accentInk : theme.body }}>
@@ -186,10 +186,10 @@ export default function BrowserTrackPage() {
             </div>
 
             <button onClick={startTracking}
-              style={{ width: "100%", background: theme.track, color: theme.accentInk, border: "none", borderRadius: 6, padding: "14px 0", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
+              style={{ width: "100%", background: theme.track, color: theme.accentInk, border: "none", borderRadius: 6, padding: "14px 0", fontSize: text.md, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
               ● Start tracking
             </button>
-            <p style={{ fontSize: 12, color: theme.muted, lineHeight: 1.6, margin: "14px 0 0" }}>
+            <p style={{ fontSize: text.sm, color: theme.muted, lineHeight: 1.6, margin: "14px 0 0" }}>
               Keep this tab open and your screen on. Your location is shared on a live map you can send to family or friends. A shorter interval is more precise but uses more battery.
             </p>
           </div>
@@ -210,23 +210,23 @@ export default function BrowserTrackPage() {
             </div>
 
             {lastFix && (
-              <div style={{ fontSize: 12, color: theme.muted, marginBottom: 18 }}>
+              <div style={{ fontSize: text.sm, color: theme.muted, marginBottom: 18 }}>
                 {lastFix.lat.toFixed(5)}, {lastFix.lng.toFixed(5)}
               </div>
             )}
 
             {shareToken && (
               <a href={`/share/${shareToken}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", textAlign: "center", background: "transparent", color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "11px 0", fontSize: 13, fontWeight: 700, textTransform: "uppercase", textDecoration: "none", marginBottom: 10 }}>
+                style={{ display: "block", textAlign: "center", background: "transparent", color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "11px 0", fontSize: text.base, fontWeight: 700, textTransform: "uppercase", textDecoration: "none", marginBottom: 10 }}>
                 View / share live map ↗
               </a>
             )}
             <button onClick={stopTracking}
-              style={{ width: "100%", background: "transparent", color: theme.danger, border: `1px solid ${theme.danger}`, borderRadius: 6, padding: "12px 0", fontSize: 13, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
+              style={{ width: "100%", background: "transparent", color: theme.danger, border: `1px solid ${theme.danger}`, borderRadius: 6, padding: "12px 0", fontSize: text.base, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
               Stop tracking
             </button>
             {!wakeOn && (
-              <p style={{ fontSize: 12, color: theme.warn, lineHeight: 1.6, margin: "12px 0 0" }}>
+              <p style={{ fontSize: text.sm, color: theme.warn, lineHeight: 1.6, margin: "12px 0 0" }}>
                 Your device wouldn&apos;t keep the screen awake. Set your screen timeout to a few minutes so tracking isn&apos;t interrupted.
               </p>
             )}
@@ -237,8 +237,8 @@ export default function BrowserTrackPage() {
           <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 8, padding: 20, textAlign: "center" }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>🏁</div>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: theme.ink, margin: "0 0 6px" }}>Trip saved</h2>
-            <p style={{ fontSize: 13, color: theme.muted, margin: "0 0 18px" }}>{pointCount} point{pointCount !== 1 ? "s" : ""} logged.</p>
-            <Link href="/dashboard" style={{ display: "inline-block", background: theme.track, color: theme.accentInk, borderRadius: 6, padding: "11px 20px", fontSize: 13, fontWeight: 700, textTransform: "uppercase", textDecoration: "none" }}>
+            <p style={{ fontSize: text.base, color: theme.muted, margin: "0 0 18px" }}>{pointCount} point{pointCount !== 1 ? "s" : ""} logged.</p>
+            <Link href="/dashboard" style={{ display: "inline-block", background: theme.track, color: theme.accentInk, borderRadius: 6, padding: "11px 20px", fontSize: text.base, fontWeight: 700, textTransform: "uppercase", textDecoration: "none" }}>
               Back to dashboard
             </Link>
           </div>
@@ -251,7 +251,7 @@ export default function BrowserTrackPage() {
 function Stat({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div style={{ background: theme.canvas, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "10px 12px" }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 16, fontWeight: 700, color: valueColor ?? theme.ink }}>{value}</div>
     </div>
   );

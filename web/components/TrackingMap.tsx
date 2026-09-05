@@ -10,7 +10,7 @@ import {
   getLayer,
   rasterStyle,
 } from "../lib/mapLayers";
-import { theme, font, btnMap, panel } from "../lib/theme";
+import { theme, font, btnMap, panel, text } from "../lib/theme";
 import { authFetch } from "../lib/authFetch";
 import {
   LngLat,
@@ -666,7 +666,7 @@ export default function TrackingMap({
         >
           {getLayer(layerId).name}
           {(weatherRain || weatherTemp) && (
-            <span style={{ marginLeft: 6, color: theme.accent, fontSize: 10, fontWeight: 700 }}>● WX</span>
+            <span style={{ marginLeft: 6, color: theme.accent, fontSize: text.xxs, fontWeight: 700 }}>● WX</span>
           )}
           <span style={{ marginLeft: 6, opacity: 0.6 }}>▾</span>
         </button>
@@ -684,13 +684,13 @@ export default function TrackingMap({
                 }}
               >
                 <div>{l.name}</div>
-                <div style={{ fontSize: 11, color: theme.muted, marginTop: 2 }}>
+                <div style={{ fontSize: text.xs, color: theme.muted, marginTop: 2 }}>
                   {l.description}
                 </div>
               </button>
             ))}
             <div style={{ borderTop: `1px solid ${theme.hairline}`, marginTop: 4 }}>
-              <div style={{ padding: "8px 12px 4px", fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted }}>
+              <div style={{ padding: "8px 12px 4px", fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted }}>
                 Weather overlay
               </div>
               {([
@@ -709,12 +709,12 @@ export default function TrackingMap({
                   }}
                 >
                   <span>{label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: on ? theme.accent : theme.muted }}>
+                  <span style={{ fontSize: text.xs, fontWeight: 700, color: on ? theme.accent : theme.muted }}>
                     {on ? "ON" : "OFF"}
                   </span>
                 </button>
               ))}
-              <div style={{ padding: "4px 12px 8px", fontSize: 10, color: theme.muted }}>
+              <div style={{ padding: "4px 12px 8px", fontSize: text.xxs, color: theme.muted }}>
                 OpenWeather · refreshes ~10 min
               </div>
             </div>
@@ -741,10 +741,10 @@ export default function TrackingMap({
 
           {measuring && measurePoints.length > 0 && (
             <div style={{ ...panelStyle, minWidth: 190, padding: 12 }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: theme.accent }}>
+              <div style={{ fontSize: text.xxl, fontWeight: 700, color: theme.accent }}>
                 {formatDistance(total, unit)}
               </div>
-              <div style={{ fontSize: 12, color: theme.muted, marginTop: 4 }}>
+              <div style={{ fontSize: text.sm, color: theme.muted, marginTop: 4 }}>
                 {measurePoints.length} point{measurePoints.length === 1 ? "" : "s"}
                 {cap !== null && (
                   <> &middot; CAP {Math.round(((cap % 360) + 360) % 360)}&deg; {compassPoint(cap)}</>

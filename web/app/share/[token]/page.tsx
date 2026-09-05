@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
@@ -171,15 +172,11 @@ export default function SharePage() {
     return () => { supabase.removeChannel(channel); };
   }, [data]);
 
-  if (loading) return (
-    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0C1E29", fontFamily: "system-ui" }}>
-      <p style={{ color: "#7E93A0", fontSize: 14 }}>Loading trip...</p>
-    </div>
-  );
+  if (loading) return <ShareSkeleton />;
 
   if (needsPassword) return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0C1E29", fontFamily: "system-ui", padding: 24 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>Protected Trip</p>
+      <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>Protected Trip</p>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: "#C8D4DC", marginBottom: 24 }}>Enter Password</h1>
       <input
         type="password"
@@ -191,7 +188,7 @@ export default function SharePage() {
       />
       <button
         onClick={() => loadTrip(password)}
-        style={{ marginTop: 12, background: "#CCFF00", color: "#0C1E29", border: "none", padding: "14px 32px", fontWeight: 700, fontSize: 13, letterSpacing: 0.5, cursor: "pointer", width: "100%", maxWidth: 320 }}
+        style={{ marginTop: 12, background: "#CCFF00", color: "#0C1E29", border: "none", padding: "14px 32px", fontWeight: 700, fontSize: text.base, letterSpacing: 0.5, cursor: "pointer", width: "100%", maxWidth: 320 }}
       >
         VIEW TRIP
       </button>
@@ -200,12 +197,12 @@ export default function SharePage() {
 
   if (isExpired) return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0A0A0A", fontFamily: "system-ui", padding: 24 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8, margin: "0 0 8px" }}>Waypoint</p>
+      <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8, margin: "0 0 8px" }}>Waypoint</p>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: "#FFFFFF", margin: "0 0 12px" }}>This link has expired</h1>
-      <p style={{ fontSize: 14, color: "#7E93A0", fontWeight: 300, margin: "0 0 32px", textAlign: "center", maxWidth: 320 }}>
+      <p style={{ fontSize: text.md, color: "#7E93A0", fontWeight: 300, margin: "0 0 32px", textAlign: "center", maxWidth: 320 }}>
         The person who shared this trip set an expiry date. Ask them to generate a new share link.
       </p>
-      <a href="/" style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}>
+      <a href="/" style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 28px", fontWeight: 700, fontSize: text.sm, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}>
         Go to Waypoint
       </a>
     </div>
@@ -213,7 +210,7 @@ export default function SharePage() {
 
   if (error) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0C1E29", fontFamily: "system-ui" }}>
-      <p style={{ color: "#FF3B30", fontSize: 14 }}>{error}</p>
+      <p style={{ color: "#FF3B30", fontSize: text.md }}>{error}</p>
     </div>
   );
 
@@ -226,13 +223,13 @@ export default function SharePage() {
       {/* Header */}
       <div style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint</p>
+          <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint</p>
           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0", color: "#fff" }}>{data.trip.name}</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <a
             href={`/share/${token}/story`}
-            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
           >
             Story
           </a>
@@ -240,20 +237,20 @@ export default function SharePage() {
             <a
               href={`${baseUrl}/api/share/${token}/network-link.kml`}
               title="Open as a live-refreshing NetworkLink in Google Earth Pro"
-              style={{ background: "#1a7a1a", color: "#fff", border: "1px solid #1a7a1a", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+              style={{ background: "#1a7a1a", color: "#fff", border: "1px solid #1a7a1a", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
             >
               🌍 GEP Live
             </a>
           )}
           <a
             href={`${baseUrl}/api/share/${token}/track.kml`}
-            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
           >
             KML ↓
           </a>
           <a
             href={`${baseUrl}/api/trips/${data.trip.id}/track.gpx?token=${token}`}
-            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
+            style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textDecoration: "none", textTransform: "uppercase" }}
           >
             GPX ↓
           </a>
@@ -269,7 +266,7 @@ export default function SharePage() {
         {data.trip.status === "active" && (
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#CCFF00", display: "inline-block", animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#CCFF00", textTransform: "uppercase" }}>Live</span>
+            <span style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1, color: "#CCFF00", textTransform: "uppercase" }}>Live</span>
           </div>
         )}
       </div>
@@ -280,11 +277,40 @@ export default function SharePage() {
   );
 }
 
+function ShareSkeleton() {
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }} aria-busy="true" aria-label="Loading trip">
+      {/* Header */}
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #1E3B4C", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div className="wp-skel" style={{ width: 60, height: 8 }} />
+          <div className="wp-skel" style={{ width: 160, height: 14 }} />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <div className="wp-skel" style={{ width: 56, height: 26 }} />
+          <div className="wp-skel" style={{ width: 56, height: 26 }} />
+        </div>
+      </div>
+      {/* Stats bar */}
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #1E3B4C", padding: "10px 20px", display: "flex", gap: 24, flexShrink: 0, alignItems: "center" }}>
+        {[64, 72, 60, 56].map((w, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div className="wp-skel" style={{ width: 40, height: 7 }} />
+            <div className="wp-skel" style={{ width: w, height: 13 }} />
+          </div>
+        ))}
+      </div>
+      {/* Map */}
+      <div className="wp-skel" style={{ flex: 1, borderRadius: 0 }} />
+    </div>
+  );
+}
+
 function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div>
-      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", margin: 0 }}>{label}</p>
-      <p style={{ fontSize: 14, fontWeight: 700, color: color ?? "#262626", margin: "2px 0 0" }}>{value}</p>
+      <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", margin: 0 }}>{label}</p>
+      <p style={{ fontSize: text.md, fontWeight: 700, color: color ?? "#262626", margin: "2px 0 0" }}>{value}</p>
     </div>
   );
 }

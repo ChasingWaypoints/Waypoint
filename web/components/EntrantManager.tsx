@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { authFetch } from "../lib/authFetch";
 import { timeAgo } from "../lib/geo";
-import { theme, font, btnPrimary, btnGhost } from "../lib/theme";
+import { theme, font, btnPrimary, btnGhost, text } from "../lib/theme";
 
 interface Entrant {
   id: string;
@@ -187,7 +187,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 6, color: theme.ink }}>Batch load a roster</div>
-        <p style={{ margin: "0 0 12px", color: theme.muted, fontSize: 13 }}>
+        <p style={{ margin: "0 0 12px", color: theme.muted, fontSize: text.base }}>
           Upload a <strong>CSV or Excel (.xlsx)</strong> file with columns{" "}
           <code>name, number, class, device, feed</code>. The feed is each entrant&rsquo;s
           public beacon share link — a Garmin MapShare URL or a SPOT feed id. ZOLEO entrants
@@ -206,11 +206,11 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
               const f = e.target.files?.[0];
               if (f) handleFile(f);
             }}
-            style={{ fontSize: 13 }}
+            style={{ fontSize: text.base }}
           />
           <a
             href={`/api/events/${eventId}/entrants/batch`}
-            style={{ fontSize: 13, color: theme.accent }}
+            style={{ fontSize: text.base, color: theme.accent }}
           >
             Download template
           </a>
@@ -232,7 +232,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
             </div>
 
             {(dryRun.would_link || dryRun.unlinked_codes?.length || dryRun.already_in_event?.length) ? (
-              <div style={{ fontSize: 13, marginBottom: 10 }}>
+              <div style={{ fontSize: text.base, marginBottom: 10 }}>
                 {dryRun.would_link ? (
                   <div style={{ color: theme.live }}>
                     🔗 {dryRun.would_link} will link to a Waypoint account
@@ -253,7 +253,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
             ) : null}
 
             {dryRun.preview.length > 0 && (
-              <div style={{ fontSize: 13, color: theme.muted, marginBottom: 10 }}>
+              <div style={{ fontSize: text.base, color: theme.muted, marginBottom: 10 }}>
                 First few: {dryRun.preview.map((p) => p.display_name).join(", ")}
                 {dryRun.would_insert > dryRun.preview.length && "…"}
               </div>
@@ -261,11 +261,11 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
 
             {dryRun.errors.length > 0 && (
               <div style={{ marginBottom: 10 }}>
-                <div style={{ color: theme.danger, fontWeight: 600, fontSize: 13 }}>
+                <div style={{ color: theme.danger, fontWeight: 600, fontSize: text.base }}>
                   {dryRun.errors.length} row{dryRun.errors.length === 1 ? "" : "s"} will be
                   skipped
                 </div>
-                <ul style={{ margin: "6px 0 0", paddingLeft: 18, fontSize: 13, color: theme.muted }}>
+                <ul style={{ margin: "6px 0 0", paddingLeft: 18, fontSize: text.base, color: theme.muted }}>
                   {dryRun.errors.slice(0, 8).map((e, i) => (
                     <li key={i}>
                       Line {e.line}: {e.message}
@@ -277,12 +277,12 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
             )}
 
             {dryRun.duplicates.length > 0 && (
-              <div style={{ color: theme.warn, fontSize: 13, marginBottom: 10 }}>
+              <div style={{ color: theme.warn, fontSize: text.base, marginBottom: 10 }}>
                 Duplicate names in the file: {dryRun.duplicates.join(", ")}
               </div>
             )}
 
-            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, marginBottom: 12 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: text.base, marginBottom: 12 }}>
               <input
                 type="checkbox"
                 checked={replace}
@@ -315,7 +315,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
       )}
 
       {importMsg && (
-        <div style={{ color: theme.live, marginBottom: 14, fontSize: 13, background: theme.canvas, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 14px" }}>
+        <div style={{ color: theme.live, marginBottom: 14, fontSize: text.base, background: theme.canvas, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 14px" }}>
           ✓ {importMsg}
         </div>
       )}
@@ -334,7 +334,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
           <div style={{ fontWeight: 600, color: theme.danger, marginBottom: 6 }}>
             {problems.length} feed{problems.length === 1 ? "" : "s"} not responding
           </div>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: text.base }}>
             {problems.slice(0, 6).map((p) => (
               <li key={p.id}>
                 <strong>{p.display_name}</strong>: {p.poll_error}
@@ -353,7 +353,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: text.base }}>
             <thead>
               <tr style={{ textAlign: "left", color: theme.muted, borderBottom: `2px solid ${theme.hairline}` }}>
                 <th style={th}>#</th>
@@ -418,7 +418,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
                     <td style={td}>
                       <button
                         onClick={() => remove(e.id, e.display_name)}
-                        style={{ ...secondaryBtn, padding: "3px 8px", fontSize: 12 }}
+                        style={{ ...secondaryBtn, padding: "3px 8px", fontSize: text.sm }}
                       >
                         Remove
                       </button>

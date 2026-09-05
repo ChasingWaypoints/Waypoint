@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useState, useRef } from "react";
@@ -63,23 +64,23 @@ export default function CreateEventPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif" }}>
       <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/dashboard" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+        <Link href="/dashboard" style={{ color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
-        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: 12, textDecoration: "none" }}>
+        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>
           ← Back to Dashboard
         </Link>
       </nav>
 
       <div style={{ maxWidth: 520, margin: "60px auto", padding: "0 24px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Group Rides</p>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Group Rides</p>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: "0 0 32px" }}>Create Event</h1>
 
         <form onSubmit={handleSubmit} style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 32 }}>
 
           {/* Name */}
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
               Event Name *
             </label>
             <input
@@ -89,13 +90,13 @@ export default function CreateEventPage() {
               placeholder="e.g. Baja 500 Recon Ride"
               required
               autoFocus
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: 15, color: "#FFFFFF", outline: "none", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: text.lg, color: "#FFFFFF", outline: "none", boxSizing: "border-box" }}
             />
           </div>
 
           {/* Description */}
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
               Description <span style={{ fontWeight: 300, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
             </label>
             <textarea
@@ -103,16 +104,16 @@ export default function CreateEventPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Route details, meeting point, start time..."
               rows={3}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none", resize: "vertical", fontFamily: "system-ui", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: text.md, color: "#FFFFFF", outline: "none", resize: "vertical", fontFamily: "system-ui", boxSizing: "border-box" }}
             />
           </div>
 
           {/* Classes */}
           <div style={{ marginBottom: 32 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
               Classes <span style={{ fontWeight: 300, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
             </label>
-            <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 }}>
               Define the class options riders pick from when joining. Leave empty to skip the class field entirely.
             </p>
 
@@ -122,13 +123,13 @@ export default function CreateEventPage() {
                 {riderClasses.map((cls) => (
                   <div
                     key={cls}
-                    style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                    style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: text.sm, fontWeight: 700 }}
                   >
                     {cls}
                     <button
                       type="button"
                       onClick={() => removeClass(cls)}
-                      style={{ background: "none", border: "none", color: "#cce0ff", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}
+                      style={{ background: "none", border: "none", color: "#cce0ff", cursor: "pointer", fontSize: text.md, lineHeight: 1, padding: 0 }}
                     >
                       ×
                     </button>
@@ -146,7 +147,7 @@ export default function CreateEventPage() {
                 onChange={(e) => setClassInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addClass(); } }}
                 placeholder="e.g. Moto, UTV, Car, Truck…"
-                style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: text.md, color: "#FFFFFF", outline: "none" }}
               />
               <button
                 type="button"
@@ -155,7 +156,7 @@ export default function CreateEventPage() {
                 style={{
                   background: classInput.trim() ? "#1a2129" : "#1E3B4C",
                   color: "#fff", border: "none", padding: "10px 18px",
-                  fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                  fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
                   textTransform: "uppercase", cursor: classInput.trim() ? "pointer" : "default",
                 }}
               >
@@ -164,7 +165,7 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          {error && <p style={{ color: "#FF3B30", fontSize: 13, marginBottom: 16 }}>{error}</p>}
+          {error && <p style={{ color: "#FF3B30", fontSize: text.base, marginBottom: 16 }}>{error}</p>}
 
           <div style={{ display: "flex", gap: 12 }}>
             <button
@@ -173,7 +174,7 @@ export default function CreateEventPage() {
               style={{
                 flex: 1, background: name.trim() ? "#CCFF00" : "#1E3B4C",
                 color: "#0C1E29", padding: "13px", border: "none",
-                fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+                fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
                 cursor: name.trim() && !submitting ? "pointer" : "default",
               }}
             >
@@ -181,13 +182,13 @@ export default function CreateEventPage() {
             </button>
             <Link
               href="/dashboard"
-              style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "13px 20px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
             >
               Cancel
             </Link>
           </div>
 
-          <p style={{ fontSize: 12, color: "#7E93A0", marginTop: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 20, lineHeight: 1.6 }}>
             After creating the event, you'll get a 6-character join code to share with your riders.
           </p>
         </form>

@@ -53,6 +53,7 @@ export const theme = {
 // Type scale — the sizes already in de-facto use across the app, named so new
 // and refactored code can stay on the scale instead of picking numbers ad hoc.
 export const text = {
+  xxs: 10,  // micro labels, pulse/live chips
   xs: 11,   // labels, chips, meta
   sm: 12,   // secondary text
   base: 13, // body / controls
@@ -63,8 +64,9 @@ export const text = {
 } as const;
 
 export const font = {
-  sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  sans: "var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  mono: "var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace",
+  display: "var(--font-display), 'Barlow Condensed', system-ui, sans-serif",
 };
 
 // ── Shared control styles ─────────────────────────────────────

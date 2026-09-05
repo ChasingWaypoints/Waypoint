@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../lib/theme";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { authFetch } from "../lib/authFetch";
@@ -69,7 +70,7 @@ export default function StagesManager({ eventId }: { eventId: string }) {
   return (
     <section>
       <p style={label}>Stages</p>
-      <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 12px", lineHeight: 1.5 }}>
+      <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 12px", lineHeight: 1.5 }}>
         Upload a <strong>GPX, KML, or KMZ</strong> per day or special stage and name it. OpenRally
         GPX files bring their named waypoints in automatically. Toggle each stage on or off, give it
         a colour — every visible stage draws in its colour with its waypoint pins on all maps.
@@ -100,9 +101,9 @@ export default function StagesManager({ eventId }: { eventId: string }) {
               </button>
 
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: st.visible ? "#fff" : "#7E93A0" }}>{st.name}</span>
+                <span style={{ fontSize: text.md, fontWeight: 600, color: st.visible ? "#fff" : "#7E93A0" }}>{st.name}</span>
                 {st.waypoints && st.waypoints.length > 0 && (
-                  <span style={{ fontSize: 11, color: "#7E93A0", marginLeft: 8 }}>
+                  <span style={{ fontSize: text.xs, color: "#7E93A0", marginLeft: 8 }}>
                     {st.waypoints.length} waypoint{st.waypoints.length === 1 ? "" : "s"}
                   </span>
                 )}
@@ -142,33 +143,33 @@ export default function StagesManager({ eventId }: { eventId: string }) {
             type="file"
             accept=".gpx,.kml,.kmz"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            style={{ fontSize: 13, color: "#C8D4DC" }}
+            style={{ fontSize: text.base, color: "#C8D4DC" }}
           />
           <button onClick={upload} disabled={busy} style={addBtn}>
             {busy ? "Uploading…" : "Add Stage"}
           </button>
         </div>
-        {error && <p style={{ color: "#FF3B30", fontSize: 13, margin: "10px 0 0" }}>{error}</p>}
+        {error && <p style={{ color: "#FF3B30", fontSize: text.base, margin: "10px 0 0" }}>{error}</p>}
       </div>
     </section>
   );
 }
 
 const label: React.CSSProperties = {
-  fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0",
+  fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0",
   textTransform: "uppercase", margin: "0 0 8px",
 };
 const input: React.CSSProperties = {
   background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C",
-  borderRadius: 4, padding: "9px 11px", fontSize: 13,
+  borderRadius: 4, padding: "9px 11px", fontSize: text.base,
 };
 const addBtn: React.CSSProperties = {
   background: "#CCFF00", color: "#0C1E29", border: "none", borderRadius: 4,
-  padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+  padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
   textTransform: "uppercase", cursor: "pointer",
 };
 const delBtn: React.CSSProperties = {
   background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C",
-  borderRadius: 4, padding: "5px 10px", fontSize: 11, fontWeight: 700,
+  borderRadius: 4, padding: "5px 10px", fontSize: text.xs, fontWeight: 700,
   letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer",
 };

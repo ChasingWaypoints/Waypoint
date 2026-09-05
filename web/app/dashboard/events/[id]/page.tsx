@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
@@ -40,7 +41,7 @@ function timeAgo(iso: string): string {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>
+    <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>
       {children}
     </p>
   );
@@ -58,7 +59,7 @@ function Btn({ onClick, color = "#CCFF00", border, children, disabled }: {
         background: border ? "transparent" : (disabled ? "#1E3B4C" : color),
         color: border ? color : "#0C1E29",
         border: border ? `1px solid ${border}` : "none",
-        padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+        padding: "7px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
         textTransform: "uppercase", cursor: disabled ? "default" : "pointer",
       }}
     >
@@ -342,8 +343,8 @@ export default function EventDetailPage() {
 
       {/* Nav */}
       <nav style={{ background: "#0C1E29", padding: "0 24px", height: NAV_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
-        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: 12, textDecoration: "none" }}>← Dashboard</Link>
+        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 
       {/* Event header */}
@@ -351,8 +352,8 @@ export default function EventDetailPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {isLive && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />}
           <div>
-            <h1 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: isMobile ? "78vw" : "none" }}>{event.name}</h1>
-            <p style={{ fontSize: 11, color: "#7E93A0", margin: 0 }}>
+            <h1 style={{ fontSize: text.lg, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: isMobile ? "78vw" : "none" }}>{event.name}</h1>
+            <p style={{ fontSize: text.xs, color: "#7E93A0", margin: 0 }}>
               {riders.length <= 10 && (
                 <>Join code: <strong style={{ color: "#fff", letterSpacing: 1 }}>{event.join_code}</strong>{" · "}</>
               )}
@@ -365,48 +366,48 @@ export default function EventDetailPage() {
         <div className="wp-actionbar" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {isOrganizer && event.paid && (
             <>
-              <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
+              <span style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>✓ Paid</span>
               <button
                 onClick={startAddSeats}
                 title="Add 10 more rider seats for $40"
-                style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
               >
                 + 10 seats · $40
               </button>
             </>
           )}
           {isOrganizer && !event.paid && event.comped && (
-            <span style={{ border: "1px solid #4A5A25", color: "#CCFF00", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>★ Sponsored</span>
+            <span style={{ border: "1px solid #4A5A25", color: "#CCFF00", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>★ Sponsored</span>
           )}
           {isOrganizer && !event.paid && !event.comped && (
             <button
               onClick={startEventCheckout}
               title="Upgrade this ride to a paid event (needed past 10 riders)"
-              style={{ background: "#FFFE15", border: "1px solid #FFFE15", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+              style={{ background: "#FFFE15", border: "1px solid #FFFE15", color: "#0C1E29", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
             >
               Upgrade $200
             </button>
           )}
           <button
             onClick={() => setShowShare(true)}
-            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
           >
             Share
           </button>
           <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer"
-            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
             Public View ↗
           </a>
           {isOrganizer && (
             <Link href={`/dashboard/events/${id}/track`}
-              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
               Tracking Page
             </Link>
           )}
           {isOrganizer && !isLive && event.status !== "completed" && event.status !== "cancelled" && (
             <button
               onClick={goLive}
-              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+              style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
             >
               ● Go Live
             </button>
@@ -414,7 +415,7 @@ export default function EventDetailPage() {
           {isOrganizer && isLive && (
             <button
               onClick={endEvent}
-              style={{ background: "transparent", border: "1px solid #cc3300", color: "#FF3B30", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+              style={{ background: "transparent", border: "1px solid #cc3300", color: "#FF3B30", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
             >
               End Event
             </button>
@@ -425,7 +426,7 @@ export default function EventDetailPage() {
         {isMobile && (
           <div style={{ position: "relative", alignSelf: "flex-end" }}>
             <button onClick={() => setMenuOpen((o) => !o)} aria-label="Actions" aria-expanded={menuOpen}
-              style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 16px", fontSize: 13, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", borderRadius: 999 }}>
+              style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 16px", fontSize: text.base, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", borderRadius: 999 }}>
               ⋯ Menu
             </button>
             {menuOpen && (
@@ -463,7 +464,7 @@ export default function EventDetailPage() {
             style={{ width: "100%", maxWidth: 540, background: "#0C1E29", border: "1px solid #1E3B4C", borderRadius: 8, padding: 24, color: "#C8D4DC", maxHeight: "90vh", overflowY: "auto" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Share this event</h2>
+              <h2 style={{ margin: 0, fontSize: text.xl, fontWeight: 700, color: "#fff" }}>Share this event</h2>
               <button onClick={() => setShowShare(false)} aria-label="Close" style={{ background: "transparent", border: "none", color: "#7E93A0", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>&times;</button>
             </div>
 
@@ -479,7 +480,7 @@ export default function EventDetailPage() {
             <div style={shareSection}>
               <div style={shareLabel}>Invite message — {groupNoun}</div>
               <p style={shareHelp}>A ready-to-send note for the riders you're inviting to this {groupNoun}.</p>
-              <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{inviteText}</div>
+              <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: text.base, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{inviteText}</div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button onClick={() => copy(inviteText, "invite")} style={modalBtn}>{copyFeedback === "invite" ? "Copied!" : "Copy invite"}</button>
               </div>
@@ -513,7 +514,7 @@ export default function EventDetailPage() {
         {(["map", "riders", ...(isOrganizer ? ["admin"] : [])] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             style={{
-              padding: "0 24px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
+              padding: "0 24px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase",
               border: "none", borderBottom: tab === t ? "2px solid #CCFF00" : "2px solid transparent",
               color: tab === t ? "#CCFF00" : "#7E93A0", background: "transparent", cursor: "pointer",
             }}
@@ -539,33 +540,33 @@ export default function EventDetailPage() {
             <SectionLabel>Participants</SectionLabel>
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
               {riders.length === 0 ? (
-                <p style={{ padding: "24px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No riders have joined yet. Share the join code: <strong>{event.join_code}</strong></p>
+                <p style={{ padding: "24px", color: "#7E93A0", fontSize: text.base, margin: 0 }}>No riders have joined yet. Share the join code: <strong>{event.join_code}</strong></p>
               ) : riders.map((rider, i) => {
                 const color = RIDER_COLORS[i % RIDER_COLORS.length];
                 const minsAgo = rider.latest ? Math.round((Date.now() - new Date(rider.latest.recorded_at).getTime()) / 60000) : null;
                 return (
                   <div key={rider.id} style={{ padding: "14px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", alignItems: "center", gap: 14, borderLeft: `3px solid ${color}` }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: text.xs, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                       {rider.display_name.slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
+                        <p style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
                           {rider.rider_number ? `#${rider.rider_number} ` : ""}{rider.display_name}{rider.role === "organizer" ? " ★" : ""}
                         </p>
                         {rider.rider_class && (
-                          <span style={{ fontSize: 10, fontWeight: 700, color: "#7E93A0", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
+                          <span style={{ fontSize: text.xxs, fontWeight: 700, color: "#7E93A0", letterSpacing: 0.5, textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
                             {rider.rider_class}
                           </span>
                         )}
                       </div>
                       {rider.latest ? (
-                        <p style={{ fontSize: 12, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#7E93A0", margin: "2px 0 0" }}>
+                        <p style={{ fontSize: text.sm, color: minsAgo !== null && minsAgo > 10 ? "#f59e0b" : "#7E93A0", margin: "2px 0 0" }}>
                           {rider.latest.speed_kmh?.toFixed(0) ?? "?"} km/h · {timeAgo(rider.latest.recorded_at)}
                           {rider.latest.altitude_m ? ` · ${Math.round(rider.latest.altitude_m)}m` : ""}
                         </p>
                       ) : (
-                        <p style={{ fontSize: 12, color: "#7E93A0", margin: "2px 0 0" }}>No position yet</p>
+                        <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "2px 0 0" }}>No position yet</p>
                       )}
                     </div>
                     {rider.latest && (
@@ -599,25 +600,25 @@ export default function EventDetailPage() {
             <div>
               <SectionLabel>Payment</SectionLabel>
               <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
-                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
+                <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
                   Choose who pays for this event. <strong style={{ color: "#C8D4DC" }}>Organizer pays</strong> uses your $200 / 40-seat purchase; <strong style={{ color: "#C8D4DC" }}>entrants pay</strong> charges each rider a fee when they join.
                 </p>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <select value={payMode} onChange={(e) => setPayMode(e.target.value as "organizer" | "entrant")}
-                    style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: 13 }}>
+                    style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base }}>
                     <option value="organizer">Organizer pays</option>
                     <option value="entrant">Entrants pay at join</option>
                   </select>
                   {payMode === "entrant" && (
-                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#C8D4DC" }}>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: text.base, color: "#C8D4DC" }}>
                       Fee $
                       <input value={payFee} onChange={(e) => setPayFee(e.target.value.replace(/[^0-9]/g, ""))}
-                        inputMode="numeric" style={{ width: 56, background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 10px", fontSize: 13, textAlign: "center" }} />
+                        inputMode="numeric" style={{ width: 56, background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 10px", fontSize: text.base, textAlign: "center" }} />
                       <span style={{ color: "#7E93A0" }}>/ rider ($8–15)</span>
                     </label>
                   )}
                   <button onClick={savePayment}
-                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
+                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
                     Save
                   </button>
                 </div>
@@ -628,14 +629,14 @@ export default function EventDetailPage() {
             <div>
               <SectionLabel>Public map</SectionLabel>
               <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
-                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
+                <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
                   Control what spectators see on the public link. Riders are always shown; the course can be hidden if it is sensitive. Organizer and command views always see everything.
                 </p>
                 {([
                   ["public_show_route", "Show the route line", event.public_show_route !== false],
                   ["public_show_waypoints", "Show the waypoints", event.public_show_waypoints !== false],
                 ] as [("public_show_route" | "public_show_waypoints"), string, boolean][]).map(([field, label, on]) => (
-                  <label key={field} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", fontSize: 14, color: "#C8D4DC" }}>
+                  <label key={field} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", fontSize: text.md, color: "#C8D4DC" }}>
                     <input type="checkbox" checked={on} onChange={(e) => savePublicVis(field, e.target.checked)} style={{ width: 16, height: 16, accentColor: "#CCFF00" }} />
                     {label}
                   </label>
@@ -650,7 +651,7 @@ export default function EventDetailPage() {
             <div>
               <SectionLabel>Rider Classes</SectionLabel>
               <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
-                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.6 }}>
+                <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.6 }}>
                   Define the class options riders see when joining this event. If left empty, the class field is hidden on the join screen.
                 </p>
 
@@ -660,7 +661,7 @@ export default function EventDetailPage() {
                     {(editedClasses ?? []).map((cls) => (
                       <div
                         key={cls}
-                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: 12, fontWeight: 700 }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, background: "#CCFF00", color: "#0C1E29", padding: "5px 10px 5px 12px", fontSize: text.sm, fontWeight: 700 }}
                       >
                         {cls}
                         <button
@@ -682,14 +683,14 @@ export default function EventDetailPage() {
                     onChange={(e) => setClassInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEditedClass(); } }}
                     placeholder="e.g. Moto, UTV, Car, Truck…"
-                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                    style={{ flex: 1, padding: "10px 14px", border: "1px solid #1E3B4C", fontSize: text.md, color: "#FFFFFF", outline: "none" }}
                   />
                   <button
                     onClick={addEditedClass}
                     disabled={!classInput.trim()}
                     style={{
                       background: classInput.trim() ? "#1a2129" : "#1E3B4C", color: "#fff",
-                      border: "none", padding: "10px 18px", fontSize: 11, fontWeight: 700,
+                      border: "none", padding: "10px 18px", fontSize: text.xs, fontWeight: 700,
                       letterSpacing: 0.5, textTransform: "uppercase",
                       cursor: classInput.trim() ? "pointer" : "default",
                     }}
@@ -703,7 +704,7 @@ export default function EventDetailPage() {
                   disabled={savingClasses}
                   style={{
                     background: classesSaved ? "#CCFF00" : "#CCFF00", color: "#0C1E29",
-                    border: "none", padding: "11px 24px", fontSize: 11, fontWeight: 700,
+                    border: "none", padding: "11px 24px", fontSize: text.xs, fontWeight: 700,
                     letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: savingClasses ? "default" : "pointer",
                   }}
@@ -717,21 +718,21 @@ export default function EventDetailPage() {
             <div>
               <SectionLabel>Your GEP Link</SectionLabel>
               <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 20 }}>
-                <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
+                <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 14px", lineHeight: 1.6 }}>
                   Open this in Google Earth Pro to see all riders live. Go to Add → Network Link, paste the URL in the Link field. This link is unique to you — do not share it.
                 </p>
                 {myGepUrl ? (
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       readOnly value={myGepUrl}
-                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: 12, color: "#FFFFFF", background: "#0A0A0A", outline: "none" }}
+                      style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: text.sm, color: "#FFFFFF", background: "#0A0A0A", outline: "none" }}
                     />
                     <Btn onClick={() => copy(myGepUrl, "my-gep")} color={copyFeedback === "my-gep" ? "#CCFF00" : "#FFFE15"}>
                       {copyFeedback === "my-gep" ? "Copied!" : "Copy"}
                     </Btn>
                   </div>
                 ) : (
-                  <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>GEP link not available yet.</p>
+                  <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>GEP link not available yet.</p>
                 )}
               </div>
             </div>
@@ -742,7 +743,7 @@ export default function EventDetailPage() {
                 <SectionLabel>GEP Viewers</SectionLabel>
                 <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
                   <div style={{ padding: "14px 20px", borderBottom: "1px solid #1E3B4C" }}>
-                    <p style={{ fontSize: 12, color: "#7E93A0", margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0, lineHeight: 1.6 }}>
                       Issue a named KML link to anyone watching in Google Earth Pro — marshals, crew, sponsors. Each link is unique and traceable. Revoking it kills their feed immediately.
                     </p>
                   </div>
@@ -753,8 +754,8 @@ export default function EventDetailPage() {
                     return (
                       <div key={cred.id} style={{ padding: "12px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{cred.display_name}</p>
-                          <p style={{ fontSize: 11, color: "#7E93A0", margin: "2px 0 0", fontFamily: "monospace" }}>…{cred.gep_token.slice(-10)}</p>
+                          <p style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{cred.display_name}</p>
+                          <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "2px 0 0", fontFamily: "monospace" }}>…{cred.gep_token.slice(-10)}</p>
                         </div>
                         <Btn border="#FFFE15" color="#FFFE15" onClick={() => copy(url, copyKey)}>
                           {copyFeedback === copyKey ? "Copied!" : "Copy Link"}
@@ -768,7 +769,7 @@ export default function EventDetailPage() {
 
                   {/* Add viewer */}
                   <div style={{ padding: "16px 20px" }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>Add Viewer</p>
+                    <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 10px" }}>Add Viewer</p>
                     <div style={{ display: "flex", gap: 8 }}>
                       <input
                         type="text"
@@ -776,7 +777,7 @@ export default function EventDetailPage() {
                         value={newViewerName}
                         onChange={(e) => setNewViewerName(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") addViewer(); }}
-                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: 14, color: "#FFFFFF", outline: "none" }}
+                        style={{ flex: 1, padding: "9px 12px", border: "1px solid #1E3B4C", fontSize: text.md, color: "#FFFFFF", outline: "none" }}
                       />
                       <Btn onClick={addViewer} disabled={addingViewer || !newViewerName.trim()}>
                         {addingViewer ? "Adding..." : "Add"}
@@ -793,26 +794,26 @@ export default function EventDetailPage() {
                 <SectionLabel>GEP Access Log</SectionLabel>
                 <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
                   {accessLog.length === 0 ? (
-                    <p style={{ padding: "20px", color: "#7E93A0", fontSize: 13, margin: 0 }}>No GEP accesses yet.</p>
+                    <p style={{ padding: "20px", color: "#7E93A0", fontSize: text.base, margin: 0 }}>No GEP accesses yet.</p>
                   ) : accessLog.map((entry, i) => (
                     <div key={i} style={{ padding: "12px 20px", borderBottom: "1px solid #1E3B4C", display: "flex", gap: 16, alignItems: "flex-start" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{entry.display_name}</p>
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#7E93A0", textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
+                          <p style={{ fontSize: text.base, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{entry.display_name}</p>
+                          <span style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.5, color: "#7E93A0", textTransform: "uppercase", border: "1px solid #1E3B4C", padding: "1px 6px" }}>
                             {entry.type === "credential" ? "GEP Viewer" : entry.role === "organizer" ? "Organizer" : "Rider"}
                           </span>
                         </div>
-                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "3px 0 0" }}>
+                        <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "3px 0 0" }}>
                           {entry.access_count} access{entry.access_count !== 1 ? "es" : ""} · {entry.unique_ips.length} IP{entry.unique_ips.length !== 1 ? "s" : ""} · Last: {entry.last_ip}
                         </p>
                         {entry.unique_ips.length > 1 && (
-                          <p style={{ fontSize: 11, color: "#d97706", fontWeight: 700, margin: "4px 0 0" }}>
+                          <p style={{ fontSize: text.xs, color: "#d97706", fontWeight: 700, margin: "4px 0 0" }}>
                             ⚠ Multiple IPs — link may have been shared
                           </p>
                         )}
                       </div>
-                      <span style={{ fontSize: 11, color: "#7E93A0", whiteSpace: "nowrap" }}>{entry.access_count}×</span>
+                      <span style={{ fontSize: text.xs, color: "#7E93A0", whiteSpace: "nowrap" }}>{entry.access_count}×</span>
                     </div>
                   ))}
                 </div>
@@ -827,17 +828,17 @@ export default function EventDetailPage() {
 }
 
 const shareSection: React.CSSProperties = { paddingBottom: 18, marginBottom: 18, borderBottom: "1px solid #1E3B4C" };
-const shareLabel: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#7E93A0", marginBottom: 4 };
-const shareHelp: React.CSSProperties = { fontSize: 13, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 };
-const shareInput: React.CSSProperties = { flex: 1, minWidth: 0, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#fff", fontSize: 13, borderRadius: 4, outline: "none" };
-const shareCode: React.CSSProperties = { display: "block", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: 12, fontFamily: "monospace", wordBreak: "break-all", whiteSpace: "pre-wrap" };
-const modalBtn: React.CSSProperties = { background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 };
-const modalLinkBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 };
+const shareLabel: React.CSSProperties = { fontSize: text.xs, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#7E93A0", marginBottom: 4 };
+const shareHelp: React.CSSProperties = { fontSize: text.base, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 };
+const shareInput: React.CSSProperties = { flex: 1, minWidth: 0, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#fff", fontSize: text.base, borderRadius: 4, outline: "none" };
+const shareCode: React.CSSProperties = { display: "block", background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: text.sm, fontFamily: "monospace", wordBreak: "break-all", whiteSpace: "pre-wrap" };
+const modalBtn: React.CSSProperties = { background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 };
+const modalLinkBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "9px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 };
 
 // Small responsive helper — true when the viewport is at or below `bp` px.
 const menuItem: React.CSSProperties = {
   background: "transparent", border: "none", borderBottom: "1px solid #14303F",
-  color: "#C8D4DC", padding: "13px 16px", fontSize: 13, fontWeight: 700,
+  color: "#C8D4DC", padding: "13px 16px", fontSize: text.base, fontWeight: 700,
   letterSpacing: 0.3, textTransform: "uppercase", textAlign: "left",
   textDecoration: "none", cursor: "pointer", width: "100%",
 };

@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
@@ -88,7 +89,7 @@ const POLL_OPTIONS: Record<DeviceType, { label: string; value: number; note: str
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 12px" }}>
+    <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 12px" }}>
       {children}
     </p>
   );
@@ -97,7 +98,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 6 }}>
+      <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 6 }}>
         {label}
       </label>
       {children}
@@ -107,7 +108,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const INPUT: React.CSSProperties = {
   width: "100%", padding: "11px 14px", border: "1px solid #1E3B4C",
-  fontSize: 14, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
+  fontSize: text.md, color: "#FFFFFF", outline: "none", boxSizing: "border-box",
   fontFamily: "system-ui", background: "#0A0A0A",
 };
 
@@ -374,16 +375,16 @@ export default function ProfilePage() {
 
       {/* Nav */}
       <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
-        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: 12, textDecoration: "none" }}>
+        <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>
           ← Dashboard
         </Link>
       </nav>
 
       <div style={{ maxWidth: 640, margin: "48px auto", padding: "0 24px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Account</p>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 6px" }}>Account</p>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: "0 0 36px" }}>Profile &amp; Devices</h1>
 
         {/* ── Profile ── */}
@@ -405,7 +406,7 @@ export default function ProfilePage() {
                   style={{
                     background: nameChanged ? (nameSaved ? "#CCFF00" : "#FFFE15") : "#1E3B4C",
                     color: "#0C1E29", border: "none", padding: "11px 20px",
-                    fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+                    fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
                     cursor: nameChanged ? "pointer" : "default",
                     whiteSpace: "nowrap",
                   }}
@@ -413,13 +414,13 @@ export default function ProfilePage() {
                   {savingName ? "Saving…" : nameSaved ? "Saved ✓" : "Save"}
                 </button>
               </div>
-              <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>
+              <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "6px 0 0" }}>
                 This is how you appear on group event maps.
               </p>
             </Field>
 
             <Field label="Email">
-              <p style={{ fontSize: 14, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
+              <p style={{ fontSize: text.md, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
             </Field>
 
             <Field label="Waypoint ID">
@@ -429,32 +430,32 @@ export default function ProfilePage() {
                 </code>
                 <button
                   onClick={copyWaypointId}
-                  style={{ background: wpCopied ? "#CCFF00" : "#14303F", color: wpCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ background: wpCopied ? "#CCFF00" : "#14303F", color: wpCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   {wpCopied ? "Copied \u2713" : "Copy"}
                 </button>
               </div>
-              <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>
+              <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "6px 0 0" }}>
                 Give this to an event organizer to link your account — it lets them reach your emergency info if something goes wrong.
               </p>
             </Field>
 
             <div style={{ borderTop: "1px solid #1E3B4C", paddingTop: 20 }}>
               {resetSent ? (
-                <p style={{ fontSize: 13, color: "#CCFF00", margin: 0 }}>
+                <p style={{ fontSize: text.base, color: "#CCFF00", margin: 0 }}>
                   ✓ Reset email sent to {userEmail}
                 </p>
               ) : (
                 <button
                   onClick={sendPasswordReset}
-                  style={{ background: "transparent", border: "1px solid #1E3B4C", color: "#7E93A0", padding: "9px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                  style={{ background: "transparent", border: "1px solid #1E3B4C", color: "#7E93A0", padding: "9px 18px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
                   Send Password Reset Email
                 </button>
               )}
             </div>
 
-            <p style={{ fontSize: 11, color: "#c4c4c4", margin: "20px 0 0" }}>Member since {memberSince}</p>
+            <p style={{ fontSize: text.xs, color: "#c4c4c4", margin: "20px 0 0" }}>Member since {memberSince}</p>
           </div>
         </div>
 
@@ -477,7 +478,7 @@ export default function ProfilePage() {
                     onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value })}
                   />
                   {age !== null && (
-                    <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>Age {age}</p>
+                    <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "6px 0 0" }}>Age {age}</p>
                   )}
                 </Field>
               </div>
@@ -508,7 +509,7 @@ export default function ProfilePage() {
         <div style={{ marginBottom: 24 }}>
           <SectionLabel>Emergency Contact</SectionLabel>
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
-            <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.5 }}>
               Shown to your event organizer for search-and-rescue. Optional, but recommended for rally and backcountry events.
             </p>
             <div style={{ display: "flex", gap: 16 }}>
@@ -527,14 +528,14 @@ export default function ProfilePage() {
             style={{
               background: profileChanged ? (profileSaved ? "#CCFF00" : "#FFFE15") : "#1E3B4C",
               color: profileChanged ? "#0C1E29" : "#7E93A0", border: "none", padding: "12px 26px",
-              fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+              fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
               cursor: profileChanged ? "pointer" : "default",
             }}
           >
             {savingProfile ? "Saving…" : profileSaved ? "Saved ✓" : "Save Profile"}
           </button>
           {profileChanged && !savingProfile && (
-            <span style={{ fontSize: 12, color: "#7E93A0" }}>Unsaved changes</span>
+            <span style={{ fontSize: text.sm, color: "#7E93A0" }}>Unsaved changes</span>
           )}
         </div>
 
@@ -542,7 +543,7 @@ export default function ProfilePage() {
         <div style={{ marginBottom: 48 }}>
           <SectionLabel>Emergency Card (ICE)</SectionLabel>
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
-            <p style={{ fontSize: 12, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.5 }}>
               A Waypoint-branded page showing your emergency info and Waypoint ID. Share this link, add it to a bracelet or bike sticker, or hand it to a first responder. The link is private until you share it — the rest of your account stays hidden.
             </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -552,7 +553,7 @@ export default function ProfilePage() {
               <button
                 onClick={copyIceLink}
                 disabled={!iceUrl}
-                style={{ background: iceCopied ? "#CCFF00" : "#14303F", color: iceCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "11px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: iceUrl ? "pointer" : "default", whiteSpace: "nowrap" }}
+                style={{ background: iceCopied ? "#CCFF00" : "#14303F", color: iceCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "11px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: iceUrl ? "pointer" : "default", whiteSpace: "nowrap" }}
               >
                 {iceCopied ? "Copied \u2713" : "Copy Link"}
               </button>
@@ -561,13 +562,13 @@ export default function ProfilePage() {
                   href={iceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ background: "#FFFE15", color: "#0C1E29", padding: "11px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4, whiteSpace: "nowrap" }}
+                  style={{ background: "#FFFE15", color: "#0C1E29", padding: "11px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4, whiteSpace: "nowrap" }}
                 >
                   Open Card
                 </a>
               )}
             </div>
-            <p style={{ fontSize: 11, color: "#54697A", margin: "10px 0 0" }}>
+            <p style={{ fontSize: text.xs, color: "#54697A", margin: "10px 0 0" }}>
               Tip: fill in your blood type and emergency contact above so the card is useful.
             </p>
 
@@ -581,13 +582,13 @@ export default function ProfilePage() {
                   style={{ background: "#fff", borderRadius: 8, padding: 8, border: "1px solid #1E3B4C" }}
                 />
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <p style={{ fontSize: 12, color: "#C8D4DC", margin: "0 0 10px", lineHeight: 1.5 }}>
+                  <p style={{ fontSize: text.sm, color: "#C8D4DC", margin: "0 0 10px", lineHeight: 1.5 }}>
                     Scan to open the card. Print it on a bracelet, helmet, or bike sticker so a responder can reach your info fast.
                   </p>
                   <a
                     href={iceQr}
                     download="waypoint-ice-qr.png"
-                    style={{ display: "inline-block", background: "#14303F", color: "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "9px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                    style={{ display: "inline-block", background: "#14303F", color: "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "9px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
                   >
                     Download QR
                   </a>
@@ -610,7 +611,7 @@ export default function ProfilePage() {
                   onClick={() => openAddForm(t)}
                   style={{
                     flex: 1, background: "#0C1E29", border: "1px solid #1E3B4C",
-                    padding: "12px 8px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                    padding: "12px 8px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
                     textTransform: "uppercase", cursor: "pointer", color: "#FFFFFF",
                   }}
                 >
@@ -624,20 +625,20 @@ export default function ProfilePage() {
           {addOpen && (
             <div style={{ background: "#0C1E29", border: "1px solid #1c69d4", padding: 28, marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
+                <p style={{ fontSize: text.lg, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>
                   {DEVICE_META[addType].icon} Connect {DEVICE_META[addType].label}
                 </p>
-                <button onClick={closeAdd} style={{ background: "none", border: "none", color: "#7E93A0", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                <button onClick={closeAdd} style={{ background: "none", border: "none", color: "#7E93A0", fontSize: text.xl, cursor: "pointer", lineHeight: 1 }}>✕</button>
               </div>
 
               {/* Steps */}
               <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "16px 20px", marginBottom: 24 }}>
                 {DEVICE_META[addType].steps.map((step, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < DEVICE_META[addType].steps.length - 1 ? 10 : 0 }}>
-                    <span style={{ width: 20, height: 20, background: "#CCFF00", color: "#0C1E29", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ width: 20, height: 20, background: "#CCFF00", color: "#0C1E29", fontSize: text.xxs, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {i + 1}
                     </span>
-                    <p style={{ fontSize: 12, color: "#C8D4DC", margin: 0, lineHeight: 1.6 }}>{step}</p>
+                    <p style={{ fontSize: text.sm, color: "#C8D4DC", margin: 0, lineHeight: 1.6 }}>{step}</p>
                   </div>
                 ))}
               </div>
@@ -660,8 +661,8 @@ export default function ProfilePage() {
                         cursor: "pointer",
                       }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 700, color: addPoll === opt.value ? "#0C1E29" : "#C8D4DC" }}>{opt.label}</div>
-                      <div style={{ fontSize: 10, color: addPoll === opt.value ? "#0C1E29" : "#7E93A0", marginTop: 2, fontWeight: addPoll === opt.value ? 600 : 400 }}>{opt.note}</div>
+                      <div style={{ fontSize: text.base, fontWeight: 700, color: addPoll === opt.value ? "#0C1E29" : "#C8D4DC" }}>{opt.label}</div>
+                      <div style={{ fontSize: text.xxs, color: addPoll === opt.value ? "#0C1E29" : "#7E93A0", marginTop: 2, fontWeight: addPoll === opt.value ? 600 : 400 }}>{opt.note}</div>
                     </button>
                   ))}
                 </div>
@@ -676,7 +677,7 @@ export default function ProfilePage() {
                   autoCapitalize="off"
                   autoCorrect="off"
                 />
-                <p style={{ fontSize: 11, color: "#7E93A0", margin: "6px 0 0" }}>{DEVICE_META[addType].hint}</p>
+                <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "6px 0 0" }}>{DEVICE_META[addType].hint}</p>
               </Field>
 
               {addType === "spot" && (
@@ -691,14 +692,14 @@ export default function ProfilePage() {
                 </Field>
               )}
 
-              {addError && <p style={{ color: "#FF3B30", fontSize: 13, marginBottom: 12 }}>{addError}</p>}
+              {addError && <p style={{ color: "#FF3B30", fontSize: text.base, marginBottom: 12 }}>{addError}</p>}
 
               <button
                 onClick={submitDevice}
                 disabled={addLoading}
                 style={{
                   width: "100%", background: addLoading ? "#1E3B4C" : "#FFFE15", color: addLoading ? "#7E93A0" : "#0C1E29",
-                  border: "none", padding: "13px", fontSize: 12, fontWeight: 700,
+                  border: "none", padding: "13px", fontSize: text.sm, fontWeight: 700,
                   letterSpacing: 0.5, textTransform: "uppercase", cursor: addLoading ? "default" : "pointer",
                 }}
               >
@@ -709,14 +710,14 @@ export default function ProfilePage() {
 
           {/* Device list */}
           {devicesLoading ? (
-            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "24px", textAlign: "center", color: "#7E93A0", fontSize: 13 }}>
+            <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "24px", textAlign: "center", color: "#7E93A0", fontSize: text.base }}>
               Loading devices…
             </div>
           ) : devices.length === 0 ? (
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "32px", textAlign: "center" }}>
               <p style={{ fontSize: 24, margin: "0 0 8px" }}>📡</p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>No satellite devices connected</p>
-              <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>Add a Garmin inReach, SPOT, or ZOLEO above to track your location during trips.</p>
+              <p style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF", margin: "0 0 6px" }}>No satellite devices connected</p>
+              <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>Add a Garmin inReach, SPOT, or ZOLEO above to track your location during trips.</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
@@ -726,23 +727,23 @@ export default function ProfilePage() {
                 return (
                   <div key={device.id} style={{ background: "#0C1E29", padding: "16px 20px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: 22 }}>{meta?.icon ?? "📡"}</span>
+                      <span style={{ fontSize: text.xxl }}>{meta?.icon ?? "📡"}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{device.name}</p>
-                        <p style={{ fontSize: 11, color: "#7E93A0", margin: "2px 0 0" }}>
+                        <p style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{device.name}</p>
+                        <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "2px 0 0" }}>
                           {meta?.label ?? device.type}
                           {device.last_polled_at && ` · Last polled ${new Date(device.last_polled_at).toLocaleTimeString()}`}
                         </p>
                         {device.poll_error && (
-                          <p style={{ fontSize: 11, color: "#FF3B30", margin: "3px 0 0" }}>⚠ {device.poll_error}</p>
+                          <p style={{ fontSize: text.xs, color: "#FF3B30", margin: "3px 0 0" }}>⚠ {device.poll_error}</p>
                         )}
                         {test && !test.testing && (
-                          <p style={{ fontSize: 11, color: test.ok ? "#16a34a" : "#FF3B30", margin: "4px 0 0", fontWeight: 600 }}>
+                          <p style={{ fontSize: text.xs, color: test.ok ? "#16a34a" : "#FF3B30", margin: "4px 0 0", fontWeight: 600 }}>
                             {test.ok ? "✓" : "✗"} {test.message}
                           </p>
                         )}
                         {test?.testing && (
-                          <p style={{ fontSize: 11, color: "#7E93A0", margin: "4px 0 0" }}>Testing connection…</p>
+                          <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "4px 0 0" }}>Testing connection…</p>
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
@@ -751,7 +752,7 @@ export default function ProfilePage() {
                           disabled={test?.testing}
                           style={{
                             background: "transparent", border: "1px solid #1c69d4", color: "#FFFE15",
-                            padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                            padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
                             textTransform: "uppercase", cursor: test?.testing ? "default" : "pointer",
                           }}
                         >
@@ -761,7 +762,7 @@ export default function ProfilePage() {
                           onClick={() => removeDevice(device.id)}
                           style={{
                             background: "transparent", border: "1px solid #1E3B4C", color: "#7E93A0",
-                            padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                            padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5,
                             textTransform: "uppercase", cursor: "pointer",
                           }}
                         >
@@ -775,7 +776,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <p style={{ fontSize: 11, color: "#7E93A0", margin: "12px 0 0", lineHeight: 1.6 }}>
+          <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "12px 0 0", lineHeight: 1.6 }}>
             Waypoint polls your satellite device for location updates during active trips. Use the Test button to confirm your device is on and reporting.
           </p>
         </div>

@@ -1,3 +1,4 @@
+import { text } from "../lib/theme";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -66,12 +67,12 @@ export default function LandingPage() {
           Waypoint
         </Link>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Link href="/auth/login" style={{ color: C.body, fontSize: 13, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+          <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Sign in
           </Link>
           <Link
             href="/auth/signup"
-            style={{ background: C.lime, color: C.accentInk, fontSize: 13, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
+            style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
           >
             Get started
           </Link>
@@ -85,7 +86,7 @@ export default function LandingPage() {
         backgroundPosition: "center 28%",
       }}>
       <section style={{ maxWidth: 1080, margin: "0 auto", padding: "120px 28px 100px" }}>
-        <div style={{ color: C.accent, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 20 }}>
+        <div style={{ color: C.accent, fontSize: text.sm, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 20 }}>
           Live event tracking
         </div>
         <h1 style={{ color: C.ink, fontSize: "clamp(40px, 7vw, 76px)", lineHeight: 1.02, fontWeight: 800, letterSpacing: -1.5, margin: "0 0 26px", maxWidth: 860 }}>
@@ -100,24 +101,24 @@ export default function LandingPage() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link
             href="/auth/signup"
-            style={{ background: C.lime, color: C.accentInk, fontWeight: 800, fontSize: 15, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
+            style={{ background: C.lime, color: C.accentInk, fontWeight: 800, fontSize: text.lg, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
           >
             Start an event — free during beta
           </Link>
           <a
             href="#how"
-            style={{ border: `1px solid ${C.hairline}`, color: C.ink, fontWeight: 600, fontSize: 15, padding: "14px 26px", borderRadius: 4, textDecoration: "none" }}
+            style={{ border: `1px solid ${C.hairline}`, color: C.ink, fontWeight: 600, fontSize: text.lg, padding: "14px 26px", borderRadius: 4, textDecoration: "none" }}
           >
             How it works
           </a>
         </div>
 
         <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 44, alignItems: "center" }}>
-          <span style={{ color: C.muted, fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Works with</span>
+          <span style={{ color: C.muted, fontSize: text.sm, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Works with</span>
           {DEVICES.map((d) => (
-            <span key={d} style={{ color: C.ink, fontSize: 14, fontWeight: 700 }}>{d}</span>
+            <span key={d} style={{ color: C.ink, fontSize: text.md, fontWeight: 700 }}>{d}</span>
           ))}
-          <span style={{ color: C.muted, fontSize: 14 }}>· no app required</span>
+          <span style={{ color: C.muted, fontSize: text.md }}>· no app required</span>
         </div>
       </section>
       </div>
@@ -132,8 +133,8 @@ export default function LandingPage() {
             ["Trails, not just dots", "Click any entrant to see where they have been. Export the whole event as KML afterwards."],
           ].map(([t, b]) => (
             <div key={t}>
-              <div style={{ color: C.track, fontSize: 13, fontWeight: 800, letterSpacing: 0.5, marginBottom: 6 }}>{t}</div>
-              <div style={{ color: C.body, fontSize: 14, lineHeight: 1.5 }}>{b}</div>
+              <div style={{ color: C.track, fontSize: text.base, fontWeight: 800, letterSpacing: 0.5, marginBottom: 6 }}>{t}</div>
+              <div style={{ color: C.body, fontSize: text.md, lineHeight: 1.5 }}>{b}</div>
             </div>
           ))}
         </div>
@@ -154,7 +155,7 @@ export default function LandingPage() {
 
       {/* ── How it works ─────────────────────────────────────── */}
       <section id="how" style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 28px 80px" }}>
-        <div style={{ color: C.accent, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 14 }}>
+        <div style={{ color: C.accent, fontSize: text.sm, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 14 }}>
           For organizers
         </div>
         <h2 style={{ color: C.ink, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800, letterSpacing: -0.8, margin: "0 0 36px" }}>
@@ -178,13 +179,13 @@ export default function LandingPage() {
             <h2 style={{ color: C.accentInk, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, letterSpacing: -0.6, margin: "0 0 8px" }}>
               Free while we&rsquo;re in beta.
             </h2>
-            <p style={{ color: C.accentInk, opacity: 0.8, fontSize: 15, margin: 0 }}>
+            <p style={{ color: C.accentInk, opacity: 0.8, fontSize: text.lg, margin: 0 }}>
               Annual membership for riders and per-event pricing for organizers come after.
             </p>
           </div>
           <Link
             href="/auth/signup"
-            style={{ background: C.accentInk, color: C.accent, fontWeight: 800, fontSize: 15, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
+            style={{ background: C.accentInk, color: C.accent, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
           >
             Create an account
           </Link>
@@ -193,7 +194,7 @@ export default function LandingPage() {
 
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer style={{ borderTop: `1px solid ${C.hairline}`, padding: "28px", background: C.surface }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: 13, color: C.muted }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: text.base, color: C.muted }}>
           <span>&copy; {new Date().getFullYear()} Waypoint &middot; a Chasing Waypoints product</span>
           <span style={{ color: C.body }}>We never sell your location data. Ever.</span>
         </div>

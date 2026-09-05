@@ -1,5 +1,37 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
+
+// Self-hosted via next/font/local (woff2 vendored in app/fonts). No runtime
+// Google Fonts dependency; zero layout shift; exposed as CSS variables that
+// globals.css and lib/theme.ts consume.
+const inter = localFont({
+  src: "./fonts/Inter-Variable.woff2",
+  weight: "100 900",
+  style: "normal",
+  variable: "--font-sans",
+  display: "swap",
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+});
+
+const jetbrainsMono = localFont({
+  src: "./fonts/JetBrainsMono-Variable.woff2",
+  weight: "100 800",
+  style: "normal",
+  variable: "--font-mono",
+  display: "swap",
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+});
+
+const barlowCondensed = localFont({
+  src: [
+    { path: "./fonts/BarlowCondensed-SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/BarlowCondensed-Bold.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-display",
+  display: "swap",
+  fallback: ["Barlow Condensed", "system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.chasingwaypoints.com"),
@@ -29,7 +61,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className={`h-full antialiased ${inter.variable} ${jetbrainsMono.variable} ${barlowCondensed.variable}`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
@@ -172,15 +173,11 @@ export default function StoryPage() {
     return min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
   };
 
-  if (loading) return (
-    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#7E93A0", fontSize: 13 }}>Loading trip story...</p>
-    </div>
-  );
+  if (loading) return <StorySkeleton />;
 
   if (error) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <p style={{ color: "#FF3B30", fontSize: 13 }}>{error}</p>
+      <p style={{ color: "#FF3B30", fontSize: text.base }}>{error}</p>
     </div>
   );
 
@@ -191,12 +188,12 @@ export default function StoryPage() {
 
       {/* Nav */}
       <nav style={{ background: "#0C1E29", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
           Waypoint
         </Link>
         <Link
           href={`/share/${token}`}
-          style={{ background: "#CCFF00", color: "#0C1E29", padding: "7px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          style={{ background: "#CCFF00", color: "#0C1E29", padding: "7px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
         >
           View Live Map →
         </Link>
@@ -204,14 +201,14 @@ export default function StoryPage() {
 
       {/* Hero — trip name + date */}
       <div style={{ background: "#0C1E29", padding: "40px 24px 32px", textAlign: "center" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: "#4a8ab5", textTransform: "uppercase", margin: "0 0 10px" }}>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 2, color: "#4a8ab5", textTransform: "uppercase", margin: "0 0 10px" }}>
           Trip Story
         </p>
         <h1 style={{ fontSize: 36, fontWeight: 800, color: "#fff", margin: "0 0 10px", lineHeight: 1.15 }}>
           {data.trip.name}
         </h1>
         {data.trip.started_at && (
-          <p style={{ fontSize: 13, color: "#7E93A0", fontWeight: 300, margin: 0 }}>
+          <p style={{ fontSize: text.base, color: "#7E93A0", fontWeight: 300, margin: 0 }}>
             {fmtDate(data.trip.started_at)}
             {data.trip.ended_at && data.trip.ended_at !== data.trip.started_at && ` — ${fmtDate(data.trip.ended_at)}`}
           </p>
@@ -246,7 +243,7 @@ export default function StoryPage() {
             style={{
               position: "absolute", top: 12, left: 12,
               background: "#CCFF00", color: "#0C1E29", border: "none",
-              padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
+              padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.8,
               textTransform: "uppercase", cursor: "pointer",
             }}
           >
@@ -257,19 +254,19 @@ export default function StoryPage() {
 
       {/* CTA */}
       <div style={{ background: "#0C1E29", padding: "48px 24px", textAlign: "center" }}>
-        <p style={{ fontSize: 13, color: "#7E93A0", fontWeight: 300, margin: "0 0 20px" }}>
+        <p style={{ fontSize: text.base, color: "#7E93A0", fontWeight: 300, margin: "0 0 20px" }}>
           Follow this trip live — or track your own.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link
             href={`/share/${token}`}
-            style={{ background: "#CCFF00", color: "#0C1E29", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+            style={{ background: "#CCFF00", color: "#0C1E29", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
           >
             View Live Map
           </Link>
           <Link
             href="/auth/signup"
-            style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+            style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
           >
             Track Your Own Trip
           </Link>
@@ -278,7 +275,7 @@ export default function StoryPage() {
 
       {/* Footer */}
       <footer style={{ background: "#0f1923", padding: "20px 24px", textAlign: "center" }}>
-        <p style={{ fontSize: 11, color: "#1E3B4C", fontWeight: 300, margin: 0 }}>
+        <p style={{ fontSize: text.xs, color: "#1E3B4C", fontWeight: 300, margin: 0 }}>
           © {new Date().getFullYear()} Waypoint · We never sell your location data. Ever.
         </p>
       </footer>
@@ -287,10 +284,39 @@ export default function StoryPage() {
   );
 }
 
+function StorySkeleton() {
+  return (
+    <div style={{ background: "#0A0A0A", minHeight: "100vh" }} aria-busy="true" aria-label="Loading trip story">
+      {/* Nav */}
+      <nav style={{ background: "#0C1E29", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="wp-skel" style={{ width: 96, height: 14 }} />
+        <div className="wp-skel" style={{ width: 120, height: 28 }} />
+      </nav>
+      {/* Hero */}
+      <div style={{ background: "#0C1E29", padding: "40px 24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        <div className="wp-skel" style={{ width: 90, height: 9 }} />
+        <div className="wp-skel" style={{ width: 260, height: 30 }} />
+        <div className="wp-skel" style={{ width: 180, height: 12 }} />
+      </div>
+      {/* Stats bar */}
+      <div style={{ background: "#0C1E29", borderBottom: "1px solid #1E3B4C", padding: "16px 24px", display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center" }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+            <div className="wp-skel" style={{ width: 70, height: 16 }} />
+            <div className="wp-skel" style={{ width: 50, height: 8 }} />
+          </div>
+        ))}
+      </div>
+      {/* Map */}
+      <div className="wp-skel" style={{ width: "100%", height: "60vh", minHeight: 360, borderRadius: 0 }} />
+    </div>
+  );
+}
+
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase" }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", marginTop: 2 }}>{value}</div>
     </div>
   );

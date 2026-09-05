@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -66,10 +67,10 @@ export default function EventPage() {
           />
         )}
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <span style={{ color: "#fff", fontWeight: 800, fontSize: 15, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ color: "#fff", fontWeight: 800, fontSize: text.lg, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {name || "Live Event"}
           </span>
-          <span style={{ color: "#7E93A0", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ color: "#7E93A0", fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />
             {whitelabel ? "Live · powered by Waypoint" : "Live · Waypoint"}
           </span>
@@ -101,7 +102,7 @@ export default function EventPage() {
             overflowX: "auto",
           }}
         >
-          <span style={{ color: "#7E93A0", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
+          <span style={{ color: "#7E93A0", fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
             Presented&nbsp;by
           </span>
           {sponsors.filter((sp) => !sp.headline).map((sp, i) => (

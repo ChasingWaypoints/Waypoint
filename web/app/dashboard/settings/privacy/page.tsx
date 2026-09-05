@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { theme, font } from "../../../../lib/theme";
+import { theme, font, text } from "../../../../lib/theme";
 
 /**
  * Privacy zones — circles the user marks (home, work) inside which their live
@@ -123,14 +123,14 @@ export default function PrivacyZonesPage() {
   return (
     <div style={{ minHeight: "100vh", background: theme.canvas, color: theme.body, font: `14px ${font.sans}` }}>
       <nav style={{ background: theme.surface, borderBottom: `1px solid ${theme.hairline}`, padding: "0 16px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: theme.ink, fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: "uppercase" }}>Waypoint</span>
-        <Link href="/dashboard/profile" style={{ color: theme.muted, fontSize: 12, textDecoration: "none" }}>← Profile</Link>
+        <span style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase" }}>Waypoint</span>
+        <Link href="/dashboard/profile" style={{ color: theme.muted, fontSize: text.sm, textDecoration: "none" }}>← Profile</Link>
       </nav>
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", margin: "0 0 4px" }}>Settings</p>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: theme.ink, margin: "0 0 8px" }}>Privacy zones</h1>
-        <p style={{ fontSize: 13, color: theme.muted, lineHeight: 1.6, margin: "0 0 20px", maxWidth: 620 }}>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", margin: "0 0 4px" }}>Settings</p>
+        <h1 style={{ fontSize: text.xxl, fontWeight: 700, color: theme.ink, margin: "0 0 8px" }}>Privacy zones</h1>
+        <p style={{ fontSize: text.base, color: theme.muted, lineHeight: 1.6, margin: "0 0 20px", maxWidth: 620 }}>
           Mark a circle around a place you want kept private — home, work. While you&apos;re inside it, your live position is hidden from shared maps. Click the map to set a center, set a radius, and save.
         </p>
 
@@ -138,33 +138,33 @@ export default function PrivacyZonesPage() {
           <div ref={container} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden", border: `1px solid ${theme.hairline}` }} />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Zone name (e.g. Home)"
-              style={{ flex: "1 1 180px", background: theme.surface, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 12px", fontSize: 14 }} />
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: theme.muted }}>
+              style={{ flex: "1 1 180px", background: theme.surface, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px 12px", fontSize: text.md }} />
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: text.base, color: theme.muted }}>
               Radius
               <input type="number" min={0.1} max={25} step={0.1} value={radius} onChange={(e) => setRadius(Math.max(0.1, Number(e.target.value) || 0.5))}
-                style={{ width: 72, background: theme.surface, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px", fontSize: 14, textAlign: "center" }} />
+                style={{ width: 72, background: theme.surface, color: theme.ink, border: `1px solid ${theme.hairline}`, borderRadius: 4, padding: "10px", fontSize: text.md, textAlign: "center" }} />
               mi
             </label>
             <button onClick={saveZone} disabled={!center || !name.trim() || saving}
-              style={{ background: center && name.trim() ? theme.track : theme.hairline, color: center && name.trim() ? theme.accentInk : theme.muted, border: "none", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: center && name.trim() ? "pointer" : "default" }}>
+              style={{ background: center && name.trim() ? theme.track : theme.hairline, color: center && name.trim() ? theme.accentInk : theme.muted, border: "none", borderRadius: 6, padding: "10px 18px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: center && name.trim() ? "pointer" : "default" }}>
               {saving ? "Saving…" : "Save zone"}
             </button>
-            {center && <span style={{ fontSize: 12, color: theme.muted }}>{center.lat.toFixed(4)}, {center.lng.toFixed(4)}</span>}
+            {center && <span style={{ fontSize: text.sm, color: theme.muted }}>{center.lat.toFixed(4)}, {center.lng.toFixed(4)}</span>}
           </div>
         </div>
 
-        <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted, margin: "0 0 10px" }}>Your zones</h2>
+        <h2 style={{ fontSize: text.base, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted, margin: "0 0 10px" }}>Your zones</h2>
         {zones.length === 0 ? (
-          <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 8, padding: 20, color: theme.muted, fontSize: 13 }}>No privacy zones yet.</div>
+          <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 8, padding: 20, color: theme.muted, fontSize: text.base }}>No privacy zones yet.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 1, background: theme.hairline, border: `1px solid ${theme.hairline}`, borderRadius: 8, overflow: "hidden" }}>
             {zones.map((z) => (
               <div key={z.id} style={{ background: theme.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div>
                   <div style={{ color: theme.ink, fontWeight: 700 }}>{z.name}</div>
-                  <div style={{ color: theme.muted, fontSize: 12 }}>{z.radius_miles} mi · {z.center_lat.toFixed(4)}, {z.center_lng.toFixed(4)}</div>
+                  <div style={{ color: theme.muted, fontSize: text.sm }}>{z.radius_miles} mi · {z.center_lat.toFixed(4)}, {z.center_lng.toFixed(4)}</div>
                 </div>
-                <button onClick={() => deleteZone(z.id)} style={{ background: "transparent", color: theme.danger, border: `1px solid ${theme.danger}`, borderRadius: 4, padding: "6px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Delete</button>
+                <button onClick={() => deleteZone(z.id)} style={{ background: "transparent", color: theme.danger, border: `1px solid ${theme.danger}`, borderRadius: 4, padding: "6px 12px", fontSize: text.xs, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Delete</button>
               </div>
             ))}
           </div>

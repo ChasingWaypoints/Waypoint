@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { authFetch } from "../lib/authFetch";
-import { theme, font, btnPrimary, btnGhost, card as cardStyle, input as inputStyle } from "../lib/theme";
+import { theme, font, btnPrimary, btnGhost, card as cardStyle, input as inputStyle, text } from "../lib/theme";
 
 /**
  * The three ways an organizer hands out an event: the embeddable map for
@@ -116,13 +116,13 @@ export default function EventShareLinks({
                   }}
                 >
                   <strong style={{ minWidth: 140, color: theme.ink }}>{c.display_name}</strong>
-                  <a href={cmdUrl} target="_blank" rel="noopener noreferrer" style={{ color: theme.track, fontSize: 13, fontWeight: 700 }}>
+                  <a href={cmdUrl} target="_blank" rel="noopener noreferrer" style={{ color: theme.track, fontSize: text.base, fontWeight: 700 }}>
                     Open Command View ↗
                   </a>
                   <button onClick={() => copy(cmdUrl, c.id + "-cmd")} style={{ ...linkBtn, padding: "4px 10px" }}>
                     {copied === c.id + "-cmd" ? "Copied" : "Copy command link"}
                   </button>
-                  <a href={url} style={{ color: theme.muted, fontSize: 12 }}>
+                  <a href={url} style={{ color: theme.muted, fontSize: text.sm }}>
                     .kml (Earth Pro)
                   </a>
                   <button onClick={() => copy(url, c.id)} style={{ ...linkBtn, padding: "4px 10px" }}>
@@ -140,7 +140,7 @@ export default function EventShareLinks({
 
 const card = cardStyle;
 const cardTitle: React.CSSProperties = { fontWeight: 700, color: theme.ink, marginBottom: 6 };
-const cardText: React.CSSProperties = { margin: "0 0 10px", color: theme.muted, fontSize: 13 };
+const cardText: React.CSSProperties = { margin: "0 0 10px", color: theme.muted, fontSize: text.base };
 const codeBox: React.CSSProperties = {
   display: "block",
   background: theme.canvas,

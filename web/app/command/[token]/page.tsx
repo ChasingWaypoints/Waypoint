@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, use } from "react";
 import TrackingMap, { Entrant, StageLine } from "../../../components/TrackingMap";
-import { theme, font } from "../../../lib/theme";
+import { theme, font, text } from "../../../lib/theme";
 
 /**
  * Command View — a full-screen, read-only, no-login live map for recovery,
@@ -81,12 +81,12 @@ export default function CommandViewPage({ params }: { params: Promise<{ token: s
           <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 6, width: "min(92%, 460px)", display: "flex", flexDirection: "column", gap: 6 }}>
             {sosEntrants.map((e) => (
               <div key={e.id} className="wp-pulse" style={{ background: "#FF3B30", color: "#fff", borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 6px 20px rgba(0,0,0,.5)" }}>
-                <span style={{ fontSize: 18 }}>&#9888;</span>
+                <span style={{ fontSize: text.xl }}>&#9888;</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 800, fontSize: 13 }}>SOS — {e.number ? `#${e.number} ` : ""}{e.name}</div>
-                  <div style={{ fontSize: 11, opacity: 0.85 }}>Tap Locate for position &amp; ICE.</div>
+                  <div style={{ fontWeight: 800, fontSize: text.base }}>SOS — {e.number ? `#${e.number} ` : ""}{e.name}</div>
+                  <div style={{ fontSize: text.xs, opacity: 0.85 }}>Tap Locate for position &amp; ICE.</div>
                 </div>
-                <button onClick={() => setSosFocus(e.id)} style={{ background: "#fff", color: "#B3261E", border: "none", borderRadius: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Locate</button>
+                <button onClick={() => setSosFocus(e.id)} style={{ background: "#fff", color: "#B3261E", border: "none", borderRadius: 4, padding: "6px 10px", fontSize: text.xs, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Locate</button>
               </div>
             ))}
           </div>

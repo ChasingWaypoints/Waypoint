@@ -1,4 +1,5 @@
 "use client";
+import { text } from "../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -30,28 +31,28 @@ const EVENT_STATUS_COLOR: Record<string, string> = {
 function Nav({ email, onSignOut, isAdmin }: { email: string; onSignOut: () => void; isAdmin?: boolean }) {
   return (
     <nav className="wp-topnav" style={{ background: "#0C1E29", padding: "0 24px", minHeight: 56, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
-      <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+      <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
         Waypoint
       </Link>
       <div className="wp-nav-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span className="wp-nav-email" style={{ color: "#7E93A0", fontSize: 13 }}>{email}</span>
+        <span className="wp-nav-email" style={{ color: "#7E93A0", fontSize: text.base }}>{email}</span>
         {isAdmin && (
           <Link
             href="/dashboard/admin"
-            style={{ background: "transparent", border: "1px solid #CCFF00", color: "#CCFF00", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+            style={{ background: "transparent", border: "1px solid #CCFF00", color: "#CCFF00", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
           >
             Admin
           </Link>
         )}
         <Link
           href="/dashboard/profile"
-          style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
         >
           Profile
         </Link>
         <button
           onClick={onSignOut}
-          style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+          style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
         >
           Sign Out
         </button>
@@ -205,12 +206,12 @@ export default function DashboardPage() {
         <div style={{ marginBottom: 56 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Group Rides</p>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Events</h2>
+              <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Group Rides</p>
+              <h2 style={{ fontSize: text.xxl, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Events</h2>
             </div>
             <Link
               href="/dashboard/events/create"
-              style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+              style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
             >
               + Create Event
             </Link>
@@ -219,8 +220,8 @@ export default function DashboardPage() {
           {/* Join with a code — the rider workflow */}
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF" }}>Join a ride or event</div>
-              <div style={{ fontSize: 12, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+              <div style={{ fontSize: text.base, fontWeight: 700, color: "#FFFFFF" }}>Join a ride or event</div>
+              <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
                 Got a join code from an organizer? Enter it to hop on their live map.
               </div>
             </div>
@@ -230,16 +231,16 @@ export default function DashboardPage() {
               onKeyDown={(e) => { if (e.key === "Enter") joinEvent(); }}
               placeholder="CODE"
               maxLength={12}
-              style={{ width: 130, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#FFFFFF", fontSize: 15, fontWeight: 700, letterSpacing: 2, textAlign: "center", outline: "none", textTransform: "uppercase" }}
+              style={{ width: 130, padding: "9px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", color: "#FFFFFF", fontSize: text.lg, fontWeight: 700, letterSpacing: 2, textAlign: "center", outline: "none", textTransform: "uppercase" }}
             />
             <button
               onClick={joinEvent}
               disabled={joining || !joinCode.trim()}
-              style={{ background: joinCode.trim() ? "#CCFF00" : "#1E3B4C", color: joinCode.trim() ? "#0C1E29" : "#7E93A0", border: "none", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: joining || !joinCode.trim() ? "default" : "pointer" }}
+              style={{ background: joinCode.trim() ? "#CCFF00" : "#1E3B4C", color: joinCode.trim() ? "#0C1E29" : "#7E93A0", border: "none", padding: "10px 20px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: joining || !joinCode.trim() ? "default" : "pointer" }}
             >
               {joining ? "Joining…" : "Join"}
             </button>
-            {joinError && <div style={{ flexBasis: "100%", color: "#FF6B6B", fontSize: 12 }}>{joinError}</div>}
+            {joinError && <div style={{ flexBasis: "100%", color: "#FF6B6B", fontSize: text.sm }}>{joinError}</div>}
           </div>
 
           {loading ? (
@@ -248,12 +249,12 @@ export default function DashboardPage() {
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🏁</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No events yet</h3>
-              <p style={{ fontSize: 13, color: "#7E93A0", margin: "0 0 20px", fontWeight: 400 }}>
+              <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 20px", fontWeight: 400 }}>
                 Create a group event and share a join code with your riders.
               </p>
               <Link
                 href="/dashboard/events/create"
-                style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
+                style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 20px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", display: "inline-block" }}
               >
                 Create Your First Event
               </Link>
@@ -265,24 +266,24 @@ export default function DashboardPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", display: "inline-block" }} />
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{ev.name}</h3>
+                      <h3 style={{ fontSize: text.lg, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{ev.name}</h3>
                       {(() => {
                         const isEvent = (ev.rider_count ?? 0) > 10;
                         return (
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: isEvent ? "#CCFF00" : "#7E93A0", border: `1px solid ${isEvent ? "#CCFF00" : "#3a4550"}`, borderRadius: 10, padding: "1px 8px" }}>
+                          <span style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: isEvent ? "#CCFF00" : "#7E93A0", border: `1px solid ${isEvent ? "#CCFF00" : "#3a4550"}`, borderRadius: 10, padding: "1px 8px" }}>
                             {isEvent ? "Event" : "Ride"}
                           </span>
                         );
                       })()}
                     </div>
-                    <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>
+                    <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>
                       {(ev.rider_count ?? 0) <= 10 ? (
                         <>Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong></>
                       ) : (
                         <>{ev.rider_count} riders</>
                       )}
                       {" · "}
-                      <span style={{ fontWeight: 700, color: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 11 }}>{ev.status}</span>
+                      <span style={{ fontWeight: 700, color: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: text.xs }}>{ev.status}</span>
                       {" · "}
                       {ev.my_role === "organizer" ? "You are organizer" : "Participant"}
                     </p>
@@ -291,14 +292,14 @@ export default function DashboardPage() {
                     {ev.my_role === "organizer" && (
                       <Link
                         href={`/dashboard/events/${ev.id}/track`}
-                        style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                        style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
                       >
                         Tracking
                       </Link>
                     )}
                     <Link
                       href={`/dashboard/events/${ev.id}`}
-                      style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+                      style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
                     >
                       Manage →
                     </Link>
@@ -312,14 +313,14 @@ export default function DashboardPage() {
         {hasSub === false && (
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "18px 20px", marginBottom: 40, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div style={{ flex: "1 1 260px", minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF" }}>Waypoint Personal</div>
-              <div style={{ fontSize: 12, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+              <div style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF" }}>Waypoint Personal</div>
+              <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
                 Your own live tracking and a shareable map for family &amp; friends.
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => startSubscribe("individual")} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$15 / year</button>
-              <button onClick={() => startSubscribe("individual_plus")} style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Plus · $29 / year</button>
+              <button onClick={() => startSubscribe("individual")} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$15 / year</button>
+              <button onClick={() => startSubscribe("individual_plus")} style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #3a4550", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Plus · $29 / year</button>
             </div>
           </div>
         )}
@@ -327,18 +328,18 @@ export default function DashboardPage() {
         {hasOrg === false && (
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div style={{ flex: "1 1 260px", minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF" }}>Waypoint Organization</div>
-              <div style={{ fontSize: 12, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+              <div style={{ fontSize: text.md, fontWeight: 700, color: "#FFFFFF" }}>Waypoint Organization</div>
+              <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
                 Unlimited events, a shared 1,500-entrant pool, white-label branding, and command credentials.
               </div>
             </div>
-            <button onClick={startOrgCheckout} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$3,500 / year</button>
+            <button onClick={startOrgCheckout} style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>$3,500 / year</button>
           </div>
         )}
 
         {(hasSub || hasOrg) && (
           <div style={{ marginBottom: 40 }}>
-            <button onClick={openBillingPortal} style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Manage billing</button>
+            <button onClick={openBillingPortal} style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Manage billing</button>
           </div>
         )}
 
@@ -346,10 +347,10 @@ export default function DashboardPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Your Trips</p>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Track History</h2>
+              <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Your Trips</p>
+              <h2 style={{ fontSize: text.xxl, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Track History</h2>
             </div>
-            <Link href="/track" style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 18px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", whiteSpace: "nowrap" }}>
+            <Link href="/track" style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 18px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", whiteSpace: "nowrap" }}>
               ● Track from this phone
             </Link>
           </div>
@@ -360,7 +361,7 @@ export default function DashboardPage() {
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No trips yet</h3>
-              <p style={{ fontSize: 13, color: "#7E93A0", margin: 0, fontWeight: 400 }}>
+              <p style={{ fontSize: text.base, color: "#7E93A0", margin: 0, fontWeight: 400 }}>
                 Start your first trip in the Waypoint mobile app — it'll appear here automatically.
               </p>
             </div>
@@ -371,35 +372,35 @@ export default function DashboardPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: TRIP_STATUS_COLOR[trip.status] ?? "#7E93A0", display: "inline-block" }} />
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{trip.name}</h3>
+                      <h3 style={{ fontSize: text.lg, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{trip.name}</h3>
                     </div>
-                    <p style={{ fontSize: 12, color: "#7E93A0", margin: 0 }}>
+                    <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>
                       {new Date(trip.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       {" · "}
-                      <span style={{ fontWeight: 700, color: TRIP_STATUS_COLOR[trip.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 11 }}>{trip.status}</span>
+                      <span style={{ fontWeight: 700, color: TRIP_STATUS_COLOR[trip.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: text.xs }}>{trip.status}</span>
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {trip.is_public && trip.share_token ? (
                       <>
                         <a href={`/share/${trip.share_token}`} target="_blank" rel="noopener noreferrer"
-                          style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+                          style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
                           Live Map ↗
                         </a>
                         <a href={`/share/${trip.share_token}/story`} target="_blank" rel="noopener noreferrer"
-                          style={{ background: "transparent", color: "#FFFFFF", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+                          style={{ background: "transparent", color: "#FFFFFF", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
                           Story ↗
                         </a>
                       </>
                     ) : (
-                      <span style={{ border: "1px solid #1E3B4C", color: "#7E93A0", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                      <span style={{ border: "1px solid #1E3B4C", color: "#7E93A0", padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
                         Private
                       </span>
                     )}
                     <button
                       onClick={() => deleteTrip(trip.id, trip.name)}
                       title="Delete trip and its track history"
-                      style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                      style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                     >
                       Delete
                     </button>

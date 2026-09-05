@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import TrackingMap, { Entrant, StageLine } from "./TrackingMap";
 import { LngLat, timeAgo } from "../lib/geo";
-import { theme, font } from "../lib/theme";
+import { theme, font, text } from "../lib/theme";
 import { authFetch } from "../lib/authFetch";
 import { Skeleton } from "./Skeleton";
 
@@ -209,7 +209,7 @@ export default function LiveEventMap({
             {e.name}
           </span>
           <br />
-          <span style={{ color: theme.muted, fontSize: 12 }}>
+          <span style={{ color: theme.muted, fontSize: text.sm }}>
             {e.class ? `${e.class} · ` : ""}
             {timeAgo(e.last_seen_at)}
           </span>
@@ -330,7 +330,7 @@ export default function LiveEventMap({
                 padding: "10px 16px",
                 borderTop: `1px solid ${theme.hairline}`,
                 color: theme.muted,
-                fontSize: 12,
+                fontSize: text.sm,
               }}
             >
               Showing trail for the selected entrant. Click again to clear.
@@ -361,13 +361,13 @@ export default function LiveEventMap({
           <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 6, width: "min(92%, 460px)", display: "flex", flexDirection: "column", gap: 6 }}>
             {sosEntrants.map((e) => (
               <div key={e.id} className="wp-pulse" style={{ background: "#FF3B30", color: "#fff", borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 6px 20px rgba(0,0,0,.5)" }}>
-                <span style={{ fontSize: 18 }}>&#9888;</span>
+                <span style={{ fontSize: text.xl }}>&#9888;</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: 0.3 }}>SOS — {e.number ? `#${e.number} ` : ""}{e.name}</div>
-                  <div style={{ fontSize: 11, opacity: 0.85 }}>Tap Locate to see position &amp; ICE.</div>
+                  <div style={{ fontWeight: 800, fontSize: text.base, letterSpacing: 0.3 }}>SOS — {e.number ? `#${e.number} ` : ""}{e.name}</div>
+                  <div style={{ fontSize: text.xs, opacity: 0.85 }}>Tap Locate to see position &amp; ICE.</div>
                 </div>
-                <button onClick={() => { setSosFocus(e.id); selectEntrant(e.id); }} style={{ background: "#fff", color: "#B3261E", border: "none", borderRadius: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Locate</button>
-                <button onClick={() => acknowledgeSos(e.id)} style={{ background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.6)", borderRadius: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Ack</button>
+                <button onClick={() => { setSosFocus(e.id); selectEntrant(e.id); }} style={{ background: "#fff", color: "#B3261E", border: "none", borderRadius: 4, padding: "6px 10px", fontSize: text.xs, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Locate</button>
+                <button onClick={() => acknowledgeSos(e.id)} style={{ background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.6)", borderRadius: 4, padding: "6px 10px", fontSize: text.xs, fontWeight: 700, textTransform: "uppercase", cursor: "pointer" }}>Ack</button>
               </div>
             ))}
           </div>
