@@ -2,18 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
 import type Stripe from "stripe";
 import { getStripe } from "../../../../lib/stripe";
+import { createAdminClient } from "../../../../lib/supabase/admin";
 
 // GET /api/events/join?code=RIDE42
 // Look up an event by join code without joining — returns name and rider_classes
 // so the client can show the class picker before committing to join.
 export async function GET(request: NextRequest) {
-  const { user, supabase } = await getUserFromRequest(request);
+  const { user } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const code = request.nextUrl.searchParams.get("code")?.trim().toUpperCase();
   if (!code) return NextResponse.json({ error: "code is required" }, { status: 400 });
 
-  const { data: event } = await supabase
+  // Join-by-code must resolve for ANY authenticated user, not only the
+  // organizer. Direct SELECT is behind organizer-only RLS, so use the
+  // service-role client here (identity is already verified from the token).
+  const db = createAdminClient();
+  const { data: event } = await db
     .from("events")
     .select("id, name, status, rider_classes")
     .eq("join_code", code)
@@ -57,14 +62,17 @@ async function entrantCheckoutUrl(
 }
 
 export async function POST(request: NextRequest) {
-  const { user, supabase } = await getUserFromRequest(request);
+  const { user } = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   const code = body.code?.trim().toUpperCase();
   if (!code) return NextResponse.json({ error: "Join code is required" }, { status: 400 });
 
-  const { data: event } = await supabase
+  // Service-role client for the join operations (lookup + self-insert +
+  // capacity) so a non-organizer rider can join; identity is verified above.
+  const db = createAdminClient();
+  const { data: event } = await db
     .from("events")
     .select("id, name, status, organizer_id, paid, comped, seats_paid, payment_mode, entrant_fee_cents, suspended_at")
     .eq("join_code", code)
@@ -78,7 +86,7 @@ export async function POST(request: NextRequest) {
   const isEntrantPaid = event.payment_mode === "entrant";
 
   // Already a participant?
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from("event_participants")
     .select("id, event_id, paid_at")
     .eq("event_id", event.id)
@@ -104,7 +112,7 @@ export async function POST(request: NextRequest) {
   // Entrant-paid: create a PENDING row, then send them to Checkout. The webhook
   // stamps paid_at; until then the row is excluded from all live feeds.
   if (isEntrantPaid) {
-    const { data: inserted, error } = await supabase
+    const { data: inserted, error } = await db
       .from("event_participants")
       .insert({ event_id: event.id, user_id: user.id, display_name: displayName, role: "rider", rider_class: riderClass, rider_number: riderNumber })
       .select("id")
@@ -120,10 +128,10 @@ export async function POST(request: NextRequest) {
   //   paid event    → capped at seats_paid (base 40 + $40/10-seat blocks)
   //   free ride     → capped at 10
   if (!event.comped) {
-    const { data: consumed } = await supabase.rpc("consume_org_entrant", { p_event_id: event.id });
+    const { data: consumed } = await db.rpc("consume_org_entrant", { p_event_id: event.id });
     if (consumed !== true) {
       const limit = event.paid ? (event.seats_paid ?? 40) : 10;
-      const { count } = await supabase
+      const { count } = await db
         .from("event_participants")
         .select("id", { count: "exact", head: true })
         .eq("event_id", event.id);
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { error } = await supabase.from("event_participants").insert({
+  const { error } = await db.from("event_participants").insert({
     event_id: event.id,
     user_id: user.id,
     display_name: displayName,
