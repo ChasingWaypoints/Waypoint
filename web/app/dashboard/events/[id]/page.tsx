@@ -188,9 +188,9 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!event) return;
     setPayMode(event.payment_mode === "entrant" ? "entrant" : "organizer");
-    // Entrant fee is tiered by event length: <=3d $8, <=7d $10, <=30d $15.
-    const dollars = event.entrant_fee_cents ? Math.round(event.entrant_fee_cents / 100) : 8;
-    setPayFee(dollars >= 13 ? "15" : dollars >= 9 ? "10" : "8");
+    // Entrant fee is tiered by event length: <=3d $10, <=7d $12, <=30d $15.
+    const dollars = event.entrant_fee_cents ? Math.round(event.entrant_fee_cents / 100) : 10;
+    setPayFee(dollars >= 14 ? "15" : dollars >= 11 ? "12" : "10");
   }, [event?.payment_mode, event?.entrant_fee_cents]);
 
   async function savePayment() {
@@ -616,8 +616,8 @@ export default function EventDetailPage() {
                       Event length
                       <select value={payFee} onChange={(e) => setPayFee(e.target.value)}
                         style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base }}>
-                        <option value="8">Up to 3 days — $8 / rider</option>
-                        <option value="10">Up to 7 days — $10 / rider</option>
+                        <option value="10">Up to 3 days — $10 / rider</option>
+                        <option value="12">Up to 7 days — $12 / rider</option>
                         <option value="15">Up to 30 days — $15 / rider</option>
                       </select>
                     </label>
