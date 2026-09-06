@@ -33,6 +33,11 @@ export async function GET(
   const participantId: string | null = tokenData.participant_id ?? null;
   const credentialId: string | null = tokenData.credential_id ?? null;
   const event: { name: string; status: string } = tokenData.event;
+  // Credentials expire with the event. (The track.kml child also enforces the
+  // end-date backstop, so a wrapper is never handed out for an ended event.)
+  if (event.status === "completed" || event.status === "cancelled") {
+    return new NextResponse("This event has ended.", { status: 410 });
+  }
 
   // ── Log the access ────────────────────────────────────────────
   const ip =

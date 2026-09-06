@@ -104,9 +104,16 @@ export async function GET(
   }
 
   // Suspended events go dark on every feed, not just the public page.
-  const { data: susp } = await supabase.from("events").select("suspended_at").eq("id", id).maybeSingle();
+  const { data: susp } = await supabase.from("events").select("suspended_at, status, ends_at").eq("id", id).maybeSingle();
   if (susp?.suspended_at) {
     return new NextResponse("This event is currently unavailable.", { status: 403 });
+  }
+  // Credentials expire with the event: no access once it's over.
+  if (susp?.status === "completed" || susp?.status === "cancelled") {
+    return new NextResponse("This event has ended.", { status: 410 });
+  }
+  if (susp?.ends_at && Date.now() > new Date(susp.ends_at).getTime() + 86_400_000) {
+    return new NextResponse("This event has ended.", { status: 410 });
   }
 
   const holderName: string = tokenData.holder_name;
