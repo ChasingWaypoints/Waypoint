@@ -95,6 +95,8 @@ export default function EventDetailPage() {
   const [editedClasses, setEditedClasses] = useState<string[] | null>(null); // null = not yet opened
   const [savingClasses, setSavingClasses] = useState(false);
   const [classesSaved, setClassesSaved] = useState(false);
+  const [paymentSaved, setPaymentSaved] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
 
 
   const authHeaders = useCallback((tok: string) => ({
@@ -194,18 +196,29 @@ export default function EventDetailPage() {
   }, [event?.payment_mode, event?.entrant_fee_cents]);
 
   async function savePayment() {
-    if (!session) return;
+    if (!session) { alert("Your session expired — refresh and sign in again."); return; }
     const fee = Math.min(15, Math.max(8, Math.round(Number(payFee) || 10)));
-    const res = await fetch(`/api/events/${id}`, {
-      method: "PATCH",
-      headers: authHeaders(session.access_token),
-      body: JSON.stringify({
-        payment_mode: payMode,
-        ...(payMode === "entrant" ? { entrant_fee_cents: fee * 100 } : {}),
-      }),
-    });
-    if (res.ok) { await load(); }
-    else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Could not save payment settings."); }
+    setSavingPayment(true);
+    try {
+      const res = await fetch(`/api/events/${id}`, {
+        method: "PATCH",
+        headers: authHeaders(session.access_token),
+        body: JSON.stringify({
+          payment_mode: payMode,
+          ...(payMode === "entrant" ? { entrant_fee_cents: fee * 100 } : {}),
+        }),
+      });
+      if (res.ok) {
+        await load();
+        setPaymentSaved(true);
+        setTimeout(() => setPaymentSaved(false), 2500);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? "Could not save payment settings.");
+      }
+    } finally {
+      setSavingPayment(false);
+    }
   }
 
   async function savePublicVis(field: "public_show_route" | "public_show_waypoints", value: boolean) {
@@ -622,9 +635,9 @@ export default function EventDetailPage() {
                       </select>
                     </label>
                   )}
-                  <button onClick={savePayment}
-                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>
-                    Save
+                  <button onClick={savePayment} disabled={savingPayment}
+                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: savingPayment ? "default" : "pointer", opacity: savingPayment ? 0.7 : 1 }}>
+                    {savingPayment ? "Saving…" : paymentSaved ? "Saved ✓" : "Save"}
                   </button>
                 </div>
               </div>
