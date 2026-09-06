@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { name, description, starts_at, ends_at } = body;
+  const payment_mode = body.payment_mode === "entrant" ? "entrant" : "organizer";
   if (!name?.trim()) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
   // rider_classes: organizer-defined class options shown to riders on join
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       description: description?.trim() || null,
       starts_at: starts_at || null,
       ends_at: ends_at || null,
+      payment_mode,
       entrant_fee_cents: entrantFeeCentsForDays(eventDurationDays(starts_at, ends_at)),
       join_code,
       rider_classes,

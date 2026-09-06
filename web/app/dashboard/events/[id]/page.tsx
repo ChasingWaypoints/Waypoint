@@ -3,8 +3,8 @@ import { text } from "../../../../lib/theme";
 import { eventDurationDays, entrantFeeCentsForDays } from "../../../../lib/pricing";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import StagesManager from "../../../../components/StagesManager";
 import EventBranding from "../../../../components/EventBranding";
@@ -71,6 +71,7 @@ function Btn({ onClick, color = "#CCFF00", border, children, disabled }: {
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [session, setSession] = useState<any>(null);
@@ -260,6 +261,18 @@ export default function EventDetailPage() {
     if (data.url) window.location.href = data.url;
     else alert(data.error ?? "Could not start checkout. Please try again.");
   }
+
+  // Arriving from "I'll pay for more riders" at creation → open $200 checkout once.
+  const upgradeKicked = useRef(false);
+  useEffect(() => {
+    if (upgradeKicked.current) return;
+    if (searchParams.get("upgrade") !== "1") return;
+    if (!session || !event || !isOrganizer) return;
+    if (event.paid || event.comped) return;
+    upgradeKicked.current = true;
+    startEventCheckout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, event, isOrganizer, searchParams]);
 
   async function startAddSeats() {
     if (!session) return;

@@ -14,6 +14,7 @@ export default function CreateEventPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [rideType, setRideType] = useState<"free" | "organizer_paid" | "entrant">("free");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [riderClasses, setRiderClasses] = useState<string[]>([]);
@@ -52,6 +53,7 @@ export default function CreateEventPage() {
         description: description.trim() || undefined,
         starts_at: startDate ? new Date(startDate + "T00:00:00").toISOString() : undefined,
         ends_at: endDate ? new Date(endDate + "T00:00:00").toISOString() : undefined,
+        payment_mode: rideType === "entrant" ? "entrant" : "organizer",
         rider_classes: riderClasses,
       }),
     });
@@ -64,7 +66,8 @@ export default function CreateEventPage() {
     }
 
     const event = await res.json();
-    router.push(`/dashboard/events/${event.id}`);
+    // "I'll pay for more riders" → jump straight into the $200 upgrade checkout.
+    router.push(`/dashboard/events/${event.id}${rideType === "organizer_paid" ? "?upgrade=1" : ""}`);
   }
 
   return (
@@ -98,6 +101,29 @@ export default function CreateEventPage() {
               autoFocus
               style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: text.lg, color: "#FFFFFF", outline: "none", boxSizing: "border-box" }}
             />
+          </div>
+
+          {/* Ride type — free vs paid */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
+              How is this paid for?
+            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {([
+                ["free", "Free group ride", "Up to 10 riders, no charge. Perfect for a ride with friends."],
+                ["organizer_paid", "I'll pay for more riders", "$200 unlocks 40 riders (then +$40 per 10). You'll go to checkout after creating."],
+                ["entrant", "Riders pay at join", "Each rider pays a fee set by event length ($10 / $12 / $15). Set the dates below."],
+              ] as [typeof rideType, string, string][]).map(([val, title, desc]) => {
+                const on = rideType === val;
+                return (
+                  <button key={val} type="button" onClick={() => setRideType(val)}
+                    style={{ textAlign: "left", background: on ? "#14303F" : "#0C1E29", border: `1px solid ${on ? "#CCFF00" : "#1E3B4C"}`, padding: "12px 14px", cursor: "pointer", color: "#fff" }}>
+                    <div style={{ fontWeight: 700, fontSize: text.md, color: on ? "#CCFF00" : "#fff" }}>{title}</div>
+                    <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 3, lineHeight: 1.4 }}>{desc}</div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Description */}
