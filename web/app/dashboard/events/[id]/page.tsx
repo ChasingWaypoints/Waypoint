@@ -188,7 +188,9 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!event) return;
     setPayMode(event.payment_mode === "entrant" ? "entrant" : "organizer");
-    setPayFee(event.entrant_fee_cents ? String(Math.round(event.entrant_fee_cents / 100)) : "10");
+    // Entrant fee is tiered by event length: <=3d $8, <=7d $10, <=30d $15.
+    const dollars = event.entrant_fee_cents ? Math.round(event.entrant_fee_cents / 100) : 8;
+    setPayFee(dollars >= 13 ? "15" : dollars >= 9 ? "10" : "8");
   }, [event?.payment_mode, event?.entrant_fee_cents]);
 
   async function savePayment() {
@@ -601,7 +603,7 @@ export default function EventDetailPage() {
               <SectionLabel>Payment</SectionLabel>
               <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
                 <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
-                  Choose who pays for this event. <strong style={{ color: "#C8D4DC" }}>Organizer pays</strong> uses your $200 / 40-seat purchase; <strong style={{ color: "#C8D4DC" }}>entrants pay</strong> charges each rider a fee when they join.
+                  Choose who pays for this event. <strong style={{ color: "#C8D4DC" }}>Organizer pays</strong> uses your $200 / 40-seat purchase; <strong style={{ color: "#C8D4DC" }}>entrants pay</strong> charges each rider a fee at join, set by how long your event runs.
                 </p>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <select value={payMode} onChange={(e) => setPayMode(e.target.value as "organizer" | "entrant")}
@@ -611,10 +613,13 @@ export default function EventDetailPage() {
                   </select>
                   {payMode === "entrant" && (
                     <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: text.base, color: "#C8D4DC" }}>
-                      Fee $
-                      <input value={payFee} onChange={(e) => setPayFee(e.target.value.replace(/[^0-9]/g, ""))}
-                        inputMode="numeric" style={{ width: 56, background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 10px", fontSize: text.base, textAlign: "center" }} />
-                      <span style={{ color: "#7E93A0" }}>/ rider ($8–15)</span>
+                      Event length
+                      <select value={payFee} onChange={(e) => setPayFee(e.target.value)}
+                        style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base }}>
+                        <option value="8">Up to 3 days — $8 / rider</option>
+                        <option value="10">Up to 7 days — $10 / rider</option>
+                        <option value="15">Up to 30 days — $15 / rider</option>
+                      </select>
                     </label>
                   )}
                   <button onClick={savePayment}
