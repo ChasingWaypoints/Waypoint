@@ -206,6 +206,12 @@ export default function RegisterPage() {
           style={{ background: theme.accent, color: theme.accentInk, border: "none", padding: "13px 22px", fontSize: text.md, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
           {busy ? "Registering…" : "Register"}
         </button>
+        <p style={{ fontSize: text.sm, color: "#7E93A0", lineHeight: 1.6, margin: 0, textAlign: "center" }}>
+          By registering, you agree to Waypoint&rsquo;s{" "}
+          <Link href="/terms" style={{ color: "#C8D4DC", textDecoration: "underline" }}>Terms of Service</Link>{" "}
+          and{" "}
+          <Link href="/privacy" style={{ color: "#C8D4DC", textDecoration: "underline" }}>Privacy Policy</Link>. This tracking tool is for recreation and is not a replacement for a dedicated emergency locator beacon.
+        </p>
         <div style={{ height: 20 }} />
       </div>
     </div>

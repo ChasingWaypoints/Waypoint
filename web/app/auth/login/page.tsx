@@ -102,6 +102,11 @@ export default function LoginPage() {
               Create one free
             </Link>
           </p>
+          <p style={{ fontSize: text.sm, color: "#54697A", textAlign: "center", margin: "14px 0 0" }}>
+            <Link href="/terms" style={{ color: "#7E93A0", textDecoration: "none" }}>Terms</Link>
+            {"  ·  "}
+            <Link href="/privacy" style={{ color: "#7E93A0", textDecoration: "none" }}>Privacy</Link>
+          </p>
         </div>
       </div>
     </div>

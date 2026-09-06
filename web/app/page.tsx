@@ -196,7 +196,11 @@ export default function LandingPage() {
       <footer style={{ borderTop: `1px solid ${C.hairline}`, padding: "28px", background: C.surface }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: text.base, color: C.muted }}>
           <span>&copy; {new Date().getFullYear()} Waypoint &middot; a Chasing Waypoints product</span>
-          <span style={{ color: C.body }}>We never sell your location data. Ever.</span>
+          <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+            <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Terms</Link>
+            <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacy</Link>
+            <span style={{ color: C.body }}>We never sell your location data. Ever.</span>
+          </span>
         </div>
       </footer>
     </main>

@@ -119,7 +119,14 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p style={{ fontSize: text.base, color: "#7E93A0", textAlign: "center", margin: "24px 0 0" }}>
+          <p style={{ fontSize: text.sm, color: "#7E93A0", textAlign: "center", lineHeight: 1.6, margin: "20px 0 0" }}>
+            By creating an account, you agree to our{" "}
+            <Link href="/terms" style={{ color: "#C8D4DC", textDecoration: "underline" }}>Terms of Service</Link>{" "}
+            and{" "}
+            <Link href="/privacy" style={{ color: "#C8D4DC", textDecoration: "underline" }}>Privacy Policy</Link>.
+          </p>
+
+          <p style={{ fontSize: text.base, color: "#7E93A0", textAlign: "center", margin: "16px 0 0" }}>
             Already have one?{" "}
             <Link href="/auth/login" style={{ color: "#FFFE15", fontWeight: 700, textDecoration: "none" }}>
               Sign in
