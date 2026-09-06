@@ -20,6 +20,14 @@ export default function EventPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [sponsors, setSponsors] = useState<{ name?: string; logo_url: string; url?: string; headline?: boolean }[]>([]);
   const [whitelabel, setWhitelabel] = useState(false);
+  const isMobile = useIsMobile(768);
+
+  // On phones there is no room for headline sponsors up top; roll every
+  // sponsor (headline first) into the scrollable bottom strip instead so a
+  // headline sponsor is never dropped on mobile.
+  const stripSponsors = isMobile
+    ? [...sponsors.filter((sp) => sp.headline), ...sponsors.filter((sp) => !sp.headline)]
+    : sponsors.filter((sp) => !sp.headline);
 
   // Pull the event name for the header/title; the map loads its own data.
   useEffect(() => {
@@ -90,16 +98,17 @@ export default function EventPage() {
         <LiveEventMap shareToken={token} />
       </div>
 
-      {sponsors.some((sp) => !sp.headline) && (
+      {stripSponsors.length > 0 && (
         <div
+          className="wp-actionbar"
           style={{
             background: "#0C1E29",
             borderTop: "1px solid #1E3B4C",
-            height: 76,
+            height: isMobile ? 64 : 76,
             padding: "0 20px",
             display: "flex",
             alignItems: "center",
-            gap: 18,
+            gap: isMobile ? 20 : 18,
             flexShrink: 0,
             overflowX: "auto",
           }}
@@ -107,8 +116,8 @@ export default function EventPage() {
           <span style={{ color: "#7E93A0", fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
             Presented&nbsp;by
           </span>
-          {sponsors.filter((sp) => !sp.headline).map((sp, i) => (
-            <SponsorLogo key={i} sp={sp} height={56} />
+          {stripSponsors.map((sp, i) => (
+            <SponsorLogo key={i} sp={sp} height={isMobile ? 44 : 56} />
           ))}
         </div>
       )}
@@ -139,4 +148,16 @@ function SponsorLogo({
   ) : (
     img
   );
+}
+
+function useIsMobile(bp = 768): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${bp}px)`);
+    const on = () => setM(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [bp]);
+  return m;
 }
