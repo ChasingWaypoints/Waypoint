@@ -268,7 +268,7 @@ export default function EventDetailPage() {
     if (upgradeKicked.current) return;
     if (searchParams.get("upgrade") !== "1") return;
     if (!session || !event || !isOrganizer) return;
-    if (event.paid || event.comped) return;
+    if (event.paid || event.comped || event.payment_mode === "entrant") return;
     upgradeKicked.current = true;
     startEventCheckout();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -424,7 +424,7 @@ export default function EventDetailPage() {
           {isOrganizer && !event.paid && event.comped && (
             <span style={{ border: "1px solid #4A5A25", color: "#CCFF00", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>★ Sponsored</span>
           )}
-          {isOrganizer && !event.paid && !event.comped && (
+          {isOrganizer && !event.paid && !event.comped && event.payment_mode !== "entrant" && (
             <button
               onClick={startEventCheckout}
               title="Upgrade this ride to a paid event (needed past 10 riders)"
@@ -432,6 +432,11 @@ export default function EventDetailPage() {
             >
               Upgrade $200
             </button>
+          )}
+          {isOrganizer && event.payment_mode === "entrant" && !event.comped && (
+            <span title="Riders pay to join this event" style={{ border: "1px solid #1F5A47", color: "#1FE0A0", padding: "6px 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              Riders pay{event.entrant_fee_cents ? ` $${Math.round(event.entrant_fee_cents / 100)}` : ""}
+            </span>
           )}
           <button
             onClick={() => setShowShare(true)}
@@ -476,7 +481,7 @@ export default function EventDetailPage() {
             </button>
             {menuOpen && (
               <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20, background: "#0C1E29", border: "1px solid #1E3B4C", borderRadius: 10, boxShadow: "0 8px 28px rgba(0,0,0,.55)", minWidth: 210, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                {isOrganizer && !event.paid && !event.comped && (
+                {isOrganizer && !event.paid && !event.comped && event.payment_mode !== "entrant" && (
                   <button onClick={() => { setMenuOpen(false); startEventCheckout(); }} style={menuItem}>Upgrade $200</button>
                 )}
                 {isOrganizer && event.paid && (
