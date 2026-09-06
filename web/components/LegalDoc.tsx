@@ -110,7 +110,7 @@ export default function LegalDoc({ markdown }: { markdown: string }) {
             case "quote":
               return (
                 <blockquote key={i} style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderLeft: `3px solid ${theme.warn}`, borderRadius: 4, padding: "14px 18px", margin: "0 0 24px", color: theme.body, fontSize: text.base }}>
-                  {b.lines.map((l, j) => <p key={j} style={{ margin: j === 0 ? 0 : "8px 0 0" }}><Inline raw={l} /></p>)}
+                  {b.lines.join("\n").split(/\n\s*\n/).map((para, j) => <p key={j} style={{ margin: j === 0 ? 0 : "8px 0 0" }}><Inline raw={para.replace(/\n/g, " ")} /></p>)}
                 </blockquote>
               );
             case "ul":
@@ -120,7 +120,7 @@ export default function LegalDoc({ markdown }: { markdown: string }) {
                 </ul>
               );
             default:
-              return <p key={i} style={{ margin: "0 0 16px" }}>{b.lines.map((l, j) => <span key={j}><Inline raw={l} />{j < b.lines.length - 1 ? " " : ""}</span>)}</p>;
+              return <p key={i} style={{ margin: "0 0 16px" }}><Inline raw={b.lines.join(" ")} /></p>;
           }
         })}
       </article>
