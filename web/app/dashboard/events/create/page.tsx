@@ -3,6 +3,7 @@ import { text } from "../../../../lib/theme";
 export const dynamic = "force-dynamic";
 
 import { useState, useRef } from "react";
+import { eventDurationDays, entrantFeeCentsForDays } from "../../../../lib/pricing";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -13,6 +14,8 @@ export default function CreateEventPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [riderClasses, setRiderClasses] = useState<string[]>([]);
   const [classInput, setClassInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -34,6 +37,7 @@ export default function CreateEventPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    if (startDate && endDate && endDate < startDate) { setError("End date can't be before the start date."); return; }
     setSubmitting(true);
     setError("");
 
@@ -46,6 +50,8 @@ export default function CreateEventPage() {
       body: JSON.stringify({
         name: name.trim(),
         description: description.trim() || undefined,
+        starts_at: startDate ? new Date(startDate + "T00:00:00").toISOString() : undefined,
+        ends_at: endDate ? new Date(endDate + "T00:00:00").toISOString() : undefined,
         rider_classes: riderClasses,
       }),
     });
@@ -106,6 +112,39 @@ export default function CreateEventPage() {
               rows={3}
               style={{ width: "100%", padding: "12px 14px", border: "1px solid #1E3B4C", fontSize: text.md, color: "#FFFFFF", outline: "none", resize: "vertical", fontFamily: "system-ui", boxSizing: "border-box" }}
             />
+          </div>
+
+          {/* Dates */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", marginBottom: 8 }}>
+              Event dates <span style={{ fontWeight: 300, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 10px", lineHeight: 1.5 }}>
+              When does the event run? For entrant-paid events this sets the per-rider fee by length: up to 3 days $10, up to 7 days $12, up to 30 days $15.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontSize: text.xs, color: "#7E93A0", marginBottom: 4 }}>Start</div>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                  style={{ padding: "10px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", fontSize: text.md, color: "#FFFFFF", outline: "none", colorScheme: "dark" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: text.xs, color: "#7E93A0", marginBottom: 4 }}>End</div>
+                <input type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)}
+                  style={{ padding: "10px 12px", border: "1px solid #1E3B4C", background: "#0A0A0A", fontSize: text.md, color: "#FFFFFF", outline: "none", colorScheme: "dark" }} />
+              </div>
+            </div>
+            {(() => {
+              const iso = (d: string) => (d ? new Date(d + "T00:00:00").toISOString() : null);
+              const days = eventDurationDays(iso(startDate), iso(endDate));
+              if (!days) return null;
+              const fee = entrantFeeCentsForDays(days) / 100;
+              return (
+                <div style={{ fontSize: text.sm, color: "#CCFF00", marginTop: 8 }}>
+                  {days} day{days === 1 ? "" : "s"} · entrant fee ${fee}/rider if riders pay
+                </div>
+              );
+            })()}
           </div>
 
           {/* Classes */}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../lib/supabase/auth";
+import { eventDurationDays, entrantFeeCentsForDays } from "../../../lib/pricing";
 
 // POST /api/events — create a new event (organizer)
 export async function POST(request: NextRequest) {
@@ -7,7 +8,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { name, description, starts_at } = body;
+  const { name, description, starts_at, ends_at } = body;
   if (!name?.trim()) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
   // rider_classes: organizer-defined class options shown to riders on join
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       description: description?.trim() || null,
       starts_at: starts_at || null,
+      ends_at: ends_at || null,
+      entrant_fee_cents: entrantFeeCentsForDays(eventDurationDays(starts_at, ends_at)),
       join_code,
       rider_classes,
     })

@@ -1,5 +1,6 @@
 "use client";
 import { text } from "../../../../lib/theme";
+import { eventDurationDays, entrantFeeCentsForDays } from "../../../../lib/pricing";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
@@ -26,7 +27,7 @@ interface EventDetail {
   id: string; name: string; status: string; join_code: string; share_token: string;
   route_gpx: string | null; route_name: string | null; organizer_id: string;
   rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
-  payment_mode?: string; entrant_fee_cents?: number | null;
+  payment_mode?: string; entrant_fee_cents?: number | null; starts_at?: string | null; ends_at?: string | null;
   public_show_route?: boolean; public_show_waypoints?: boolean;
 }
 
@@ -82,7 +83,10 @@ export default function EventDetailPage() {
   const [tab, setTab] = useState<Tab>("map");
   const isMobile = useIsMobile(640);
   const [payMode, setPayMode] = useState<"organizer" | "entrant">("organizer");
-  const [payFee, setPayFee] = useState<string>("10");
+  const [eventStart, setEventStart] = useState("");
+  const [eventEnd, setEventEnd] = useState("");
+  const [savingDates, setSavingDates] = useState(false);
+  const [datesSaved, setDatesSaved] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [newViewerName, setNewViewerName] = useState("");
@@ -190,23 +194,36 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!event) return;
     setPayMode(event.payment_mode === "entrant" ? "entrant" : "organizer");
-    // Entrant fee is tiered by event length: <=3d $10, <=7d $12, <=30d $15.
-    const dollars = event.entrant_fee_cents ? Math.round(event.entrant_fee_cents / 100) : 10;
-    setPayFee(dollars >= 14 ? "15" : dollars >= 11 ? "12" : "10");
-  }, [event?.payment_mode, event?.entrant_fee_cents]);
+    setEventStart(event.starts_at ? event.starts_at.slice(0, 10) : "");
+    setEventEnd(event.ends_at ? event.ends_at.slice(0, 10) : "");
+  }, [event?.payment_mode, event?.starts_at, event?.ends_at]);
 
-  async function savePayment() {
+  async function saveDates() {
     if (!session) { alert("Your session expired — refresh and sign in again."); return; }
-    const fee = Math.min(15, Math.max(8, Math.round(Number(payFee) || 10)));
-    setSavingPayment(true);
+    if (eventStart && eventEnd && eventEnd < eventStart) { alert("End date can't be before the start date."); return; }
+    setSavingDates(true);
     try {
       const res = await fetch(`/api/events/${id}`, {
         method: "PATCH",
         headers: authHeaders(session.access_token),
         body: JSON.stringify({
-          payment_mode: payMode,
-          ...(payMode === "entrant" ? { entrant_fee_cents: fee * 100 } : {}),
+          starts_at: eventStart ? new Date(eventStart + "T00:00:00").toISOString() : null,
+          ends_at: eventEnd ? new Date(eventEnd + "T00:00:00").toISOString() : null,
         }),
+      });
+      if (res.ok) { await load(); setDatesSaved(true); setTimeout(() => setDatesSaved(false), 2500); }
+      else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Could not save dates."); }
+    } finally { setSavingDates(false); }
+  }
+
+  async function savePayment() {
+    if (!session) { alert("Your session expired — refresh and sign in again."); return; }
+    setSavingPayment(true);
+    try {
+      const res = await fetch(`/api/events/${id}`, {
+        method: "PATCH",
+        headers: authHeaders(session.access_token),
+        body: JSON.stringify({ payment_mode: payMode }),
       });
       if (res.ok) {
         await load();
@@ -611,6 +628,43 @@ export default function EventDetailPage() {
             {/* Branding: event logo + sponsors */}
             <EventBranding eventId={id} />
 
+            {/* Dates */}
+            <div>
+              <SectionLabel>Event dates</SectionLabel>
+              <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 24 }}>
+                <p style={{ fontSize: text.base, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.6 }}>
+                  When the event runs. For entrant-paid events this sets the per-rider fee by length:
+                  up to 3 days $10, up to 7 days $12, up to 30 days $15.
+                </p>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div>
+                    <div style={{ fontSize: text.xs, color: "#7E93A0", marginBottom: 4 }}>Start</div>
+                    <input type="date" value={eventStart} onChange={(e) => setEventStart(e.target.value)}
+                      style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base, colorScheme: "dark" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: text.xs, color: "#7E93A0", marginBottom: 4 }}>End</div>
+                    <input type="date" value={eventEnd} min={eventStart || undefined} onChange={(e) => setEventEnd(e.target.value)}
+                      style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base, colorScheme: "dark" }} />
+                  </div>
+                  <button onClick={saveDates} disabled={savingDates}
+                    style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: savingDates ? "default" : "pointer", opacity: savingDates ? 0.7 : 1 }}>
+                    {savingDates ? "Saving…" : datesSaved ? "Saved ✓" : "Save"}
+                  </button>
+                </div>
+                {(() => {
+                  const iso = (d: string) => (d ? new Date(d + "T00:00:00").toISOString() : null);
+                  const days = eventDurationDays(iso(eventStart), iso(eventEnd));
+                  if (!days) return null;
+                  return (
+                    <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 10 }}>
+                      {days} day{days === 1 ? "" : "s"} · entrant fee ${entrantFeeCentsForDays(days) / 100}/rider (if riders pay)
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
             {/* Payment */}
             <div>
               <SectionLabel>Payment</SectionLabel>
@@ -624,17 +678,22 @@ export default function EventDetailPage() {
                     <option value="organizer">Organizer pays</option>
                     <option value="entrant">Entrants pay at join</option>
                   </select>
-                  {payMode === "entrant" && (
-                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: text.base, color: "#C8D4DC" }}>
-                      Event length
-                      <select value={payFee} onChange={(e) => setPayFee(e.target.value)}
-                        style={{ background: "#0A0A0A", color: "#fff", border: "1px solid #1E3B4C", padding: "9px 11px", fontSize: text.base }}>
-                        <option value="10">Up to 3 days — $10 / rider</option>
-                        <option value="12">Up to 7 days — $12 / rider</option>
-                        <option value="15">Up to 30 days — $15 / rider</option>
-                      </select>
-                    </label>
-                  )}
+                  {payMode === "entrant" && (() => {
+                    const days = eventDurationDays(event.starts_at, event.ends_at);
+                    if (!days) {
+                      return (
+                        <span style={{ fontSize: text.base, color: "#FFAA00" }}>
+                          Set event dates above to price the rider fee.
+                        </span>
+                      );
+                    }
+                    return (
+                      <span style={{ fontSize: text.base, color: "#C8D4DC" }}>
+                        Rider fee <strong style={{ color: "#CCFF00" }}>${entrantFeeCentsForDays(days) / 100}</strong>
+                        <span style={{ color: "#7E93A0" }}> / rider · {days}-day event</span>
+                      </span>
+                    );
+                  })()}
                   <button onClick={savePayment} disabled={savingPayment}
                     style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: savingPayment ? "default" : "pointer", opacity: savingPayment ? 0.7 : 1 }}>
                     {savingPayment ? "Saving…" : paymentSaved ? "Saved ✓" : "Save"}

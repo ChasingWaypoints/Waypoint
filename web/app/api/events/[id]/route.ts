@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../../../lib/supabase/auth";
 import { createAnonClient } from "../../../../lib/supabase/admin";
+import { eventDurationDays, entrantFeeCentsForDays } from "../../../../lib/pricing";
 
 // GET /api/events/[id] — full event data with riders and their tracks
 export async function GET(
@@ -79,7 +80,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json();
-  const allowed = ["name", "description", "status", "starts_at"];
+  const allowed = ["name", "description", "status", "starts_at", "ends_at"];
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
@@ -109,13 +110,21 @@ export async function PATCH(
       : [];
   }
 
-  // Payment mode + entrant fee (entrant-paid events). Fee clamped to $8–$15.
+  // Payment mode. The entrant fee is DERIVED from the event window below, not
+  // taken from the client, so riders are always charged the correct tier.
   if ("payment_mode" in body) {
     updates.payment_mode = body.payment_mode === "entrant" ? "entrant" : "organizer";
   }
-  if ("entrant_fee_cents" in body) {
-    const n = Math.round(Number(body.entrant_fee_cents));
-    updates.entrant_fee_cents = Number.isFinite(n) ? Math.min(1500, Math.max(800, n)) : null;
+  // Re-derive the entrant fee whenever the dates or payment mode change. Use the
+  // event's effective window (new value if provided, otherwise the stored one).
+  const touchesFee = "starts_at" in body || "ends_at" in body || "payment_mode" in body;
+  if (touchesFee) {
+    const { data: cur } = await supabase
+      .from("events").select("starts_at, ends_at").eq("id", id).single();
+    const startsAt = ("starts_at" in updates ? updates.starts_at : cur?.starts_at) as string | null;
+    const endsAt = ("ends_at" in updates ? updates.ends_at : cur?.ends_at) as string | null;
+    const days = eventDurationDays(startsAt, endsAt);
+    updates.entrant_fee_cents = entrantFeeCentsForDays(days);
   }
   if ("public_show_route" in body) updates.public_show_route = !!body.public_show_route;
   if ("public_show_waypoints" in body) updates.public_show_waypoints = !!body.public_show_waypoints;
