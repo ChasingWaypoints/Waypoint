@@ -337,6 +337,22 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {hasOrg && (
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+              <span style={{ display: "inline-block", background: "#26330A", border: "1px solid #4A5A25", color: "#CCFF00", padding: "3px 10px", borderRadius: 999, fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                Organization plan · active
+              </span>
+              <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 8, lineHeight: 1.5 }}>
+                1,500-entrant pool, white-label branding, and command credentials.
+              </div>
+            </div>
+            <Link href="/dashboard/settings/org" style={{ background: "#CCFF00", color: "#0C1E29", border: "none", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+              White-label settings
+            </Link>
+          </div>
+        )}
+
         {(hasSub || hasOrg) && (
           <div style={{ marginBottom: 40 }}>
             <button onClick={openBillingPortal} style={{ background: "transparent", color: "#7E93A0", border: "1px solid #1E3B4C", padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}>Manage billing</button>

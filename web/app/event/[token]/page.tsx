@@ -20,6 +20,9 @@ export default function EventPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [sponsors, setSponsors] = useState<{ name?: string; logo_url: string; url?: string; headline?: boolean }[]>([]);
   const [whitelabel, setWhitelabel] = useState(false);
+  const [orgLogo, setOrgLogo] = useState<string | null>(null);
+  const [orgSite, setOrgSite] = useState<string | null>(null);
+  const [accent, setAccent] = useState<string>("#CCFF00");
   const isMobile = useIsMobile(768);
 
   // On phones there is no room for headline sponsors up top; roll every
@@ -43,6 +46,10 @@ export default function EventPage() {
           setLogoUrl(d.event.logo_url ?? null);
           setSponsors(Array.isArray(d.event.sponsors) ? d.event.sponsors : []);
           setWhitelabel(!!d.event.whitelabel);
+          const org = d.event.org || null;
+          setOrgLogo(org?.org_logo_url ?? null);
+          setOrgSite(org?.site_url ?? null);
+          if (org?.accent_color && /^#[0-9a-fA-F]{6}$/.test(org.accent_color)) setAccent(org.accent_color);
         }
       })
       .catch(() => {});
@@ -57,6 +64,7 @@ export default function EventPage() {
         className="wp-event-header"
         style={{
           background: "#0C1E29",
+          borderTop: whitelabel ? `3px solid ${accent}` : undefined,
           borderBottom: "1px solid #1E3B4C",
           display: "flex",
           alignItems: "center",
@@ -64,25 +72,28 @@ export default function EventPage() {
           flexShrink: 0,
         }}
       >
-        {/* Event logo slot — renders when the event has a logo (branding feature). */}
-        {logoUrl && (
+        {/* Brand logo — org logo (white-label) takes precedence over the event logo. */}
+        {(() => {
+          const brandLogo = (whitelabel && orgLogo) ? orgLogo : logoUrl;
+          if (!brandLogo) return null;
           // eslint-disable-next-line @next/next/no-img-element
-          <span className="wp-event-logo-wrap" style={{ flex: "0 0 auto", display: "flex", alignItems: "center" }}>
-            <img
-              src={logoUrl}
-              alt=""
-              className="wp-event-logo"
-              style={{ width: "auto", maxWidth: "min(48vw, 280px)", objectFit: "contain", display: "block" }}
-            />
-          </span>
-        )}
+          const img = <img src={brandLogo} alt="" className="wp-event-logo" style={{ width: "auto", maxWidth: "min(48vw, 280px)", objectFit: "contain", display: "block" }} />;
+          const wrapStyle = { flex: "0 0 auto", display: "flex", alignItems: "center" } as const;
+          return (whitelabel && orgLogo && orgSite)
+            ? <a className="wp-event-logo-wrap" href={orgSite} target="_blank" rel="noopener noreferrer" style={wrapStyle}>{img}</a>
+            : <span className="wp-event-logo-wrap" style={wrapStyle}>{img}</span>;
+        })()}
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <span style={{ color: "#fff", fontWeight: 800, fontSize: text.lg, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {name || "Live Event"}
           </span>
           <span style={{ color: "#7E93A0", fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#CCFF00", display: "inline-block" }} />
-            {whitelabel ? "Live · powered by Waypoint" : "Live · Waypoint"}
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: accent, display: "inline-block" }} />
+            {whitelabel ? (
+              <>Live · powered by{" "}
+                <a href="https://app.chasingwaypoints.com" target="_blank" rel="noopener noreferrer" style={{ color: "#7E93A0", textDecoration: "underline" }}>Waypoint</a>
+              </>
+            ) : "Live · Waypoint"}
           </span>
         </div>
 
