@@ -82,7 +82,7 @@ export default function EventPage() {
             they still appear in the bottom "Presented by" strip). */}
         <div className="wp-header-sponsors" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
           {sponsors.filter((sp) => sp.headline).map((sp, i) => (
-            <SponsorLogo key={i} sp={sp} height={32} />
+            <SponsorLogo key={i} sp={sp} height={64} />
           ))}
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function EventPage() {
           style={{
             background: "#0C1E29",
             borderTop: "1px solid #1E3B4C",
-            height: 52,
+            height: 76,
             padding: "0 20px",
             display: "flex",
             alignItems: "center",
@@ -108,7 +108,7 @@ export default function EventPage() {
             Presented&nbsp;by
           </span>
           {sponsors.filter((sp) => !sp.headline).map((sp, i) => (
-            <SponsorLogo key={i} sp={sp} height={28} />
+            <SponsorLogo key={i} sp={sp} height={56} />
           ))}
         </div>
       )}
@@ -129,7 +129,7 @@ function SponsorLogo({
       src={sp.logo_url}
       alt={sp.name ?? ""}
       title={sp.name ?? ""}
-      style={{ height, width: "auto", maxWidth: 130, objectFit: "contain", flexShrink: 0, display: "block" }}
+      style={{ height, width: "auto", maxWidth: 220, objectFit: "contain", flexShrink: 0, display: "block" }}
     />
   );
   return sp.url ? (
