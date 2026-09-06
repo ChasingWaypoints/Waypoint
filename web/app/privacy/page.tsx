@@ -10,7 +10,7 @@ const MARKDOWN = `# Waypoint — Privacy Policy
 
 
 **Effective date:** [DATE]
-**Controller / operator:** [Legal entity — e.g. Waypoint Group Holdings LLC]
+**Controller / operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media
 ("Waypoint," "we," "us"), operator of app.chasingwaypoints.com (the "Service").
 This Policy explains what we collect, why, who sees it, and your choices. It works
 alongside our Terms of Service.
@@ -119,7 +119,7 @@ We may update this Policy; material changes will be posted with a new effective
 date and, where appropriate, notice.
 
 ## 12. Contact
-[Company legal name], [address]. Privacy questions / data requests:
+Waypoint Group Holdings LLC (DBA Chasing Waypoints Media), [address]. Privacy questions / data requests:
 [privacy@ / support@ email].`;
 
 export default function Page() {

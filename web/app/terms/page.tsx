@@ -10,7 +10,7 @@ const MARKDOWN = `# Waypoint — Terms of Service
 
 
 **Effective date:** [DATE]
-**Operator:** [Legal entity — e.g. Waypoint Group Holdings LLC] ("Waypoint,"
+**Operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media ("Waypoint,"
 "we," "us"), operator of the Waypoint live-tracking service at
 app.chasingwaypoints.com (the "Service").
 
@@ -205,13 +205,13 @@ date and, where appropriate, notice. Continued use after changes take effect mea
 you accept them.
 
 ## 15. Governing law and disputes
-These Terms are governed by the laws of the State of [California / your state],
+These Terms are governed by the laws of the State of California,
 without regard to conflicts of law. [Choose: courts of [County, State] have
 exclusive jurisdiction, OR an arbitration clause + class-action waiver — discuss
 with counsel.]
 
 ## 16. Contact
-[Company legal name], [address]. Questions: [legal@ / support@ email].
+Waypoint Group Holdings LLC (DBA Chasing Waypoints Media), [address]. Questions: [legal@ / support@ email].
 
 ## 17. Force majeure
 We are not liable for any delay or failure of the Service caused by events beyond
