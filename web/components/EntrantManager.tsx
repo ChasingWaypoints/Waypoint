@@ -23,6 +23,7 @@ interface Entrant {
 
 interface DryRun {
   would_insert: number;
+  would_cap?: number;
   would_link?: number;
   unlinked_codes?: string[];
   already_in_event?: string[];
@@ -116,6 +117,7 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
         return;
       }
       const parts = [`Imported ${data.inserted} entrant${data.inserted === 1 ? "" : "s"}`];
+      if (data.capped) parts.push(`${data.capped} skipped — event at seat limit (add seats to import more)`);
       if (data.linked) parts.push(`${data.linked} linked to Waypoint account${data.linked === 1 ? "" : "s"}`);
       if (data.already_in_event?.length) parts.push(`${data.already_in_event.length} already in event (left unlinked)`);
       if (data.unlinked_codes?.length) parts.push(`${data.unlinked_codes.length} Waypoint ID${data.unlinked_codes.length === 1 ? "" : "s"} not found`);
@@ -230,6 +232,11 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
               Ready to import {dryRun.would_insert} entrant
               {dryRun.would_insert === 1 ? "" : "s"}
             </div>
+            {dryRun.would_cap ? (
+              <div style={{ color: theme.warn, fontSize: text.base, marginBottom: 10 }}>
+                {dryRun.would_cap} over this event&rsquo;s seat limit and won&rsquo;t be imported. Add seats (or upgrade) to include them.
+              </div>
+            ) : null}
 
             {(dryRun.would_link || dryRun.unlinked_codes?.length || dryRun.already_in_event?.length) ? (
               <div style={{ fontSize: text.base, marginBottom: 10 }}>

@@ -45,6 +45,32 @@ async function requireOrganizer(request: NextRequest, eventId: string) {
 }
 
 // ── GET — download the CSV template ───────────────────────────
+
+// Read-only seat-capacity snapshot for an event (no side effects). Mirrors the
+// join route's tiers: comped = uncapped; otherwise free events cap at 10 and
+// paid events at seats_paid, with an active org subscription's pool on top.
+async function readCapacity(
+  supabase: NonNullable<Awaited<ReturnType<typeof requireOrganizer>>["supabase"]>,
+  eventId: string,
+  organizerId: string
+) {
+  const { data: ev } = await supabase
+    .from("events").select("comped, paid, seats_paid").eq("id", eventId).single();
+  if (!ev) return { comped: false, limit: 10, existing: 0, poolRemaining: 0 };
+  if (ev.comped) return { comped: true, limit: Infinity, existing: 0, poolRemaining: 0 };
+  const { count } = await supabase
+    .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", eventId);
+  const limit = ev.paid ? (ev.seats_paid ?? 40) : 10;
+  const { data: sub } = await supabase
+    .from("org_subscriptions")
+    .select("entrant_pool, entrants_used, status, current_period_end")
+    .eq("user_id", organizerId).maybeSingle();
+  const active = !!sub && sub.status === "active"
+    && (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+  const poolRemaining = active ? Math.max(0, (sub.entrant_pool ?? 0) - (sub.entrants_used ?? 0)) : 0;
+  return { comped: false, limit, existing: count ?? 0, poolRemaining };
+}
+
 export async function GET(
   _request: NextRequest,
   _ctx: { params: Promise<{ id: string }> }
@@ -183,7 +209,7 @@ export async function POST(
   }
   const usedInBatch = new Set<string>();
   const alreadyInEvent: string[] = [];
-  const insertRows = valid.map((v) => {
+  let insertRows = valid.map((v) => {
     let uid = linkFor(v.code);
     if (uid && (existingUserIds.has(uid) || usedInBatch.has(uid))) {
       alreadyInEvent.push(v.entrant.display_name);
@@ -207,9 +233,13 @@ export async function POST(
   });
 
   if (dryRun) {
+    const cap = await readCapacity(guard.supabase!, id, guard.user!.id);
+    const room = cap.comped ? valid.length : Math.max(0, cap.limit - cap.existing) + cap.poolRemaining;
+    const wouldInsert = Math.min(valid.length, room);
     return NextResponse.json({
       dry_run: true,
-      would_insert: valid.length,
+      would_insert: wouldInsert,
+      would_cap: valid.length - wouldInsert,
       would_link: linkedCount,
       unlinked_codes: unlinkedCodes,
       already_in_event: alreadyInEvent,
@@ -224,6 +254,49 @@ export async function POST(
       { error: "No valid rows to import", errors },
       { status: 400 }
     );
+  }
+
+  // ── Seat cap enforcement ────────────────────────────────────
+  // Roster import must respect the same capacity as join-by-code, or it
+  // becomes a way to bypass paid seats. comped = uncapped; an active org
+  // subscription's pool covers rows first; otherwise free = 10, paid = seats_paid.
+  let cappedForCapacity = 0;
+  {
+    const { data: ev } = await guard.supabase!
+      .from("events").select("comped, paid, seats_paid").eq("id", id).single();
+    if (ev && !ev.comped) {
+      const { count: existing } = await guard.supabase!
+        .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", id);
+      const limit = ev.paid ? (ev.seats_paid ?? 40) : 10;
+      const { data: hasOrg } = await guard.supabase!
+        .rpc("user_has_org", { p_user_id: guard.user!.id });
+      let capCount = existing ?? 0;
+      const kept: typeof insertRows = [];
+      for (const row of insertRows) {
+        let covered = false;
+        if (hasOrg) {
+          const { data: consumed } = await guard.supabase!
+            .rpc("consume_org_entrant", { p_event_id: id });
+          if (consumed) covered = true;
+        }
+        if (!covered) {
+          if (capCount < limit) capCount++;
+          else { cappedForCapacity++; continue; }
+        }
+        kept.push(row);
+      }
+      insertRows = kept;
+    }
+  }
+
+  if (insertRows.length === 0) {
+    return NextResponse.json({
+      inserted: 0,
+      capped: cappedForCapacity,
+      error: cappedForCapacity > 0
+        ? "Event is full — no riders added. Upgrade or add seats to import more."
+        : "No valid rows to import",
+    }, { status: cappedForCapacity > 0 ? 409 : 400 });
   }
 
   // ── Optionally clear the existing roster ────────────────────
@@ -257,6 +330,7 @@ export async function POST(
 
   return NextResponse.json({
     inserted: data?.length ?? 0,
+    capped: cappedForCapacity,
     linked: linkedCount,
     unlinked_codes: unlinkedCodes,
     already_in_event: alreadyInEvent,
