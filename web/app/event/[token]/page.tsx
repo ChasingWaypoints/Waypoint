@@ -52,7 +52,7 @@ export default function EventPage() {
   }, [token]);
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0A0A0A" }}>
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#0A0A0A" }}>
       <div
         className="wp-event-header"
         style={{
@@ -104,8 +104,12 @@ export default function EventPage() {
           style={{
             background: "#0C1E29",
             borderTop: "1px solid #1E3B4C",
-            height: isMobile ? 64 : 76,
-            padding: "0 20px",
+            minHeight: isMobile ? 64 : 76,
+            padding: "8px 20px",
+            paddingLeft: "max(20px, env(safe-area-inset-left))",
+            paddingRight: "max(20px, env(safe-area-inset-right))",
+            paddingBottom: "calc(8px + env(safe-area-inset-bottom, 0px))",
+            boxSizing: "border-box",
             display: "flex",
             alignItems: "center",
             gap: isMobile ? 20 : 18,

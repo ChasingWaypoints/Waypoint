@@ -103,10 +103,20 @@ input, select, textarea {
 /* Public event header — taller bar so the organizer's logo reads at a glance.
    The logo lives in a flex:none wrapper so it never collapses at narrow
    (portrait) widths, and its height scales up on wider screens. */
-.wp-event-header { min-height: 72px; padding: 10px 18px; }
+.wp-event-header {
+  min-height: 72px;
+  padding: 10px 18px;
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+}
 .wp-event-logo   { height: 52px; }
 @media (min-width: 768px) {
-  .wp-event-header { min-height: 104px; padding: 14px 24px; }
+  .wp-event-header {
+    min-height: 104px;
+    padding: 14px 24px;
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
+  }
   .wp-event-logo   { height: 92px; }
 }
 

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -32,6 +32,13 @@ const barlowCondensed = localFont({
   display: "swap",
   fallback: ["Barlow Condensed", "system-ui", "sans-serif"],
 });
+
+export const viewport: Viewport = {
+  // Extend the layout under the notch / home indicator so env(safe-area-inset-*)
+  // is honored; pages that use it (e.g. the public event page) then pad
+  // themselves so nothing hides behind the browser chrome or hardware cutouts.
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.chasingwaypoints.com"),
