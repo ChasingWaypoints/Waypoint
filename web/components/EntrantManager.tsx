@@ -39,7 +39,7 @@ const STATUS_STYLE: Record<Entrant["status"], { color: string; label: string }> 
   no_fix: { color: theme.noFix, label: "No fix yet" },
 };
 
-export default function EntrantManager({ eventId }: { eventId: string }) {
+export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { eventId: string; paid?: boolean; comped?: boolean; seatsPaid?: number | null }) {
   const [entrants, setEntrants] = useState<Entrant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +189,26 @@ export default function EntrantManager({ eventId }: { eventId: string }) {
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 6, color: theme.ink }}>Batch load a roster</div>
+        {(() => {
+          const limit = comped ? null : paid ? (seatsPaid ?? 40) : 10;
+          const used = entrants.length;
+          if (limit === null) {
+            return (
+              <div style={{ fontSize: text.base, color: theme.live, marginBottom: 10 }}>
+                ★ Sponsored — no rider limit on this event.
+              </div>
+            );
+          }
+          const full = used >= limit;
+          return (
+            <div style={{ fontSize: text.base, color: full ? theme.warn : theme.muted, marginBottom: 10 }}>
+              {paid
+                ? `${used} of ${limit} paid seats used.`
+                : `Free events hold up to ${limit} riders (${used} in use). Extra rows in an upload are skipped — Upgrade to $200 to unlock 40 seats.`}
+              {paid && full ? " Add seats to import more." : ""}
+            </div>
+          );
+        })()}
         <p style={{ margin: "0 0 12px", color: theme.muted, fontSize: text.base }}>
           Upload a <strong>CSV or Excel (.xlsx)</strong> file with columns{" "}
           <code>name, number, class, device, feed</code>. The feed is each entrant&rsquo;s

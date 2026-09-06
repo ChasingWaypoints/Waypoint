@@ -535,7 +535,7 @@ export default function EventDetailPage() {
       {tab === "riders" && (
         <div style={{ flex: 1, overflowY: "auto", background: "#0A0A0A" }}>
           <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-            {isOrganizer && <EntrantManager eventId={event.id} />}
+            {isOrganizer && <EntrantManager eventId={event.id} paid={event.paid} comped={event.comped} seatsPaid={event.seats_paid} />}
             {!isOrganizer && (<>
             <SectionLabel>Participants</SectionLabel>
             <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C" }}>
