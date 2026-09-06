@@ -163,7 +163,19 @@ export default function TrackingMap({
       setMeasurePoints((prev) => [...prev, { lng: e.lngLat.lng, lat: e.lngLat.lat }]);
     });
 
+    // Keep the canvas matched to its container. The roster panel collapsing,
+    // an orientation change, or the mobile address bar showing/hiding all
+    // resize the flex parent; without this the map leaves a dead (black) gap.
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => map.current?.resize());
+    });
+    if (container.current) ro.observe(container.current);
+
     return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
       map.current?.remove();
       map.current = null;
     };
