@@ -46,11 +46,10 @@ export default function EventPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0A0A0A" }}>
       <div
+        className="wp-event-header"
         style={{
           background: "#0C1E29",
           borderBottom: "1px solid #1E3B4C",
-          height: 60,
-          padding: "0 20px",
           display: "flex",
           alignItems: "center",
           gap: 14,
@@ -60,11 +59,14 @@ export default function EventPage() {
         {/* Event logo slot — renders when the event has a logo (branding feature). */}
         {logoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt=""
-            style={{ height: 40, width: "auto", maxWidth: 160, objectFit: "contain", flexShrink: 0 }}
-          />
+          <span className="wp-event-logo-wrap" style={{ flex: "0 0 auto", display: "flex", alignItems: "center" }}>
+            <img
+              src={logoUrl}
+              alt=""
+              className="wp-event-logo"
+              style={{ width: "auto", maxWidth: "min(48vw, 280px)", objectFit: "contain", display: "block" }}
+            />
+          </span>
         )}
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <span style={{ color: "#fff", fontWeight: 800, fontSize: text.lg, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
