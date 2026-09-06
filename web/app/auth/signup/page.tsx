@@ -22,7 +22,10 @@ export default function SignupPage() {
     setError("");
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const nx = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
+    const safeNext = nx && nx.startsWith("/") ? nx : "/dashboard";
+    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}${safeNext}` } });
     if (error) {
       setError(error.message);
       setLoading(false);

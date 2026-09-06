@@ -369,6 +369,7 @@ export default function EventDetailPage() {
   const gepBase = typeof window !== "undefined" ? window.location.origin : "";
   const myGepUrl = myGepToken ? `${gepBase}/api/events/${event.id}/gep/${myGepToken}/network-link.kml` : null;
   const publicUrl = `${gepBase}/event/${event.share_token}`;
+  const registerUrl = `${gepBase}/join/${event.join_code}`;
   const embedUrl = `${gepBase}/embed/${event.share_token}`;
   const embedCode = `<iframe src="${embedUrl}" width="100%" height="600" style="border:0" allow="fullscreen"></iframe>`;
   // Group ride (≤10 riders) vs event (>10) — drives the shared wording.
@@ -533,6 +534,16 @@ export default function EventDetailPage() {
               <div style={{ background: "#0A0A0A", border: "1px solid #1E3B4C", borderRadius: 4, padding: "10px 12px", color: "#C8D4DC", fontSize: text.base, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{inviteText}</div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button onClick={() => copy(inviteText, "invite")} style={modalBtn}>{copyFeedback === "invite" ? "Copied!" : "Copy invite"}</button>
+              </div>
+            </div>
+
+            <div style={shareSection}>
+              <div style={shareLabel}>Registration link</div>
+              <p style={shareHelp}>Send this to riders who aren&rsquo;t on Waypoint yet. They create a quick account, enter their details and emergency info (with consent), and join{event.payment_mode === "entrant" ? " and pay" : ""} — all in one page.</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input readOnly value={registerUrl} style={shareInput} onFocus={(e) => e.currentTarget.select()} />
+                <button onClick={() => copy(registerUrl, "reg")} style={modalBtn}>{copyFeedback === "reg" ? "Copied!" : "Copy"}</button>
+                <a href={registerUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Open</a>
               </div>
             </div>
 

@@ -2,7 +2,7 @@
 import { text } from "../../../lib/theme";
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -11,6 +11,8 @@ const supabase = getSupabaseClient();
 
 export default function LoginPage() {
   const router = useRouter();
+  const [nextUrl, setNextUrl] = useState("/dashboard");
+  useEffect(() => { const n = new URLSearchParams(window.location.search).get("next"); if (n && n.startsWith("/")) setNextUrl(n); }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = nextUrl.startsWith("/") ? nextUrl : "/dashboard";
       }
     } catch (err) {
       console.error("[login] threw:", err);

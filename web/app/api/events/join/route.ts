@@ -109,12 +109,21 @@ export async function POST(request: NextRequest) {
   const riderClass = body.rider_class?.trim() || null;
   const riderNumber = body.rider_number?.trim() || null;
 
+  // Self-registration ICE capture — stored ONLY with explicit consent.
+  const ice = body.ice_consent === true ? {
+    ice_name: body.ice_name?.toString().trim() || null,
+    ice_phone: body.ice_phone?.toString().trim() || null,
+    blood_type: body.blood_type?.toString().trim() || null,
+    allergies: body.allergies?.toString().trim() || null,
+    ice_consent_at: new Date().toISOString(),
+  } : {};
+
   // Entrant-paid: create a PENDING row, then send them to Checkout. The webhook
   // stamps paid_at; until then the row is excluded from all live feeds.
   if (isEntrantPaid) {
     const { data: inserted, error } = await db
       .from("event_participants")
-      .insert({ event_id: event.id, user_id: user.id, display_name: displayName, role: "rider", rider_class: riderClass, rider_number: riderNumber })
+      .insert({ event_id: event.id, user_id: user.id, display_name: displayName, role: "rider", rider_class: riderClass, rider_number: riderNumber, ...ice })
       .select("id")
       .single();
     if (error || !inserted) return NextResponse.json({ error: error?.message ?? "Could not join." }, { status: 500 });
@@ -151,6 +160,7 @@ export async function POST(request: NextRequest) {
     role: "rider",
     rider_class: riderClass,
     rider_number: riderNumber,
+    ...ice,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
