@@ -91,7 +91,7 @@ export default function EventPage() {
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: accent, display: "inline-block" }} />
             {whitelabel ? (
               <>Live · powered by{" "}
-                <a href="https://app.chasingwaypoints.com" target="_blank" rel="noopener noreferrer" style={{ color: "#7E93A0", textDecoration: "underline" }}>Waypoint</a>
+                <a href={process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.chasingwaypoints.com"} target="_blank" rel="noopener noreferrer" style={{ color: "#7E93A0", textDecoration: "underline" }}>Waypoint</a>
               </>
             ) : "Live · Waypoint"}
           </span>

@@ -58,7 +58,7 @@ export default async function EmbedPage({
       </div>
 
       <div style={{ flexShrink: 0, background: "#0C1E29", borderTop: "1px solid #1E3B4C", height: 26, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 12px" }}>
-        <a href="https://app.chasingwaypoints.com" target="_blank" rel="noopener noreferrer"
+        <a href={process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.chasingwaypoints.com"} target="_blank" rel="noopener noreferrer"
           style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#7E93A0", textTransform: "uppercase", textDecoration: "none" }}>
           powered by <span style={{ color: accent }}>Waypoint</span>
         </a>

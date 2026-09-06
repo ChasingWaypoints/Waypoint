@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://app.chasingwaypoints.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.chasingwaypoints.com"),
   title: {
     default: "Waypoint — Live Event Tracking for Rally & Off-Road",
     template: "%s — Waypoint",
