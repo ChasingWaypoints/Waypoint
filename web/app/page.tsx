@@ -70,6 +70,9 @@ export default function LandingPage() {
           <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             How it works
           </Link>
+          <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+            Guide
+          </Link>
           <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Sign in
           </Link>
@@ -200,6 +203,8 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: text.base, color: C.muted }}>
           <span>&copy; {new Date().getFullYear()} Waypoint &middot; a Chasing Waypoints product</span>
           <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+            <Link href="/how-it-works" style={{ color: C.muted, textDecoration: "none" }}>How it works</Link>
+            <Link href="/guide" style={{ color: C.muted, textDecoration: "none" }}>Guide</Link>
             <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Terms</Link>
             <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacy</Link>
             <span style={{ color: C.body }}>We never sell your location data. Ever.</span>
