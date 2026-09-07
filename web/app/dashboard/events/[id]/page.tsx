@@ -29,7 +29,7 @@ interface EventDetail {
   route_gpx: string | null; route_name: string | null; organizer_id: string;
   rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
   payment_mode?: string; entrant_fee_cents?: number | null; starts_at?: string | null; ends_at?: string | null;
-  public_show_route?: boolean; public_show_waypoints?: boolean;
+  public_show_route?: boolean; public_show_waypoints?: boolean; is_demo?: boolean;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -615,7 +615,7 @@ export default function EventDetailPage() {
       {/* ── MAP TAB ── */}
       {tab === "map" && (
         <div style={{ flex: 1, minHeight: 0 }}>
-          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer ? event.id : undefined} />
+          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} />
         </div>
       )}
 
