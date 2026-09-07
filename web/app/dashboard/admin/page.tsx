@@ -28,6 +28,11 @@ interface AdminEvent {
   suspend_reason?: string | null;
 }
 
+interface PlatformStats {
+  users: number; users_7d: number; events: number; active_events: number;
+  events_7d: number; participants: number; reporting: number; paid_events: number;
+}
+
 const STATUS_COLOR: Record<string, string> = {
   active: "#CCFF00", planning: "#FFFE15", completed: "#7E93A0", cancelled: "#FF3B30",
 };
@@ -35,6 +40,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function AdminPage() {
   const router = useRouter();
   const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [platform, setPlatform] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [error, setError] = useState("");
@@ -44,14 +50,16 @@ export default function AdminPage() {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
-      const res = await fetch("/api/admin/events", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        cache: "no-store",
-      });
+      const auth = { Authorization: `Bearer ${session.access_token}` };
+      const [res, sres] = await Promise.all([
+        fetch("/api/admin/events", { headers: auth, cache: "no-store" }),
+        fetch("/api/admin/stats", { headers: auth, cache: "no-store" }),
+      ]);
       if (res.status === 403) { setForbidden(true); setLoading(false); return; }
       if (!res.ok) { setError("Could not load events."); setLoading(false); return; }
       const d = await res.json();
       setEvents(d.events ?? []);
+      if (sres.ok) { const sd = await sres.json(); setPlatform(sd.stats ?? null); }
       setLoading(false);
     })();
   }, [router]);
@@ -159,10 +167,14 @@ export default function AdminPage() {
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-        <Stat label="Events" value={stats.total} />
-        <Stat label="Active" value={stats.active} color="#CCFF00" />
-        <Stat label="Total riders" value={stats.riders} />
-        <Stat label="Over 60 entrants" value={stats.overCap} color={stats.overCap ? "#FF6B6B" : "#7E93A0"} />
+        <Stat label="Users" value={platform?.users ?? 0} color="#CCFF00" />
+        <Stat label="New users · 7d" value={platform?.users_7d ?? 0} />
+        <Stat label="Events" value={platform?.events ?? stats.total} />
+        <Stat label="Active" value={platform?.active_events ?? stats.active} color="#CCFF00" />
+        <Stat label="Riders" value={platform?.participants ?? stats.riders} />
+        <Stat label="Reporting" value={platform?.reporting ?? 0} />
+        <Stat label="Paid events" value={platform?.paid_events ?? 0} />
+        <Stat label="Over 60" value={stats.overCap} color={stats.overCap ? "#FF6B6B" : "#7E93A0"} />
       </div>
 
       {error && <p style={{ color: "#FF6B6B", fontSize: text.base }}>{error}</p>}
