@@ -67,6 +67,9 @@ export default function LandingPage() {
           Waypoint
         </Link>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+            How it works
+          </Link>
           <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Sign in
           </Link>
