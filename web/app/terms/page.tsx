@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const MARKDOWN = `# Waypoint — Terms of Service
 
 
-**Effective date:** [DATE]
+**Effective date:** September 7, 2026
 **Operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media ("Waypoint,"
 "we," "us"), operator of the Waypoint live-tracking service at
 app.chasingwaypoints.com (the "Service").
@@ -124,7 +124,7 @@ account.
   successive periods until canceled; you authorize recurring charges. You can
   cancel or view invoices through the customer billing portal.
 - **Taxes** may apply and are your responsibility unless stated otherwise.
-- **Refunds:** [Confirm your policy with counsel.] Except where required by law,
+- **Refunds:** Except where required by law,
   fees are non-refundable, including one-time event/seat purchases and the unused
   portion of a subscription period or entrant pool. Canceling a subscription stops
   future renewals but does not refund the current period.
@@ -188,8 +188,7 @@ SUPPLIERS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
 CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF LIFE, INJURY,
 LOSS OF DATA, OR LOSS OF PROFITS, ARISING FROM OR RELATED TO THE SERVICE OR ANY
 RELIANCE ON LOCATION OR ALERT DATA, EVEN IF ADVISED OF THE POSSIBILITY. OUR TOTAL
-AGGREGATE LIABILITY FOR ANY CLAIM WILL NOT EXCEED THE GREATER OF [AMOUNT, e.g.
-$100] OR THE AMOUNT YOU PAID US FOR THE SERVICE IN THE [3/12] MONTHS BEFORE THE
+AGGREGATE LIABILITY FOR ANY CLAIM WILL NOT EXCEED THE GREATER OF $100 OR THE AMOUNT YOU PAID US FOR THE SERVICE IN THE 12 MONTHS BEFORE THE
 CLAIM. Some jurisdictions do not allow certain limitations; some may not apply to
 you.
 
@@ -206,12 +205,12 @@ you accept them.
 
 ## 15. Governing law and disputes
 These Terms are governed by the laws of the State of California,
-without regard to conflicts of law. [Choose: courts of [County, State] have
-exclusive jurisdiction, OR an arbitration clause + class-action waiver — discuss
-with counsel.]
+without regard to conflicts of law. The state and federal courts located in San Diego County, California have
+exclusive jurisdiction over any dispute arising out of or relating to these Terms
+or the Service, and you consent to personal jurisdiction and venue there.
 
 ## 16. Contact
-Waypoint Group Holdings LLC (DBA Chasing Waypoints Media), [address]. Questions: [legal@ / support@ email].
+Waypoint Group Holdings LLC (DBA Chasing Waypoints Media). Questions: support@chasingwaypoints.com.
 
 ## 17. Force majeure
 We are not liable for any delay or failure of the Service caused by events beyond

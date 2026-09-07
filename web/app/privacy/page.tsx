@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const MARKDOWN = `# Waypoint — Privacy Policy
 
 
-**Effective date:** [DATE]
+**Effective date:** September 7, 2026
 **Controller / operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media
 ("Waypoint," "we," "us"), operator of app.chasingwaypoints.com (the "Service").
 This Policy explains what we collect, why, who sees it, and your choices. It works
@@ -80,8 +80,7 @@ party for that data.
 
 ## 6. Retention
 We keep account and profile data while your account is active. Event and location
-data are retained to operate and show the event and its history [confirm retention
-window with counsel]. Command/feed credentials stop working once an event ends.
+data are retained to operate and show the event and its history. Command/feed credentials stop working once an event ends.
 You can delete your account (Section 7), which removes your associated data,
 subject to limited records we must keep for legal, tax, or fraud-prevention
 purposes.
@@ -95,7 +94,7 @@ purposes.
 - Depending on where you live, you may have additional rights (e.g. under the
   **CCPA/CPRA** or **GDPR**) to access, correct, delete, or port your data, to
   object to or restrict processing, and to non-discrimination for exercising them.
-  [Add the specific request channel and verification process with counsel.]
+ To exercise any of these, contact us at support@chasingwaypoints.com.
 
 ## 8. Security
 Data is encrypted in transit (HTTPS) and at rest, access is restricted by
@@ -105,22 +104,21 @@ unguessable tokens. No system is perfectly secure; we cannot guarantee absolute
 security.
 
 ## 9. Children
-The Service is not directed to children under [13/16]. We do not knowingly collect
+The Service is not directed to children under 16. We do not knowingly collect
 their data. A minor may participate only through a parent/guardian or organizer who
-provides the required consent. [Confirm age threshold and handling with counsel.]
+provides the required consent.
 
 ## 10. International users
 The Service is operated from the United States; using it means your data may be
-processed in the U.S. [Add transfer mechanism/language if you serve EU/UK/other
-regions.]
+processed in the U.S.
 
 ## 11. Changes to this Policy
 We may update this Policy; material changes will be posted with a new effective
 date and, where appropriate, notice.
 
 ## 12. Contact
-Waypoint Group Holdings LLC (DBA Chasing Waypoints Media), [address]. Privacy questions / data requests:
-[privacy@ / support@ email].`;
+Waypoint Group Holdings LLC (DBA Chasing Waypoints Media). Privacy questions / data requests:
+support@chasingwaypoints.com.`;
 
 export default function Page() {
   return <LegalDoc markdown={MARKDOWN} />;
