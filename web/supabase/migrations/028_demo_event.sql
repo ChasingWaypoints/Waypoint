@@ -46,16 +46,16 @@ begin
   values
     (p1, v_ev, null, 'Marco Salgado',  '1',  'ADV',      'garmin', 'rider', 32.015, -116.455, t - interval '9 min',
        'marco.demo@example.com', 'https://share.garmin.com/MarcoSalgado', null,
-       'Ana Salgado',    '+52 646 118 4471', 'O+',  'None',       now()),
+       'Ana Salgado',    '+52 555 555 5555', 'O+',  'None',       now()),
     (p2, v_ev, null, 'Luis Gutierrez', '3',  'Rally1',   'spot',   'rider', 31.900, -116.250, t - interval '22 min',
        'luis.demo@example.com', null, '0aBcD3moSp0tFeed1234567890abcdef',
-       'Rosa Gutierrez', '+52 646 202 7788', 'A-',  'Penicillin', now()),
+       'Rosa Gutierrez', '+52 555 555 5555', 'A-',  'Penicillin', now()),
     (p3, v_ev, null, 'Diego Ramirez',  '7',  'RallyPro', 'garmin', 'rider', 32.022, -115.925, t - interval '4 min',
        'diego.demo@example.com', 'https://share.garmin.com/DiegoRamirez', null,
-       'Sofia Ramirez',  '+1 619 555 0142',  'B+',  'None',       now()),
+       'Sofia Ramirez',  '+1 555 555 5555',  'B+',  'None',       now()),
     (p4, v_ev, null, 'Carla Mendoza',  '12', 'ADV',      'zoleo',  'rider', 32.083, -116.582, t - interval '41 min',
        'carla.demo@example.com', null, null,
-       'Miguel Mendoza', '+52 646 155 9083', 'AB+', 'Shellfish',  now());
+       'Miguel Mendoza', '+52 555 555 5555', 'AB+', 'Shellfish',  now());
 
   insert into public.event_track_points (participant_id, event_id, lat, lng, recorded_at, source) values
     -- #1 Marco Salgado (west, Valle de Guadalupe)
