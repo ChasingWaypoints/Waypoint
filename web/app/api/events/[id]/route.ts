@@ -133,3 +133,24 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
+
+// DELETE /api/events/[id] — hard-delete an event (organizer only; super admins
+// use the admin route). The delete_event RPC checks organizer-or-super-admin and
+// cascades to participants, track points, stages and billing seats.
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { user, supabase } = await getUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { error } = await supabase.rpc("delete_event", { p_event_id: id });
+  if (error) {
+    if (error.code === "42501" || /not authorized/i.test(error.message)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true, deleted: true });
+}

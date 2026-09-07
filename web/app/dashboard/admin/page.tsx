@@ -101,6 +101,35 @@ export default function AdminPage() {
     }
   }
 
+  async function endEvent(e: AdminEvent) {
+    if (e.status === "completed" || e.status === "cancelled") return;
+    if (!window.confirm(`End "${e.name}" now?\n\nThis marks it completed and immediately revokes command / recovery-crew access. Tracking stops.`)) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/admin/events/${e.id}/end`, {
+      method: "POST",
+      headers: { ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+    });
+    if (res.ok) {
+      setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, status: "completed" } : x)));
+    } else {
+      setError("Could not end the event.");
+    }
+  }
+
+  async function deleteEvent(e: AdminEvent) {
+    if (!window.confirm(`Permanently DELETE "${e.name}"?\n\nThis removes the event, its entire roster, and all tracking data. This cannot be undone.`)) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/admin/events/${e.id}/delete`, {
+      method: "POST",
+      headers: { ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+    });
+    if (res.ok) {
+      setEvents((prev) => prev.filter((x) => x.id !== e.id));
+    } else {
+      setError("Could not delete the event.");
+    }
+  }
+
   const stats = useMemo(() => {
     const active = events.filter((e) => e.status === "active").length;
     const riders = events.reduce((n, e) => n + e.participant_count, 0);
@@ -215,6 +244,22 @@ export default function AdminPage() {
                       style={{ background: "transparent", border: `1px solid ${e.suspended ? "#FF3B30" : "#3a4550"}`, color: e.suspended ? "#FF3B30" : "#C8D4DC", padding: "4px 10px", fontSize: text.xxs, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
                     >
                       {e.suspended ? "Unsuspend" : "Suspend"}
+                    </button>
+                    {e.status !== "completed" && e.status !== "cancelled" && (
+                      <button
+                        onClick={() => endEvent(e)}
+                        title="End this event now — marks it completed and revokes command / recovery access"
+                        style={{ background: "transparent", border: "1px solid #3a4550", color: "#FFCF6B", padding: "4px 10px", fontSize: text.xxs, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
+                      >
+                        End
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteEvent(e)}
+                      title="Permanently delete this event and all its data"
+                      style={{ background: "transparent", border: "1px solid #5A2525", color: "#FF3B30", padding: "4px 10px", fontSize: text.xxs, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, cursor: "pointer", borderRadius: 4, marginRight: 8 }}
+                    >
+                      Delete
                     </button>
                     <a href={`/event/${e.share_token}`} target="_blank" rel="noopener noreferrer" style={{ color: "#CCFF00", textDecoration: "none", fontWeight: 700, fontSize: text.xs, textTransform: "uppercase" }}>
                       View ↗

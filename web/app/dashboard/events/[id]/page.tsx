@@ -192,6 +192,20 @@ export default function EventDetailPage() {
     await load();
   }
 
+  async function deleteEvent() {
+    if (!session || !event) return;
+    if (!confirm(`Permanently delete "${event.name}"?\n\nThis removes the event, its roster, and all tracking data. This cannot be undone.`)) return;
+    const res = await fetch(`/api/events/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(session.access_token),
+    });
+    if (res.ok) {
+      window.location.href = "/dashboard";
+    } else {
+      alert("Could not delete the event.");
+    }
+  }
+
   useEffect(() => {
     if (!event) return;
     setPayMode(event.payment_mode === "entrant" ? "entrant" : "organizer");
@@ -471,6 +485,15 @@ export default function EventDetailPage() {
               End Event
             </button>
           )}
+          {isOrganizer && (
+            <button
+              onClick={deleteEvent}
+              title="Permanently delete this event and all its data"
+              style={{ background: "transparent", border: "1px solid #5A2525", color: "#FF3B30", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+            >
+              Delete
+            </button>
+          )}
         </div>
         )}
 
@@ -498,6 +521,9 @@ export default function EventDetailPage() {
                 )}
                 {isOrganizer && isLive && (
                   <button onClick={() => { setMenuOpen(false); endEvent(); }} style={{ ...menuItem, color: "#FF3B30" }}>End Event</button>
+                )}
+                {isOrganizer && (
+                  <button onClick={() => { setMenuOpen(false); deleteEvent(); }} style={{ ...menuItem, color: "#FF3B30" }}>Delete Event</button>
                 )}
               </div>
             )}
