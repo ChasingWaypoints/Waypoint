@@ -106,7 +106,7 @@ export default function LandingPage() {
             href="/auth/signup"
             style={{ background: C.lime, color: C.accentInk, fontWeight: 800, fontSize: text.lg, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
           >
-            Start an event — free during beta
+            Start a free group ride
           </Link>
           <a
             href="#how"
@@ -180,10 +180,10 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
           <div>
             <h2 style={{ color: C.accentInk, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, letterSpacing: -0.6, margin: "0 0 8px" }}>
-              Free while we&rsquo;re in beta.
+              Free for group rides.
             </h2>
             <p style={{ color: C.accentInk, opacity: 0.8, fontSize: text.lg, margin: 0 }}>
-              Annual membership for riders and per-event pricing for organizers come after.
+              Group rides up to 10 riders are free. Events are $200 for 40 riders, or let riders pay a small fee when they join.
             </p>
           </div>
           <Link
