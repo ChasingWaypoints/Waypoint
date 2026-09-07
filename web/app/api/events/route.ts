@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
       .from("events")
       .select("id, name, status, join_code, share_token, starts_at, organizer_id, created_at")
       .eq("organizer_id", user.id)
+      .eq("is_demo", false)
       .order("created_at", { ascending: false }),
   ]);
 

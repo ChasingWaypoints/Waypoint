@@ -246,6 +246,24 @@ export default function DashboardPage() {
             {joinError && <div style={{ flexBasis: "100%", color: "#FF6B6B", fontSize: text.sm }}>{joinError}</div>}
           </div>
 
+          {/* Demo event — something every user can explore with no setup */}
+          <a
+            href="/event/demo-baja-rodada"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", background: "#0C1E29", border: "1px solid #1E3B4C", borderLeft: "3px solid #CCFF00", padding: "14px 20px", marginBottom: 16, flexWrap: "wrap" }}
+          >
+            <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+              <div style={{ fontSize: text.base, fontWeight: 700, color: "#FFFFFF" }}>New here? Explore a live demo event</div>
+              <div style={{ fontSize: text.sm, color: "#7E93A0", marginTop: 2, lineHeight: 1.5 }}>
+                A sample Baja ride on the map — riders, classes, tracks and tools — with nothing to set up.
+              </div>
+            </div>
+            <span style={{ background: "#CCFF00", color: "#0C1E29", padding: "9px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              Open demo ↗
+            </span>
+          </a>
+
           {loading ? (
             <SkeletonRows rows={2} />
           ) : events.length === 0 ? (
