@@ -29,8 +29,14 @@ interface AdminEvent {
 }
 
 interface PlatformStats {
-  users: number; users_7d: number; events: number; active_events: number;
-  events_7d: number; participants: number; reporting: number; paid_events: number;
+  users: number; users_7d: number; subscribed: number; individual_subs: number; org_subs: number;
+  events: number; active_events: number; events_7d: number; participants: number; reporting: number; paid_events: number;
+}
+
+interface Member {
+  id: string; email: string | null; display_name: string | null; created_at: string;
+  is_super_admin: boolean; sub_status: string | null; sub_plan: string | null;
+  sub_until: string | null; org_status: string | null; events_organized: number;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -40,26 +46,31 @@ const STATUS_COLOR: Record<string, string> = {
 export default function AdminPage() {
   const router = useRouter();
   const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [platform, setPlatform] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
+  const [mq, setMq] = useState("");
+  const [view, setView] = useState<"events" | "members">("events");
 
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
       const auth = { Authorization: `Bearer ${session.access_token}` };
-      const [res, sres] = await Promise.all([
+      const [res, sres, mres] = await Promise.all([
         fetch("/api/admin/events", { headers: auth, cache: "no-store" }),
         fetch("/api/admin/stats", { headers: auth, cache: "no-store" }),
+        fetch("/api/admin/members", { headers: auth, cache: "no-store" }),
       ]);
       if (res.status === 403) { setForbidden(true); setLoading(false); return; }
       if (!res.ok) { setError("Could not load events."); setLoading(false); return; }
       const d = await res.json();
       setEvents(d.events ?? []);
       if (sres.ok) { const sd = await sres.json(); setPlatform(sd.stats ?? null); }
+      if (mres.ok) { const md = await mres.json(); setMembers(md.members ?? []); }
       setLoading(false);
     })();
   }, [router]);
@@ -74,6 +85,16 @@ export default function AdminPage() {
         e.join_code.toLowerCase().includes(s)
     );
   }, [events, q]);
+
+  const filteredMembers = useMemo(() => {
+    const s = mq.trim().toLowerCase();
+    if (!s) return members;
+    return members.filter(
+      (m) =>
+        (m.email ?? "").toLowerCase().includes(s) ||
+        (m.display_name ?? "").toLowerCase().includes(s)
+    );
+  }, [members, mq]);
 
   async function toggleComp(e: AdminEvent) {
     const next = !e.comped;
@@ -160,7 +181,7 @@ export default function AdminPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         <div>
           <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Super Admin</p>
-          <h1 style={{ fontSize: text.xxl, fontWeight: 700, color: "#fff", margin: 0 }}>All Events</h1>
+          <h1 style={{ fontSize: text.xxl, fontWeight: 700, color: "#fff", margin: 0 }}>{view === "events" ? "All Events" : "Members"}</h1>
         </div>
         <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </div>
@@ -169,6 +190,10 @@ export default function AdminPage() {
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
         <Stat label="Users" value={platform?.users ?? 0} color="#CCFF00" />
         <Stat label="New users · 7d" value={platform?.users_7d ?? 0} />
+        <Stat label="Subscribed" value={platform?.subscribed ?? 0} color="#1FE0A0" />
+        <Stat label="Not subscribed" value={platform ? Math.max(0, platform.users - platform.subscribed) : 0} />
+        <Stat label="Individual" value={platform?.individual_subs ?? 0} />
+        <Stat label="Org" value={platform?.org_subs ?? 0} />
         <Stat label="Events" value={platform?.events ?? stats.total} />
         <Stat label="Active" value={platform?.active_events ?? stats.active} color="#CCFF00" />
         <Stat label="Riders" value={platform?.participants ?? stats.riders} />
@@ -177,8 +202,18 @@ export default function AdminPage() {
         <Stat label="Over 60" value={stats.overCap} color={stats.overCap ? "#FF6B6B" : "#7E93A0"} />
       </div>
 
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {(["events", "members"] as const).map((v) => (
+          <button key={v} onClick={() => setView(v)}
+            style={{ background: view === v ? "#CCFF00" : "transparent", color: view === v ? "#0C1E29" : "#C8D4DC", border: `1px solid ${view === v ? "#CCFF00" : "#3a4550"}`, padding: "7px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", borderRadius: 4 }}>
+            {v === "events" ? `Events (${events.length})` : `Members (${members.length})`}
+          </button>
+        ))}
+      </div>
+
       {error && <p style={{ color: "#FF6B6B", fontSize: text.base }}>{error}</p>}
 
+      {view === "events" && (<>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -284,6 +319,53 @@ export default function AdminPage() {
           </tbody>
         </table>
       </div>
+      </>)}
+
+      {view === "members" && (
+        <>
+          <input
+            value={mq}
+            onChange={(e) => setMq(e.target.value)}
+            placeholder="Search members by email or name…"
+            style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: "1px solid #1E3B4C", background: "#0C1E29", color: "#fff", fontSize: text.md, outline: "none", marginBottom: 14, borderRadius: 4 }}
+          />
+          <div style={{ overflowX: "auto", border: "1px solid #1E3B4C", borderRadius: 4 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: text.base, minWidth: 640 }}>
+              <thead>
+                <tr style={{ background: "#0C1E29", color: "#7E93A0", textAlign: "left" }}>
+                  <th style={th}>Member</th>
+                  <th style={th}>Subscription</th>
+                  <th style={th}>Events</th>
+                  <th style={th}>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMembers.length === 0 ? (
+                  <tr><td style={td} colSpan={4}><span style={{ color: "#7E93A0" }}>No members match.</span></td></tr>
+                ) : filteredMembers.map((m) => {
+                  const sub = m.sub_status === "active"
+                    ? { label: m.sub_plan === "individual_plus" ? "Plus" : "Individual", color: "#1FE0A0", bg: "#0E2A22", bd: "#1F5A47" }
+                    : m.org_status === "active"
+                    ? { label: "Org", color: "#CCFF00", bg: "#26330A", bd: "#4A5A25" }
+                    : { label: "Free", color: "#7E93A0", bg: "transparent", bd: "#3a4550" };
+                  return (
+                    <tr key={m.id} style={{ borderTop: "1px solid #14303F", background: "#0A0A0A" }}>
+                      <td style={{ ...td, color: "#fff" }}>
+                        {m.email ?? <span style={{ color: "#54697A" }}>—</span>}
+                        {m.is_super_admin && <span style={{ ...flag("#CCFF00", "#26330A", "#4A5A25"), marginLeft: 8 }}>admin</span>}
+                        {m.display_name && <div style={{ color: "#54697A", fontWeight: 400, fontSize: text.xs }}>{m.display_name}</div>}
+                      </td>
+                      <td style={td}><span style={flag(sub.color, sub.bg, sub.bd)}>{sub.label}</span></td>
+                      <td style={{ ...td, color: "#C8D4DC" }}>{m.events_organized}</td>
+                      <td style={{ ...td, color: "#7E93A0", whiteSpace: "nowrap" }}>{new Date(m.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </Shell>
   );
 }
