@@ -193,8 +193,10 @@ export default function DashboardPage() {
     }
   }
 
-  const activeEvents = events.filter((e) => e.status === "active");
-  const pastEvents = events.filter((e) => e.status !== "active");
+  const myEvents = events.filter((e) => e.my_role === "organizer");
+  const joinedEvents = events.filter((e) => e.my_role !== "organizer");
+  const orderByActive = (list: Event[]) =>
+    [...list.filter((e) => e.status === "active"), ...list.filter((e) => e.status !== "active")];
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
@@ -260,52 +262,13 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
-              {[...activeEvents, ...pastEvents].map((ev) => (
-                <div key={ev.id} style={{ background: "#0C1E29", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", display: "inline-block" }} />
-                      <h3 style={{ fontSize: text.lg, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{ev.name}</h3>
-                      {(() => {
-                        const isEvent = (ev.rider_count ?? 0) > 10;
-                        return (
-                          <span style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: isEvent ? "#CCFF00" : "#7E93A0", border: `1px solid ${isEvent ? "#CCFF00" : "#3a4550"}`, borderRadius: 10, padding: "1px 8px" }}>
-                            {isEvent ? "Event" : "Ride"}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>
-                      {(ev.rider_count ?? 0) <= 10 ? (
-                        <>Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong></>
-                      ) : (
-                        <>{ev.rider_count} riders</>
-                      )}
-                      {" · "}
-                      <span style={{ fontWeight: 700, color: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: text.xs }}>{ev.status}</span>
-                      {" · "}
-                      {ev.my_role === "organizer" ? "You are organizer" : "Participant"}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    {ev.my_role === "organizer" && (
-                      <Link
-                        href={`/dashboard/events/${ev.id}/track`}
-                        style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
-                      >
-                        Tracking
-                      </Link>
-                    )}
-                    <Link
-                      href={`/dashboard/events/${ev.id}`}
-                      style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
-                    >
-                      Manage →
-                    </Link>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              {myEvents.length > 0 && (
+                <EventGroup label="Events you're running" events={orderByActive(myEvents)} />
+              )}
+              {joinedEvents.length > 0 && (
+                <EventGroup label="Events you've joined" events={orderByActive(joinedEvents)} />
+              )}
             </div>
           )}
         </div>
@@ -427,6 +390,63 @@ export default function DashboardPage() {
           )}
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+function EventGroup({ label, events }: { label: string; events: Event[] }) {
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+        <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.2, color: "#7E93A0", textTransform: "uppercase", margin: 0 }}>{label}</p>
+        <span style={{ fontSize: text.xxs, color: "#54697A", textTransform: "uppercase", letterSpacing: 0.5 }}>{events.length}</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1E3B4C", border: "1px solid #1E3B4C" }}>
+        {events.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+      </div>
+    </div>
+  );
+}
+
+function EventRow({ ev }: { ev: Event }) {
+  const isOrganizer = ev.my_role === "organizer";
+  const isEvent = (ev.rider_count ?? 0) > 10;
+  return (
+    <div style={{ background: "#0C1E29", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", display: "inline-block" }} />
+          <h3 style={{ fontSize: text.lg, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{ev.name}</h3>
+          <span style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: isEvent ? "#CCFF00" : "#7E93A0", border: `1px solid ${isEvent ? "#CCFF00" : "#3a4550"}`, borderRadius: 10, padding: "1px 8px" }}>
+            {isEvent ? "Event" : "Ride"}
+          </span>
+        </div>
+        <p style={{ fontSize: text.sm, color: "#7E93A0", margin: 0 }}>
+          {(ev.rider_count ?? 0) <= 10 ? (
+            <>Join code: <strong style={{ color: "#FFFFFF", letterSpacing: 1 }}>{ev.join_code}</strong></>
+          ) : (
+            <>{ev.rider_count} riders</>
+          )}
+          {" · "}
+          <span style={{ fontWeight: 700, color: EVENT_STATUS_COLOR[ev.status] ?? "#7E93A0", textTransform: "uppercase", letterSpacing: 0.5, fontSize: text.xs }}>{ev.status}</span>
+        </p>
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {isOrganizer && (
+          <Link
+            href={`/dashboard/events/${ev.id}/track`}
+            style={{ background: "#CCFF00", color: "#0C1E29", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+          >
+            Tracking
+          </Link>
+        )}
+        <Link
+          href={`/dashboard/events/${ev.id}`}
+          style={{ background: isOrganizer ? "#CCFF00" : "transparent", color: isOrganizer ? "#0C1E29" : "#C8D4DC", border: isOrganizer ? "none" : "1px solid #3a4550", padding: "8px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+        >
+          {isOrganizer ? "Manage →" : "View →"}
+        </Link>
       </div>
     </div>
   );
