@@ -290,9 +290,14 @@ export default function TrackingMap({
         ? `<div style="background:#FF3B30;color:#fff;font:800 12px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:6px 8px;border-radius:4px;margin-bottom:8px;text-align:center">&#9888; SOS active</div>`
         : "";
       const ice = e.ice;
-      const iceHtml = (privileged && ice && (ice.name || ice.phone || ice.blood_type || ice.allergies))
-        ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px;font-size:12px">
-             <div style="color:#54697A;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">ICE</div>
+      // Emergency info always sits behind a reveal button. Linked riders fetch
+      // their profile ICE on click; roster-only riders reveal the ICE we already
+      // have (hidden until the button is pressed).
+      const linkedFetch = !!(privileged && organizerEventId && e.linked);
+      const localReveal = privileged && !linkedFetch
+        && !!(ice && (ice.name || ice.phone || ice.blood_type || ice.allergies));
+      const iceInner = (ice && (ice.name || ice.phone || ice.blood_type || ice.allergies))
+        ? `<div style="margin-top:6px;background:#1A0E10;border:1px solid #5A2530;border-radius:4px;padding:8px 10px;font-size:12px">
              ${ice.name ? `<div>Contact: ${escapeHtml(ice.name)}</div>` : ""}
              ${ice.phone ? `<div>Phone: <a href="tel:${escapeHtml(ice.phone)}" style="color:#4DA6FF">${escapeHtml(ice.phone)}</a></div>` : ""}
              ${ice.blood_type ? `<div>Blood type: ${escapeHtml(ice.blood_type)}</div>` : ""}
@@ -307,11 +312,10 @@ export default function TrackingMap({
              <br><span style="color:${color}">&#9679;</span> ${STATUS_LABEL[status]} &middot; ${timeAgo(e.last_seen_at)}
              ${e.device_type ? `<br><span style="color:#54697A">Device: ${escapeHtml(e.device_type)}</span>` : ""}
              ${wxHtml}
-             ${iceHtml}
              ${coordHtml}
-             ${organizerEventId && e.linked ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px">
-               <button class="wp-emergency" data-id="${e.id}" style="width:100%;background:#2A1214;color:#FF6B6B;border:1px solid #5A2530;border-radius:4px;font:700 11px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:7px;cursor:pointer">&#9888; Emergency info</button>
-               <div class="wp-emergency-out" data-id="${e.id}"></div>
+             ${(localReveal || linkedFetch) ? `<div style="margin-top:8px;border-top:1px solid #1E3B4C;padding-top:8px">
+               <button class="wp-emergency" data-id="${e.id}"${localReveal ? ` data-local="1"` : ``} style="width:100%;background:#2A1214;color:#FF6B6B;border:1px solid #5A2530;border-radius:4px;font:700 11px system-ui;letter-spacing:.5px;text-transform:uppercase;padding:7px;cursor:pointer">&#9888; Emergency info</button>
+               <div class="wp-emergency-out" data-id="${e.id}">${localReveal ? `<div class="wp-ice-local" style="display:none">${iceInner}</div>` : ``}</div>
              </div>` : ""}
            </div>`;
       popupHtml.current.set(e.id, popupContent);
@@ -937,6 +941,13 @@ function wireEmergencyButtons(root: HTMLElement | undefined, eventId: string | u
       ev.stopPropagation();
       const id = btn.getAttribute("data-id") || "";
       const out = root.querySelector<HTMLElement>('.wp-emergency-out[data-id="' + id + '"]');
+      // Roster-only rider: the ICE is already loaded and hidden \u2014 just reveal it.
+      if (btn.getAttribute("data-local") === "1") {
+        const local = out?.querySelector<HTMLElement>(".wp-ice-local");
+        if (local) local.style.display = "";
+        btn.style.display = "none";
+        return;
+      }
       const label = btn.innerHTML;
       btn.textContent = "Loading\u2026";
       btn.disabled = true;
