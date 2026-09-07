@@ -1,5 +1,6 @@
 "use client";
 import { text } from "../../../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 import { eventDurationDays, entrantFeeCentsForDays } from "../../../../lib/pricing";
 export const dynamic = "force-dynamic";
 
@@ -403,7 +404,7 @@ export default function EventDetailPage() {
 
       {/* Nav */}
       <nav style={{ background: "#0C1E29", padding: "0 24px", height: NAV_H, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={20} />Waypoint</Link>
         <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 

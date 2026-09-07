@@ -1,5 +1,6 @@
 "use client";
 import { text } from "../../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
@@ -38,7 +39,7 @@ export default function SignupPage() {
     return (
       <div style={{ minHeight: "100vh", backgroundImage: "linear-gradient(180deg, rgba(10,10,10,0.72), rgba(10,10,10,0.9)), url(/hero.jpg)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
         <nav style={{ background: "#0C1E29", padding: "0 24px", height: 56, display: "flex", alignItems: "center" }}>
-          <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={22} />Waypoint</Link>
         </nav>
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 40, width: "100%", maxWidth: 400, textAlign: "center" }}>

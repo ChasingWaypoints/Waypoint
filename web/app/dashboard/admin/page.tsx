@@ -1,5 +1,6 @@
 "use client";
 import { text } from "../../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
@@ -279,7 +280,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", fontFamily: "system-ui, sans-serif" }}>
       <nav style={{ background: "#0C1E29", padding: "0 24px", height: 48, display: "flex", alignItems: "center" }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={20} />Waypoint</Link>
       </nav>
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 24px" }}>{children}</div>
     </div>

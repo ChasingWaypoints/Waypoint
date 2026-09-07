@@ -1,6 +1,7 @@
 import { text } from "../lib/theme";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LogoMark } from "@/components/LogoMark";
 
 export const metadata: Metadata = {
   title: "Waypoint — Live Event Tracking for Rally & Off-Road",
@@ -63,8 +64,8 @@ export default function LandingPage() {
           padding: "18px 28px", borderBottom: `1px solid ${C.hairline}`, background: C.surface,
         }}
       >
-        <Link href="/" style={{ color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
-          Waypoint
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
+          <LogoMark size={22} />Waypoint
         </Link>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
           <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>

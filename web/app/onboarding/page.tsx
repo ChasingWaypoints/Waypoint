@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { theme, font, text } from "../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 
 /**
  * First-run onboarding — three steps, skippable. Picks a path (track yourself
@@ -37,7 +38,7 @@ export default function OnboardingPage() {
   return (
     <div style={{ minHeight: "100vh", background: theme.canvas, color: theme.body, font: `14px ${font.sans}`, display: "flex", flexDirection: "column" }}>
       <nav style={{ background: theme.surface, borderBottom: `1px solid ${theme.hairline}`, padding: "0 16px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <span style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase" }}>Waypoint</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase" }}><LogoMark size={20} />Waypoint</span>
         <button onClick={finish} style={{ background: "transparent", border: "none", color: theme.muted, fontSize: text.sm, cursor: "pointer" }}>Skip →</button>
       </nav>
 

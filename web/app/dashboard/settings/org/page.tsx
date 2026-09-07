@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { authFetch } from "@/lib/authFetch";
 import { theme, text } from "../../../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 
 interface OrgData {
   active: boolean;
@@ -84,7 +85,7 @@ export default function OrgSettingsPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", color: "#fff" }}>
       <nav style={{ background: theme.surface, padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: text.lg, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={20} />Waypoint</Link>
         <Link href="/dashboard" style={{ color: "#7E93A0", fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 

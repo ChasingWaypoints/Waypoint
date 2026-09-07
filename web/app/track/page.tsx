@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { theme, font, text } from "../../lib/theme";
+import { LogoMark } from "@/components/LogoMark";
 
 /**
  * Browser tracking — the interim "track from your phone, no app" path until the
@@ -154,7 +155,7 @@ export default function BrowserTrackPage() {
   return (
     <div style={{ minHeight: "100vh", background: theme.canvas, color: theme.body, font: `14px ${font.sans}`, display: "flex", flexDirection: "column" }}>
       <nav style={{ background: theme.surface, padding: "0 16px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, borderBottom: `1px solid ${theme.hairline}` }}>
-        <Link href="/" style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>Waypoint</Link>
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: theme.ink, fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={20} />Waypoint</Link>
         <Link href="/dashboard" style={{ color: theme.muted, fontSize: text.sm, textDecoration: "none" }}>← Dashboard</Link>
       </nav>
 
