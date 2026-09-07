@@ -366,9 +366,9 @@ export default function DashboardPage() {
               <p style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1.5, color: "#7E93A0", textTransform: "uppercase", margin: "0 0 4px" }}>Your Trips</p>
               <h2 style={{ fontSize: text.xxl, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>Track History</h2>
             </div>
-            <Link href="/track" style={{ background: "#CCFF00", color: "#0C1E29", padding: "10px 18px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", whiteSpace: "nowrap" }}>
-              ● Track from this phone
-            </Link>
+            <span style={{ color: "#7E93A0", border: "1px solid #1E3B4C", padding: "10px 18px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              Cellular tracking — RallyTrak · coming soon
+            </span>
           </div>
 
           {loading ? (
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: "0 0 8px" }}>No trips yet</h3>
               <p style={{ fontSize: text.base, color: "#7E93A0", margin: 0, fontWeight: 400 }}>
-                Start your first trip in the Waypoint mobile app — it'll appear here automatically.
+                Cellular tracking is coming soon with RallyTrak and RallyTrak Nav. In the meantime, add a Garmin inReach, SPOT, or ZOLEO beacon to appear on the map.
               </p>
             </div>
           ) : (

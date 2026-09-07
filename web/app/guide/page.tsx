@@ -672,11 +672,13 @@ export default function GuidePage() {
           no feed link to copy. Enable location sharing on your ZOLEO account so your positions flow through, and you&rsquo;re set.
         </P>
 
-        <Sub>Phone-based tracking</Sub>
+        <Sub>Phone / cellular tracking (coming soon)</Sub>
         <div id="r-phone" style={{ scrollMarginTop: 20 }} />
         <P>
-          No satellite beacon? You can share your position from your phone for convenience. It&rsquo;s great where you have signal —
-          but remember it depends on cell coverage, so for real backcountry it is no substitute for a satellite device.
+          No satellite beacon? <strong style={strong}>RallyTrak</strong> and <strong style={strong}>RallyTrak Nav</strong> — the
+          Chasing Waypoints companion phone apps — will track you over cellular and feed straight into your event.{" "}
+          <strong style={strong}>Coming soon.</strong> Because cellular tracking depends on cell coverage, it is great for
+          front-country and convenience but is no substitute for a satellite beacon in real backcountry.
         </P>
         <Callout
           tone="info"

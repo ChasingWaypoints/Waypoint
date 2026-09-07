@@ -49,7 +49,7 @@ export default function OnboardingPage() {
 
         {path === null && (
           <div style={{ display: "grid", gap: 12 }}>
-            <ChoiceCard title="I'm tracking myself" body="Share your live location on a map for family and friends — from your phone or a satellite beacon." onClick={() => choose("self")} />
+            <ChoiceCard title="I'm tracking myself" body="Share your live location on a map for family and friends — from a satellite beacon (cellular tracking coming soon)." onClick={() => choose("self")} />
             <ChoiceCard title="I'm organizing an event" body="Put every entrant's beacon on one live map, load a roster, and share it with your community." onClick={() => choose("organize")} />
           </div>
         )}
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
         {path === "self" && (
           <div style={{ display: "grid", gap: 12 }}>
             <StepCard n={1} title="Add a device" body="Link a Garmin inReach, SPOT, or ZOLEO so Waypoint can pull your position." href="/dashboard/profile" cta="Add a device" />
-            <StepCard n={2} title="Or track from this phone" body="No beacon? Start a browser trip and your phone becomes the tracker." href="/track" cta="Start tracking" />
+            <StepCard n={2} title="Or track over cellular" body="No beacon? RallyTrak and RallyTrak Nav — our companion phone apps — track you over cellular and feed straight into Waypoint." soon />
             <FinishRow onFinish={finish} />
           </div>
         )}
@@ -83,14 +83,18 @@ function ChoiceCard({ title, body, onClick }: { title: string; body: string; onC
   );
 }
 
-function StepCard({ n, title, body, href, cta }: { n: number; title: string; body: string; href: string; cta: string }) {
+function StepCard({ n, title, body, href, cta, soon }: { n: number; title: string; body: string; href?: string; cta?: string; soon?: boolean }) {
   return (
     <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 10, padding: 18, display: "flex", gap: 14, alignItems: "flex-start" }}>
       <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: "50%", background: theme.canvas, border: `1px solid ${theme.hairline}`, color: theme.accent, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", fontSize: text.base }}>{n}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: text.lg, fontWeight: 700, color: theme.ink, marginBottom: 3 }}>{title}</div>
         <div style={{ fontSize: text.base, color: theme.muted, lineHeight: 1.5, marginBottom: 12 }}>{body}</div>
-        <Link href={href} style={{ display: "inline-block", background: theme.track, color: theme.accentInk, borderRadius: 6, padding: "9px 16px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>{cta}</Link>
+        {soon ? (
+          <span style={{ display: "inline-block", color: theme.muted, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "9px 16px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>Coming soon</span>
+        ) : (
+          <Link href={href ?? "#"} style={{ display: "inline-block", background: theme.track, color: theme.accentInk, borderRadius: 6, padding: "9px 16px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>{cta}</Link>
+        )}
       </div>
     </div>
   );

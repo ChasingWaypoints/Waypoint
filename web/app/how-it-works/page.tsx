@@ -120,7 +120,7 @@ export default function HowItWorksPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               <Step n="01" title="Enter the join code" body="Got a code from your organizer? Drop it in and you're taken straight to that event's registration." />
               <Step n="02" title="Add your details" body="Your name, rider number and class. Optionally add emergency contact and medical info — shared only with the organizer and responders, and never shown on the public map." />
-              <Step n="03" title="Track your ride" body="Bring your own satellite beacon for real backcountry coverage, or use phone-based tracking for convenience. Your position joins the live map for the event." />
+              <Step n="03" title="Track your ride" body="Bring your own satellite beacon — Garmin inReach, SPOT or ZOLEO — for real backcountry coverage. Cellular tracking through the RallyTrak companion apps is coming soon. Your position joins the live map for the event." />
             </div>
             <div>
               <Shot src="/screenshots/rider-join.jpg" alt="Rider registration form with emergency info fields" caption="Register with your details and optional emergency info — with explicit consent, kept off the public map." />
