@@ -40,13 +40,13 @@ begin
      t - interval '3 hours', t);
 
   insert into public.event_participants
-    (id, event_id, user_id, display_name, rider_number, rider_class, device_type, join_token, role,
+    (id, event_id, user_id, display_name, rider_number, rider_class, device_type, role,
      last_lat, last_lng, last_seen_at)
   values
-    (p1, v_ev, null, 'Marco Salgado',  '1',  'ADV',      'garmin', 'demo-baja-1',  'participant', 32.015, -116.455, t - interval '9 min'),
-    (p2, v_ev, null, 'Luis Gutierrez', '3',  'Rally1',   'spot',   'demo-baja-3',  'participant', 31.900, -116.250, t - interval '22 min'),
-    (p3, v_ev, null, 'Diego Ramirez',  '7',  'RallyPro', 'garmin', 'demo-baja-7',  'participant', 32.022, -115.925, t - interval '4 min'),
-    (p4, v_ev, null, 'Carla Mendoza',  '12', 'ADV',      'zoleo',  'demo-baja-12', 'participant', 32.083, -116.582, t - interval '41 min');
+    (p1, v_ev, null, 'Marco Salgado',  '1',  'ADV',      'garmin', 'rider', 32.015, -116.455, t - interval '9 min'),
+    (p2, v_ev, null, 'Luis Gutierrez', '3',  'Rally1',   'spot',   'rider', 31.900, -116.250, t - interval '22 min'),
+    (p3, v_ev, null, 'Diego Ramirez',  '7',  'RallyPro', 'garmin', 'rider', 32.022, -115.925, t - interval '4 min'),
+    (p4, v_ev, null, 'Carla Mendoza',  '12', 'ADV',      'zoleo',  'rider', 32.083, -116.582, t - interval '41 min');
 
   insert into public.event_track_points (participant_id, event_id, lat, lng, recorded_at, source) values
     -- #1 Marco Salgado (west, Valle de Guadalupe)
