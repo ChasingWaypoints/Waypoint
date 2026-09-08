@@ -1,7 +1,7 @@
 import { text } from "../lib/theme";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LogoMark } from "@/components/LogoMark";
+import { SiteNav } from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Waypoint — Live Event Tracking for Rally & Off-Road",
@@ -58,36 +58,7 @@ export default function LandingPage() {
   return (
     <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
       {/* ── Nav ─────────────────────────────────────────────── */}
-      <nav
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "18px 28px", borderBottom: `1px solid ${C.hairline}`, background: C.surface,
-        }}
-      >
-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
-          <LogoMark size={22} />Waypoint
-        </Link>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-          <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
-            How it works
-          </Link>
-          <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
-            Guide
-          </Link>
-          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
-            Pricing
-          </Link>
-          <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
-            Sign in
-          </Link>
-          <Link
-            href="/auth/signup"
-            style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
-          >
-            Get started
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* ── Hero ────────────────────────────────────────────── */}
       <div style={{
