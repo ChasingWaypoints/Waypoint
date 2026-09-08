@@ -333,6 +333,9 @@ export default function GuidePage() {
           <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             How it works
           </Link>
+          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+            Pricing
+          </Link>
           <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Sign in
           </Link>
@@ -589,8 +592,10 @@ export default function GuidePage() {
         <Table
           head={["Plan", "Price", "What you get"]}
           rows={[
-            ["Free group ride", "$0", "Up to 10 riders. The default mode."],
-            ["Event (you pay)", "$200", "40 rider seats. Add +10 seats for $40 whenever you need them."],
+            ["Free group ride", "$0", "Up to 10 riders on one live map. Share your ride, ICE card, join events by code. Ride history kept for 30 days."],
+            ["Individual", "$15 / year", "Unlimited ride history, shareable trip stories, and privacy zones to hide your home or start point."],
+            ["Individual Plus", "$29 / year", "Everything in Individual, plus live weather & radar, animated radar timelapse, and an unbranded share page."],
+            ["Event (you pay)", "$200 / event", "40 rider seats. Add +10 seats for $40 whenever you need them. Command view, Google Earth feed, embed, private events."],
             ["Entrant-paid", "$10–$15 / rider", "Riders pay at join. Fee by event length: up to 3 days $10, up to 7 days $12, up to 30 days $15."],
             ["Org series license", "$3,500 / year", "A 1,500-entrant pool across all your events, plus white-label branding."],
           ]}
@@ -749,6 +754,7 @@ export default function GuidePage() {
           <span>&copy; {new Date().getFullYear()} Waypoint &middot; a Chasing Waypoints product</span>
           <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <Link href="/how-it-works" style={{ color: C.muted, textDecoration: "none" }}>How it works</Link>
+            <Link href="/pricing" style={{ color: C.muted, textDecoration: "none" }}>Pricing</Link>
             <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Terms</Link>
             <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacy</Link>
           </span>

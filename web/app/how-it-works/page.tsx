@@ -67,6 +67,7 @@ export default function HowItWorksPage() {
         <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={22} />Waypoint</Link>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
           <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Guide</Link>
+          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Pricing</Link>
           <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Sign in</Link>
           <Link href="/auth/signup" style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}>Get started</Link>
         </div>
@@ -161,6 +162,7 @@ export default function HowItWorksPage() {
         <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: text.base, color: C.muted }}>
           <span>&copy; {new Date().getFullYear()} Waypoint &middot; a Chasing Waypoints product</span>
           <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+            <Link href="/pricing" style={{ color: C.muted, textDecoration: "none" }}>Pricing</Link>
             <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Terms</Link>
             <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacy</Link>
             <span style={{ color: C.body }}>We never sell your location data. Ever.</span>

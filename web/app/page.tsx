@@ -74,6 +74,9 @@ export default function LandingPage() {
           <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Guide
           </Link>
+          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+            Pricing
+          </Link>
           <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
             Sign in
           </Link>
@@ -187,15 +190,23 @@ export default function LandingPage() {
               Free for group rides.
             </h2>
             <p style={{ color: C.accentInk, opacity: 0.8, fontSize: text.lg, margin: 0 }}>
-              Group rides up to 10 riders are free. Events are $200 for 40 riders, or let riders pay a small fee when they join.
+              Group rides up to 10 riders are free. Go further for $15/yr, add weather & radar for $29, or run an event for $200.
             </p>
           </div>
-          <Link
-            href="/auth/signup"
-            style={{ background: C.accentInk, color: C.accent, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
-          >
-            Create an account
-          </Link>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link
+              href="/pricing"
+              style={{ background: C.accentInk, color: C.accent, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              See pricing
+            </Link>
+            <Link
+              href="/auth/signup"
+              style={{ background: "transparent", color: C.accentInk, border: `1.5px solid ${C.accentInk}`, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              Create an account
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -206,6 +217,7 @@ export default function LandingPage() {
           <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <Link href="/how-it-works" style={{ color: C.muted, textDecoration: "none" }}>How it works</Link>
             <Link href="/guide" style={{ color: C.muted, textDecoration: "none" }}>Guide</Link>
+            <Link href="/pricing" style={{ color: C.muted, textDecoration: "none" }}>Pricing</Link>
             <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Terms</Link>
             <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacy</Link>
             <span style={{ color: C.body }}>We never sell your location data. Ever.</span>
