@@ -129,6 +129,29 @@ export async function PATCH(
   if ("public_show_route" in body) updates.public_show_route = !!body.public_show_route;
   if ("public_show_waypoints" in body) updates.public_show_waypoints = !!body.public_show_waypoints;
 
+  // Private events (no public spectator page/embed) are a premium feature —
+  // available on paid or comped events, or to organizers on an active Org plan.
+  if ("is_private" in body) {
+    const wantsPrivate = !!body.is_private;
+    if (wantsPrivate) {
+      const { data: ev } = await supabase.from("events").select("paid, comped").eq("id", id).single();
+      let eligible = !!(ev?.paid || ev?.comped);
+      if (!eligible) {
+        const { data: sub } = await supabase
+          .from("org_subscriptions").select("status, current_period_end").eq("user_id", user.id).maybeSingle();
+        eligible = !!sub && sub.status === "active"
+          && (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+      }
+      if (!eligible) {
+        return NextResponse.json(
+          { error: "Private events require a paid event or an Org plan." },
+          { status: 403 }
+        );
+      }
+    }
+    updates.is_private = wantsPrivate;
+  }
+
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);

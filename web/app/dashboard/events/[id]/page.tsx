@@ -29,7 +29,7 @@ interface EventDetail {
   route_gpx: string | null; route_name: string | null; organizer_id: string;
   rider_classes: string[]; paid?: boolean; comped?: boolean; seats_paid?: number | null;
   payment_mode?: string; entrant_fee_cents?: number | null; starts_at?: string | null; ends_at?: string | null;
-  public_show_route?: boolean; public_show_waypoints?: boolean; is_demo?: boolean;
+  public_show_route?: boolean; public_show_waypoints?: boolean; is_demo?: boolean; is_private?: boolean;
 }
 
 type Tab = "map" | "riders" | "admin";
@@ -204,6 +204,21 @@ export default function EventDetailPage() {
       window.location.href = "/dashboard";
     } else {
       alert("Could not delete the event.");
+    }
+  }
+
+  async function setPrivacy(next: boolean) {
+    if (!session) return;
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(session.access_token),
+      body: JSON.stringify({ is_private: next }),
+    });
+    if (res.ok) {
+      await load();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || "Could not change visibility.");
     }
   }
 
@@ -460,10 +475,12 @@ export default function EventDetailPage() {
           >
             Share
           </button>
-          <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer"
-            style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
-            Public View ↗
-          </a>
+          {!event.is_private && (
+            <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer"
+              style={{ background: "transparent", border: "1px solid #3a4550", color: "#C8D4DC", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
+              Public View ↗
+            </a>
+          )}
           {isOrganizer && (
             <Link href={`/dashboard/events/${id}/track`}
               style={{ background: "#CCFF00", border: "1px solid #CCFF00", color: "#0C1E29", padding: "6px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}>
@@ -513,7 +530,7 @@ export default function EventDetailPage() {
                   <button onClick={() => { setMenuOpen(false); startAddSeats(); }} style={menuItem}>+ 10 seats · $40</button>
                 )}
                 <button onClick={() => { setMenuOpen(false); setShowShare(true); }} style={menuItem}>Share</button>
-                <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={menuItem}>Public View ↗</a>
+                {!event.is_private && <a href={`/event/${event.share_token}`} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={menuItem}>Public View ↗</a>}
                 {isOrganizer && (
                   <Link href={`/dashboard/events/${id}/track`} onClick={() => setMenuOpen(false)} style={menuItem}>Tracking Page</Link>
                 )}
@@ -547,6 +564,21 @@ export default function EventDetailPage() {
             </div>
 
             <div style={shareSection}>
+              <div style={shareLabel}>Visibility</div>
+              <p style={shareHelp}>
+                {event.is_private
+                  ? "Private — no public spectator page or embed. Only you (signed in) and anyone you hand a Command / Google Earth link can watch."
+                  : "Public — anyone with the spectator link or embed can watch the live map."}
+              </p>
+              <button onClick={() => setPrivacy(!event.is_private)} style={modalBtn}>
+                {event.is_private ? "Make public" : "Make private"}
+              </button>
+              {!event.is_private && !(event.paid || event.comped) && (
+                <p style={{ ...shareHelp, color: "#FFCF6B", marginTop: 8, marginBottom: 0 }}>Private events require a paid event or an Org plan.</p>
+              )}
+            </div>
+
+            <div style={shareSection}>
               <div style={shareLabel}>Join code — for riders</div>
               <p style={shareHelp}>Riders enter this code in the app to join the event and start sharing their location.</p>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -574,25 +606,34 @@ export default function EventDetailPage() {
               </div>
             </div>
 
-            <div style={shareSection}>
-              <div style={shareLabel}>Public spectator link</div>
-              <p style={shareHelp}>Anyone with this link can watch the live map — no account needed.</p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input readOnly value={publicUrl} style={shareInput} onFocus={(e) => e.currentTarget.select()} />
-                <button onClick={() => copy(publicUrl, "pub")} style={modalBtn}>{copyFeedback === "pub" ? "Copied!" : "Copy"}</button>
-                <a href={publicUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Open</a>
+            {event.is_private ? (
+              <div style={{ ...shareSection, marginBottom: 0, borderBottom: "none" }}>
+                <div style={shareLabel}>Public spectator link &amp; embed</div>
+                <p style={{ ...shareHelp, color: "#FFCF6B" }}>Off — this event is private. The public map and embed are disabled. Share the Command / Google Earth link (in the tracking view) with the people who need to watch.</p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div style={shareSection}>
+                  <div style={shareLabel}>Public spectator link</div>
+                  <p style={shareHelp}>Anyone with this link can watch the live map — no account needed.</p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input readOnly value={publicUrl} style={shareInput} onFocus={(e) => e.currentTarget.select()} />
+                    <button onClick={() => copy(publicUrl, "pub")} style={modalBtn}>{copyFeedback === "pub" ? "Copied!" : "Copy"}</button>
+                    <a href={publicUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Open</a>
+                  </div>
+                </div>
 
-            <div style={{ ...shareSection, marginBottom: 0, borderBottom: "none" }}>
-              <div style={shareLabel}>Embed on your website</div>
-              <p style={shareHelp}>Paste this into your event site — the map stays live and updates itself. Adjust width/height to taste.</p>
-              <code style={shareCode}>{embedCode}</code>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button onClick={() => copy(embedCode, "embed")} style={modalBtn}>{copyFeedback === "embed" ? "Copied!" : "Copy embed code"}</button>
-                <a href={embedUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Preview</a>
-              </div>
-            </div>
+                <div style={{ ...shareSection, marginBottom: 0, borderBottom: "none" }}>
+                  <div style={shareLabel}>Embed on your website</div>
+                  <p style={shareHelp}>Paste this into your event site — the map stays live and updates itself. Adjust width/height to taste.</p>
+                  <code style={shareCode}>{embedCode}</code>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button onClick={() => copy(embedCode, "embed")} style={modalBtn}>{copyFeedback === "embed" ? "Copied!" : "Copy embed code"}</button>
+                    <a href={embedUrl} target="_blank" rel="noopener noreferrer" style={modalLinkBtn}>Preview</a>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -55,23 +55,34 @@ export default function LiveEventMap({
     try {
       const q = selectedRef.current ? `?track=${selectedRef.current}` : "";
       const res = await fetch(`/api/events/live/${shareToken}${q}`);
-      if (!res.ok) {
+      // A private event returns 404 from the public feed. The organizer view then
+      // falls back to the credentialed command feed below, so only bail out here
+      // when there's no organizer context to fall back to.
+      let data: { event?: EventMeta; stages?: StageLine[]; entrants?: Entrant[]; track?: LngLat[] } | null = null;
+      if (res.ok) {
+        data = await res.json();
+      } else if (!organizerEventId) {
         setError(res.status === 404 ? "Event not found" : "Could not load positions");
         return;
       }
-      const data = await res.json();
-      setEvent(data.event);
-      setStages(data.stages ?? []);
-      let list: Entrant[] = data.entrants ?? [];
-      // Organizer view: overlay SOS + ICE from the credentialed command feed.
+      setEvent(data?.event ?? null);
+      setStages((data?.stages as typeof stages) ?? []);
+      let list: Entrant[] = data?.entrants ?? [];
+      // Organizer view: pull SOS + ICE from the credentialed command feed — and
+      // use it as the base list when the public feed is empty (private event).
       if (organizerEventId) {
         try {
           const cRes = await authFetch(`/api/events/${organizerEventId}/command`);
           if (cRes.ok) {
             const cData = await cRes.json();
-            const overlay = new Map<string, { sos?: boolean; ice?: Entrant["ice"] }>();
-            for (const ce of (cData.entrants ?? []) as Entrant[]) overlay.set(ce.id, { sos: ce.sos, ice: ce.ice });
-            list = list.map((e) => ({ ...e, ...(overlay.get(e.id) ?? {}) }));
+            const cEntrants = (cData.entrants ?? []) as Entrant[];
+            if (list.length === 0 && cEntrants.length > 0) {
+              list = cEntrants;
+            } else {
+              const overlay = new Map<string, { sos?: boolean; ice?: Entrant["ice"] }>();
+              for (const ce of cEntrants) overlay.set(ce.id, { sos: ce.sos, ice: ce.ice });
+              list = list.map((e) => ({ ...e, ...(overlay.get(e.id) ?? {}) }));
+            }
             // Auto-focus a newly-raised SOS.
             const active = list.filter((e) => e.sos);
             const fresh = active.find((e) => !seenSosRef.current.has(e.id));
@@ -81,7 +92,7 @@ export default function LiveEventMap({
         } catch { /* keep base list if the command feed is unavailable */ }
       }
       setEntrants(list);
-      if (data.track) {
+      if (data?.track) {
         setTrack(data.track.map((p: LngLat) => ({ lat: p.lat, lng: p.lng })));
       } else {
         setTrack(undefined);
