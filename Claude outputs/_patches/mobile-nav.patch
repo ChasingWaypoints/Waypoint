@@ -1,0 +1,298 @@
+From ebafc562488365b633dfc3128d7be1e35a26f89e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 8 Sep 2026 18:44:47 +0000
+Subject: [PATCH] feat: shared responsive SiteNav with mobile hamburger +
+ larger wordmark
+
+Marketing-site nav was inline-duplicated on 4 pages and wrapped into a
+messy multi-row stack on mobile. Replace with one shared SiteNav:
+- Desktop: single row of links.
+- Mobile (<=780px): links collapse behind a hamburger; tap opens a clean
+  stacked sheet with a full-width Get started CTA.
+- Larger WP logo (30px) and WAYPOINT wordmark (22px) everywhere.
+Applied to landing, guide, how-it-works, and pricing.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Xfza8skNnBXBJCUoYq9sw9
+---
+ web/app/guide/page.tsx        |  31 +----------
+ web/app/how-it-works/page.tsx |  12 +---
+ web/app/page.tsx              |  33 +----------
+ web/app/pricing/page.tsx      |  14 +----
+ web/components/SiteNav.tsx    | 102 ++++++++++++++++++++++++++++++++++
+ 5 files changed, 110 insertions(+), 82 deletions(-)
+ create mode 100644 web/components/SiteNav.tsx
+
+diff --git a/web/app/guide/page.tsx b/web/app/guide/page.tsx
+index 38deb34..7e7ad77 100644
+--- a/web/app/guide/page.tsx
++++ b/web/app/guide/page.tsx
+@@ -1,7 +1,7 @@
+ import { text } from "../../lib/theme";
+ import type { Metadata } from "next";
+ import Link from "next/link";
+-import { LogoMark } from "@/components/LogoMark";
++import { SiteNav } from "@/components/SiteNav";
+ 
+ export const metadata: Metadata = {
+   title: "Field manual — Waypoint",
+@@ -316,34 +316,7 @@ export default function GuidePage() {
+   return (
+     <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
+       {/* Nav */}
+-      <nav
+-        style={{
+-          display: "flex",
+-          alignItems: "center",
+-          justifyContent: "space-between",
+-          padding: "18px 28px",
+-          borderBottom: `1px solid ${C.hairline}`,
+-          background: C.surface,
+-        }}
+-      >
+-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
+-          <LogoMark size={22} />Waypoint
+-        </Link>
+-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
+-          <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            How it works
+-          </Link>
+-          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            Pricing
+-          </Link>
+-          <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            Sign in
+-          </Link>
+-          <Link href="/auth/signup" style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}>
+-            Get started
+-          </Link>
+-        </div>
+-      </nav>
++      <SiteNav />
+ 
+       {/* Header */}
+       <header style={{ maxWidth: 860, margin: "0 auto", padding: "64px 28px 8px" }}>
+diff --git a/web/app/how-it-works/page.tsx b/web/app/how-it-works/page.tsx
+index 625d020..39f5dca 100644
+--- a/web/app/how-it-works/page.tsx
++++ b/web/app/how-it-works/page.tsx
+@@ -1,7 +1,7 @@
+ import { text } from "../../lib/theme";
+ import type { Metadata } from "next";
+ import Link from "next/link";
+-import { LogoMark } from "@/components/LogoMark";
++import { SiteNav } from "@/components/SiteNav";
+ 
+ export const metadata: Metadata = {
+   title: "How it works — Waypoint",
+@@ -63,15 +63,7 @@ export default function HowItWorksPage() {
+   return (
+     <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
+       {/* Nav */}
+-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: `1px solid ${C.hairline}`, background: C.surface }}>
+-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}><LogoMark size={22} />Waypoint</Link>
+-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
+-          <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Guide</Link>
+-          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Pricing</Link>
+-          <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Sign in</Link>
+-          <Link href="/auth/signup" style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}>Get started</Link>
+-        </div>
+-      </nav>
++      <SiteNav />
+ 
+       {/* Header */}
+       <header style={{ maxWidth: 1080, margin: "0 auto", padding: "72px 28px 40px" }}>
+diff --git a/web/app/page.tsx b/web/app/page.tsx
+index dd3ff7a..2a7f817 100644
+--- a/web/app/page.tsx
++++ b/web/app/page.tsx
+@@ -1,7 +1,7 @@
+ import { text } from "../lib/theme";
+ import type { Metadata } from "next";
+ import Link from "next/link";
+-import { LogoMark } from "@/components/LogoMark";
++import { SiteNav } from "@/components/SiteNav";
+ 
+ export const metadata: Metadata = {
+   title: "Waypoint — Live Event Tracking for Rally & Off-Road",
+@@ -58,36 +58,7 @@ export default function LandingPage() {
+   return (
+     <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
+       {/* ── Nav ─────────────────────────────────────────────── */}
+-      <nav
+-        style={{
+-          display: "flex", alignItems: "center", justifyContent: "space-between",
+-          padding: "18px 28px", borderBottom: `1px solid ${C.hairline}`, background: C.surface,
+-        }}
+-      >
+-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
+-          <LogoMark size={22} />Waypoint
+-        </Link>
+-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
+-          <Link href="/how-it-works" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            How it works
+-          </Link>
+-          <Link href="/guide" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            Guide
+-          </Link>
+-          <Link href="/pricing" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            Pricing
+-          </Link>
+-          <Link href="/auth/login" style={{ color: C.body, fontSize: text.base, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>
+-            Sign in
+-          </Link>
+-          <Link
+-            href="/auth/signup"
+-            style={{ background: C.lime, color: C.accentInk, fontSize: text.base, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}
+-          >
+-            Get started
+-          </Link>
+-        </div>
+-      </nav>
++      <SiteNav />
+ 
+       {/* ── Hero ────────────────────────────────────────────── */}
+       <div style={{
+diff --git a/web/app/pricing/page.tsx b/web/app/pricing/page.tsx
+index 02f018e..92c48dd 100644
+--- a/web/app/pricing/page.tsx
++++ b/web/app/pricing/page.tsx
+@@ -3,7 +3,7 @@
+ import { useState } from "react";
+ import Link from "next/link";
+ import { getSupabaseClient } from "@/lib/supabase/client";
+-import { LogoMark } from "@/components/LogoMark";
++import { SiteNav } from "@/components/SiteNav";
+ 
+ /**
+  * Public pricing page — the single source of truth for the five tiers, wired
+@@ -174,17 +174,7 @@ export default function PricingPage() {
+   return (
+     <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
+       {/* Nav */}
+-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: `1px solid ${C.hairline}`, background: C.surface }}>
+-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.ink, fontWeight: 800, fontSize: 16, letterSpacing: 2, textTransform: "uppercase", textDecoration: "none" }}>
+-          <LogoMark size={22} />Waypoint
+-        </Link>
+-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "flex-end", whiteSpace: "nowrap" }}>
+-          <Link href="/how-it-works" style={{ color: C.body, fontSize: 14, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>How it works</Link>
+-          <Link href="/guide" style={{ color: C.body, fontSize: 14, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Guide</Link>
+-          <Link href="/auth/login" style={{ color: C.body, fontSize: 14, fontWeight: 600, textDecoration: "none", padding: "9px 14px" }}>Sign in</Link>
+-          <Link href="/auth/signup" style={{ background: C.lime, color: C.accentInk, fontSize: 14, fontWeight: 800, textDecoration: "none", padding: "9px 18px", borderRadius: 4, letterSpacing: 0.3 }}>Get started</Link>
+-        </div>
+-      </nav>
++      <SiteNav />
+ 
+       {/* Header */}
+       <section style={{ maxWidth: 1040, margin: "0 auto", padding: "56px 28px 24px", textAlign: "center" }}>
+diff --git a/web/components/SiteNav.tsx b/web/components/SiteNav.tsx
+new file mode 100644
+index 0000000..6ae16e5
+--- /dev/null
++++ b/web/components/SiteNav.tsx
+@@ -0,0 +1,102 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { LogoMark } from "@/components/LogoMark";
++
++/**
++ * Shared marketing-site nav. One row of links on desktop; on mobile the links
++ * collapse behind a hamburger so they never wrap into a messy stack. Used on
++ * the landing page, guide, how-it-works and pricing.
++ */
++
++const LINKS = [
++  { href: "/how-it-works", label: "How it works" },
++  { href: "/guide", label: "Guide" },
++  { href: "/pricing", label: "Pricing" },
++  { href: "/auth/login", label: "Sign in" },
++];
++
++export function SiteNav() {
++  const [open, setOpen] = useState(false);
++
++  return (
++    <>
++      <style>{`
++        .wpnav { position: relative; z-index: 30; display: flex; align-items: center;
++          justify-content: space-between; padding: 16px 22px;
++          border-bottom: 1px solid #1E3B4C; background: #0C1E29; }
++        .wpnav-brand { display: inline-flex; align-items: center; gap: 11px; color: #fff;
++          font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
++          text-decoration: none; font-size: 22px; line-height: 1; }
++        .wpnav-links { display: flex; align-items: center; gap: 4px; }
++        .wpnav-link { color: #C8D4DC; font-size: 15px; font-weight: 600;
++          text-decoration: none; padding: 9px 14px; border-radius: 5px; }
++        .wpnav-link:hover { color: #fff; background: #14303F; }
++        .wpnav-cta { background: #CCFF00; color: #0C1E29; font-size: 15px; font-weight: 800;
++          text-decoration: none; padding: 10px 18px; border-radius: 5px;
++          letter-spacing: .3px; margin-left: 6px; white-space: nowrap; }
++        .wpnav-burger { display: none; background: transparent; border: 1px solid #24445A;
++          border-radius: 7px; width: 46px; height: 42px; cursor: pointer;
++          align-items: center; justify-content: center; padding: 0; }
++        .wpnav-burger svg { display: block; }
++        .wpnav-sheet { display: none; }
++
++        @media (max-width: 780px) {
++          .wpnav-links { display: none; }
++          .wpnav-burger { display: inline-flex; }
++          .wpnav-brand { font-size: 21px; }
++          .wpnav-sheet { display: block; position: absolute; top: 100%; left: 0; right: 0;
++            z-index: 40; background: #0C1E29; border-bottom: 1px solid #1E3B4C;
++            box-shadow: 0 12px 30px rgba(0,0,0,.45); padding: 8px 14px 16px; }
++          .wpnav-sheet a { display: block; color: #E6EDF2; font-size: 17px; font-weight: 600;
++            text-decoration: none; padding: 14px 10px; border-bottom: 1px solid #14303F; }
++          .wpnav-sheet a.cta { margin-top: 12px; background: #CCFF00; color: #0C1E29;
++            font-weight: 800; text-align: center; border-radius: 6px; border-bottom: none; }
++        }
++      `}</style>
++
++      <nav className="wpnav">
++        <Link href="/" className="wpnav-brand" onClick={() => setOpen(false)}>
++          <LogoMark size={30} />WAYPOINT
++        </Link>
++
++        {/* Desktop links */}
++        <div className="wpnav-links">
++          {LINKS.map((l) => (
++            <Link key={l.href} href={l.href} className="wpnav-link">{l.label}</Link>
++          ))}
++          <Link href="/auth/signup" className="wpnav-cta">Get started</Link>
++        </div>
++
++        {/* Mobile hamburger */}
++        <button
++          className="wpnav-burger"
++          aria-label={open ? "Close menu" : "Open menu"}
++          aria-expanded={open}
++          onClick={() => setOpen((v) => !v)}
++        >
++          {open ? (
++            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
++              <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
++            </svg>
++          ) : (
++            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
++              <line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" />
++            </svg>
++          )}
++        </button>
++
++        {/* Mobile sheet */}
++        {open && (
++          <div className="wpnav-sheet">
++            {LINKS.map((l) => (
++              <Link key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Link>
++            ))}
++            <Link href="/auth/signup" className="cta" onClick={() => setOpen(false)}>Get started</Link>
++          </div>
++        )}
++      </nav>
++    </>
++  );
++}
+-- 
+2.43.0
+

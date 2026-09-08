@@ -1,0 +1,721 @@
+From 82bd14536aa9f947c17b690865ba8e8e9462aefa Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 8 Sep 2026 16:26:29 +0000
+Subject: [PATCH] feat: enforce tier entitlements + build Plus weather/radar &
+ unbranded share
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Turn the pricing tiers into real entitlements (until now every personal
+feature was free, so $15/$29 unlocked nothing).
+
+Entitlement layer (migration 034):
+- user_plan() / user_has_paid_plan() / user_has_plus() — Org folds in as >= Plus
+- share_branding() for the public share page
+
+Free vs paid (lightly capped):
+- Free keeps trip stories + last 30 days of ride history
+- $15 Individual: unlimited history + privacy zones (RLS-gated insert + UI upsell)
+- $29 Plus: weather/radar overlay, animated radar timelapse, unbranded share page
+
+Plus builds:
+- Radar timelapse via RainViewer (new proxied /api/weather/radar-frames + tiles),
+  play/pause + scrubber transport on the map; weather gated to Plus/Org viewers
+- Unbranded share + story pages (owner name replaces Waypoint wordmark/CTA)
+
+Fix: share route masked privacy zones with wrong columns (lat/lng/radius_m) so
+masking silently did nothing — corrected to center_lat/center_lng/radius_miles.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Xfza8skNnBXBJCUoYq9sw9
+---
+ web/app/api/share/[token]/route.ts            | 15 ++-
+ web/app/api/trips/route.ts                    | 17 +++-
+ web/app/api/weather/radar-frames/route.ts     | 35 +++++++
+ .../radar/[frame]/[z]/[x]/[y]/route.ts        | 52 ++++++++++
+ web/app/dashboard/events/[id]/page.tsx        |  5 +-
+ web/app/dashboard/events/[id]/track/page.tsx  | 11 ++-
+ web/app/dashboard/settings/privacy/page.tsx   | 16 +++-
+ web/app/share/[token]/page.tsx                |  5 +-
+ web/app/share/[token]/story/page.tsx          | 29 ++++--
+ web/components/LiveEventMap.tsx               |  4 +
+ web/components/TrackingMap.tsx                | 95 ++++++++++++++++++-
+ .../migrations/034_plan_entitlements.sql      | 86 +++++++++++++++++
+ 12 files changed, 349 insertions(+), 21 deletions(-)
+ create mode 100644 web/app/api/weather/radar-frames/route.ts
+ create mode 100644 web/app/api/weather/radar/[frame]/[z]/[x]/[y]/route.ts
+ create mode 100644 web/supabase/migrations/034_plan_entitlements.sql
+
+diff --git a/web/app/api/share/[token]/route.ts b/web/app/api/share/[token]/route.ts
+index 61cac4d..17108f0 100644
+--- a/web/app/api/share/[token]/route.ts
++++ b/web/app/api/share/[token]/route.ts
+@@ -49,15 +49,18 @@ export async function GET(
+     .eq("trip_id", trip.id)
+     .order("recorded_at", { ascending: true });
+ 
+-  // Load privacy zones for the trip owner and mask points inside them
++  // Load privacy zones for the trip owner and mask points inside them. The
++  // columns are center_lat / center_lng / radius_miles (converted to metres).
+   const { data: privacyZones } = await supabase
+     .from("privacy_zones")
+-    .select("lat, lng, radius_m")
++    .select("center_lat, center_lng, radius_miles")
+     .eq("user_id", trip.user_id);
+ 
+   const zones = privacyZones ?? [];
+   const points = (rawPoints ?? []).filter((p) =>
+-    !zones.some((z) => haversineMeters(p.lat, p.lng, z.lat, z.lng) <= z.radius_m)
++    !zones.some(
++      (z) => haversineMeters(p.lat, p.lng, z.center_lat, z.center_lng) <= z.radius_miles * 1609.344
++    )
+   );
+ 
+   // Compute basic stats
+@@ -68,6 +71,11 @@ export async function GET(
+     }
+   }
+ 
++  // Branding: a Plus (or Org) owner gets an unbranded share page carrying
++  // their own name instead of the Waypoint wordmark.
++  const { data: branding } = await supabase.rpc("share_branding", { p_user_id: trip.user_id });
++  const b = (branding ?? {}) as { plus?: boolean; name?: string | null };
++
+   return NextResponse.json({
+     trip: {
+       id: trip.id,
+@@ -77,6 +85,7 @@ export async function GET(
+       ended_at: trip.ended_at,
+       share_token: trip.share_token,
+     },
++    branding: { plus: b.plus === true, name: b.name ?? null },
+     points: points ?? [],
+     stats: {
+       point_count: points?.length ?? 0,
+diff --git a/web/app/api/trips/route.ts b/web/app/api/trips/route.ts
+index 46d2154..1c94040 100644
+--- a/web/app/api/trips/route.ts
++++ b/web/app/api/trips/route.ts
+@@ -8,15 +8,28 @@ export async function GET() {
+   const { data: { user } } = await supabase.auth.getUser();
+   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+ 
+-  const { data, error } = await supabase
++  // Ride-history retention is a paid perk: Free accounts see the last 30 days,
++  // any paid plan (Individual / Plus / Org) keeps the full history. A single
++  // shared trip stays reachable by its own link regardless — this only caps
++  // what shows in the owner's history list.
++  const { data: paid } = await supabase.rpc("user_has_paid_plan", { p_user_id: user.id });
++
++  let query = supabase
+     .from("trips")
+     .select("*")
+     .eq("user_id", user.id)
+     .is("deleted_at", null)
+     .order("created_at", { ascending: false });
+ 
++  if (paid !== true) {
++    const cutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
++    query = query.gte("created_at", cutoff);
++  }
++
++  const { data, error } = await query;
++
+   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+-  return NextResponse.json(data);
++  return NextResponse.json(data ?? []);
+ }
+ 
+ // POST /api/trips — create a new trip
+diff --git a/web/app/api/weather/radar-frames/route.ts b/web/app/api/weather/radar-frames/route.ts
+new file mode 100644
+index 0000000..baa12a9
+--- /dev/null
++++ b/web/app/api/weather/radar-frames/route.ts
+@@ -0,0 +1,35 @@
++import { NextResponse } from "next/server";
++
++// Radar timelapse frame index (RainViewer public API — free, no key). Returns
++// the recent past frames plus short-range nowcast so the client can animate a
++// loop. Proxied so the browser only talks to our origin, and cached ~2 min
++// (RainViewer regenerates roughly every 10 min).
++export const runtime = "edge";
++
++type Frame = { time: number; key: string };
++
++function json(body: unknown, maxAge: number) {
++  return NextResponse.json(body, {
++    headers: { "cache-control": `public, s-maxage=${maxAge}, max-age=${maxAge}, stale-while-revalidate=600` },
++  });
++}
++
++export async function GET() {
++  try {
++    const r = await fetch("https://api.rainviewer.com/public/weather-maps.json", { cache: "no-store" });
++    if (!r.ok) return json({ frames: [] as Frame[] }, 60);
++    const j = (await r.json()) as {
++      radar?: { past?: { time: number; path: string }[]; nowcast?: { time: number; path: string }[] };
++    };
++    // The tile-path token is the trailing segment of `path` (e.g. "/v2/radar/1699999999").
++    const toFrame = (f: { time: number; path: string }): Frame | null => {
++      const key = f.path.split("/").filter(Boolean).pop() ?? "";
++      return /^[A-Za-z0-9_]+$/.test(key) ? { time: f.time, key } : null;
++    };
++    const past = (j.radar?.past ?? []).map(toFrame).filter(Boolean) as Frame[];
++    const nowcast = (j.radar?.nowcast ?? []).map(toFrame).filter(Boolean) as Frame[];
++    return json({ frames: [...past, ...nowcast] }, 120);
++  } catch {
++    return json({ frames: [] as Frame[] }, 60);
++  }
++}
+diff --git a/web/app/api/weather/radar/[frame]/[z]/[x]/[y]/route.ts b/web/app/api/weather/radar/[frame]/[z]/[x]/[y]/route.ts
+new file mode 100644
+index 0000000..bb757e8
+--- /dev/null
++++ b/web/app/api/weather/radar/[frame]/[z]/[x]/[y]/route.ts
+@@ -0,0 +1,52 @@
++import { NextRequest } from "next/server";
++
++// Radar timelapse tiles (RainViewer). `frame` is one of the keys returned by
++// /api/weather/radar-frames. Proxied + CDN-cached so the browser never hits
++// RainViewer directly and each frame's tiles are held briefly.
++export const runtime = "edge";
++
++const HOST = "https://tilecache.rainviewer.com";
++// size / color(2 = Universal Blue) / options(1_1 = smooth + snow).
++const TILE = (frame: string, z: string, x: string, y: string) =>
++  `${HOST}/v2/radar/${frame}/256/${z}/${x}/${y}/2/1_1.png`;
++
++// 1x1 transparent PNG fallback so the map degrades to "no overlay" on failure.
++const BLANK = Uint8Array.from(
++  atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="),
++  (c) => c.charCodeAt(0)
++);
++function blank(maxAge = 60) {
++  return new Response(BLANK, {
++    status: 200,
++    headers: { "content-type": "image/png", "cache-control": `public, max-age=${maxAge}` },
++  });
++}
++
++export async function GET(
++  _req: NextRequest,
++  { params }: { params: Promise<{ frame: string; z: string; x: string; y: string }> | { frame: string; z: string; x: string; y: string } }
++) {
++  const { frame, z, x, y } = await Promise.resolve(params);
++
++  // Strict validation — no SSRF via the path params.
++  if (
++    !/^[A-Za-z0-9_]+$/.test(frame) ||
++    !/^\d{1,2}$/.test(z) || !/^\d{1,7}$/.test(x) || !/^\d{1,7}$/.test(y)
++  ) {
++    return blank(60);
++  }
++
++  try {
++    const upstream = await fetch(TILE(frame, z, x, y), { cache: "no-store" });
++    if (!upstream.ok) return blank(60);
++    return new Response(upstream.body, {
++      status: 200,
++      headers: {
++        "content-type": "image/png",
++        "cache-control": "public, s-maxage=600, max-age=600, stale-while-revalidate=1200",
++      },
++    });
++  } catch {
++    return blank(60);
++  }
++}
+diff --git a/web/app/dashboard/events/[id]/page.tsx b/web/app/dashboard/events/[id]/page.tsx
+index a67702d..9f3d046 100644
+--- a/web/app/dashboard/events/[id]/page.tsx
++++ b/web/app/dashboard/events/[id]/page.tsx
+@@ -80,6 +80,7 @@ export default function EventDetailPage() {
+   const [riders, setRiders] = useState<Rider[]>([]);
+   const [myGepToken, setMyGepToken] = useState<string | null>(null);
+   const [isOrganizer, setIsOrganizer] = useState(false);
++  const [hasPlus, setHasPlus] = useState(false);
+   const [credentials, setCredentials] = useState<GepCredential[]>([]);
+   const [accessLog, setAccessLog] = useState<AccessEntry[]>([]);
+   const [tab, setTab] = useState<Tab>("map");
+@@ -146,6 +147,8 @@ export default function EventDetailPage() {
+       if (!sess) { router.push("/auth/login"); return; }
+       setSession(sess);
+       load(sess);
++      supabase.rpc("user_has_plus", { p_user_id: sess.user.id })
++        .then(({ data }) => setHasPlus(data === true));
+     });
+   }, []);
+ 
+@@ -656,7 +659,7 @@ export default function EventDetailPage() {
+       {/* ── MAP TAB ── */}
+       {tab === "map" && (
+         <div style={{ flex: 1, minHeight: 0 }}>
+-          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} />
++          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} weather={hasPlus} />
+         </div>
+       )}
+ 
+diff --git a/web/app/dashboard/events/[id]/track/page.tsx b/web/app/dashboard/events/[id]/track/page.tsx
+index 94c16c1..91fef2e 100644
+--- a/web/app/dashboard/events/[id]/track/page.tsx
++++ b/web/app/dashboard/events/[id]/track/page.tsx
+@@ -5,6 +5,7 @@ import Link from "next/link";
+ import { authFetch } from "../../../../../lib/authFetch";
+ import LiveEventMap from "../../../../../components/LiveEventMap";
+ import EventShareLinks from "../../../../../components/EventShareLinks";
++import { getSupabaseClient } from "@/lib/supabase/client";
+ import { theme, font } from "../../../../../lib/theme";
+ 
+ /**
+@@ -27,6 +28,7 @@ export default function EventTrackPage({
+   const [event, setEvent] = useState<{ name: string; share_token: string; status: string } | null>(null);
+   const [error, setError] = useState<string | null>(null);
+   const [origin, setOrigin] = useState("");
++  const [hasPlus, setHasPlus] = useState(false);
+   const isMobile = useIsMobile(640);
+ 
+   useEffect(() => {
+@@ -38,6 +40,13 @@ export default function EventTrackPage({
+         setEvent(d.event ?? d);
+       })
+       .catch((e) => setError(e.message));
++    const supabase = getSupabaseClient();
++    supabase.auth.getSession().then(({ data: { session } }) => {
++      if (session?.user) {
++        supabase.rpc("user_has_plus", { p_user_id: session.user.id })
++          .then(({ data }) => setHasPlus(data === true));
++      }
++    });
+   }, [id]);
+ 
+   if (error) {
+@@ -114,7 +123,7 @@ export default function EventTrackPage({
+       </header>
+ 
+       <main style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto" }}>
+-        {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} />}
++        {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} weather={hasPlus} />}
+         {tab === "share" && (
+           <div style={{ padding: 24, maxWidth: 800 }}>
+             <EventShareLinks eventId={id} shareToken={event.share_token} origin={origin} />
+diff --git a/web/app/dashboard/settings/privacy/page.tsx b/web/app/dashboard/settings/privacy/page.tsx
+index 5c850c6..ab7ba7a 100644
+--- a/web/app/dashboard/settings/privacy/page.tsx
++++ b/web/app/dashboard/settings/privacy/page.tsx
+@@ -40,6 +40,7 @@ export default function PrivacyZonesPage() {
+   const map = useRef<mapboxgl.Map | null>(null);
+   const marker = useRef<mapboxgl.Marker | null>(null);
+   const [uid, setUid] = useState<string | null>(null);
++  const [paid, setPaid] = useState<boolean | null>(null);
+   const [zones, setZones] = useState<Zone[]>([]);
+   const [name, setName] = useState("");
+   const [radius, setRadius] = useState(0.5);
+@@ -58,6 +59,8 @@ export default function PrivacyZonesPage() {
+       if (!session?.user) { window.location.href = "/auth/login"; return; }
+       setUid(session.user.id);
+       loadZones(session.user.id);
++      supabase.rpc("user_has_paid_plan", { p_user_id: session.user.id })
++        .then(({ data }) => setPaid(data === true));
+     });
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
+@@ -100,6 +103,7 @@ export default function PrivacyZonesPage() {
+ 
+   async function saveZone() {
+     if (!uid || !center || !name.trim()) return;
++    if (paid === false) { window.location.href = "/dashboard?upgrade=1"; return; }
+     setSaving(true);
+     const { error } = await supabase.from("privacy_zones").insert({
+       user_id: uid, name: name.trim(), center_lat: center.lat, center_lng: center.lng, radius_miles: radius,
+@@ -134,7 +138,17 @@ export default function PrivacyZonesPage() {
+           Mark a circle around a place you want kept private — home, work. While you&apos;re inside it, your live position is hidden from shared maps. Click the map to set a center, set a radius, and save.
+         </p>
+ 
+-        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr", marginBottom: 24 }}>
++        {paid === false && (
++          <div style={{ background: theme.surface, border: `1px solid ${theme.track}`, borderRadius: 8, padding: "16px 18px", margin: "0 0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
++            <div style={{ maxWidth: 520 }}>
++              <div style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, marginBottom: 4 }}>Privacy zones are an Individual feature</div>
++              <div style={{ color: theme.muted, fontSize: text.sm, lineHeight: 1.5 }}>Upgrade to Individual ($15/yr) to hide your home or start point on every shared map. Any zones you already created still work.</div>
++            </div>
++            <Link href="/dashboard?upgrade=1" style={{ background: theme.track, color: theme.accentInk, padding: "10px 18px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 6, whiteSpace: "nowrap" }}>Upgrade · $15/yr</Link>
++          </div>
++        )}
++
++        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr", marginBottom: 24, opacity: paid === false ? 0.5 : 1, pointerEvents: paid === false ? "none" : "auto" }}>
+           <div ref={container} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden", border: `1px solid ${theme.hairline}` }} />
+           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Zone name (e.g. Home)"
+diff --git a/web/app/share/[token]/page.tsx b/web/app/share/[token]/page.tsx
+index dfd743a..e2bad69 100644
+--- a/web/app/share/[token]/page.tsx
++++ b/web/app/share/[token]/page.tsx
+@@ -15,6 +15,7 @@ interface TripData {
+   trip: { id: string; name: string; status: string; started_at: string; ended_at: string; share_token: string };
+   points: { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string; source: string }[];
+   stats: { point_count: number; distance_km: number; duration_minutes: number | null };
++  branding?: { plus: boolean; name: string | null };
+ }
+ 
+ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+@@ -223,7 +224,9 @@ export default function SharePage() {
+       {/* Header */}
+       <div style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+         <div>
+-          <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint</p>
++          <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>
++            {data.branding?.plus ? (data.branding.name || "Live tracking") : "Waypoint"}
++          </p>
+           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0", color: "#fff" }}>{data.trip.name}</h1>
+         </div>
+         <div style={{ display: "flex", gap: 8 }}>
+diff --git a/web/app/share/[token]/story/page.tsx b/web/app/share/[token]/story/page.tsx
+index f0b220a..73dc103 100644
+--- a/web/app/share/[token]/story/page.tsx
++++ b/web/app/share/[token]/story/page.tsx
+@@ -15,6 +15,7 @@ interface TripData {
+   trip: { id: string; name: string; status: string; started_at: string | null; ended_at: string | null };
+   points: { lat: number; lng: number; altitude_m: number | null; speed_kmh: number | null; recorded_at: string }[];
+   stats: { point_count: number; distance_km: number; duration_minutes: number | null };
++  branding?: { plus: boolean; name: string | null };
+ }
+ 
+ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
+@@ -188,9 +189,15 @@ export default function StoryPage() {
+ 
+       {/* Nav */}
+       <nav style={{ background: "#0C1E29", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+-          Waypoint
+-        </Link>
++        {data.branding?.plus ? (
++          <span style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase" }}>
++            {data.branding.name || "Trip Story"}
++          </span>
++        ) : (
++          <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
++            Waypoint
++          </Link>
++        )}
+         <Link
+           href={`/share/${token}`}
+           style={{ background: "#CCFF00", color: "#0C1E29", padding: "7px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+@@ -264,19 +271,21 @@ export default function StoryPage() {
+           >
+             View Live Map
+           </Link>
+-          <Link
+-            href="/auth/signup"
+-            style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+-          >
+-            Track Your Own Trip
+-          </Link>
++          {!data.branding?.plus && (
++            <Link
++              href="/auth/signup"
++              style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
++            >
++              Track Your Own Trip
++            </Link>
++          )}
+         </div>
+       </div>
+ 
+       {/* Footer */}
+       <footer style={{ background: "#0f1923", padding: "20px 24px", textAlign: "center" }}>
+         <p style={{ fontSize: text.xs, color: "#1E3B4C", fontWeight: 300, margin: 0 }}>
+-          © {new Date().getFullYear()} Waypoint · We never sell your location data. Ever.
++          © {new Date().getFullYear()} {data.branding?.plus ? (data.branding.name || "") : "Waypoint · "}We never sell your location data. Ever.
+         </p>
+       </footer>
+ 
+diff --git a/web/components/LiveEventMap.tsx b/web/components/LiveEventMap.tsx
+index c9b65cb..11a0774 100644
+--- a/web/components/LiveEventMap.tsx
++++ b/web/components/LiveEventMap.tsx
+@@ -22,6 +22,8 @@ interface Props {
+   refreshMs?: number;
+   /** Organizer view of this event — enables the emergency-info popup. */
+   organizerEventId?: string;
++  /** Show weather + animated-radar overlay (Plus / Org perk). */
++  weather?: boolean;
+ }
+ 
+ export default function LiveEventMap({
+@@ -29,6 +31,7 @@ export default function LiveEventMap({
+   compact = false,
+   refreshMs = 30_000,
+   organizerEventId,
++  weather = false,
+ }: Props) {
+   const [event, setEvent] = useState<EventMeta | null>(null);
+   const [stages, setStages] = useState<StageLine[]>([]);
+@@ -393,6 +396,7 @@ export default function LiveEventMap({
+           selectedTrack={track}
+           organizerEventId={organizerEventId}
+           focusEntrantId={sosFocus}
++          weather={weather}
+         />
+       </div>
+     </div>
+diff --git a/web/components/TrackingMap.tsx b/web/components/TrackingMap.tsx
+index d803cd6..7d8ffa7 100644
+--- a/web/components/TrackingMap.tsx
++++ b/web/components/TrackingMap.tsx
+@@ -73,6 +73,9 @@ interface Props {
+   organizerEventId?: string;
+   commandMode?: boolean;
+   focusEntrantId?: string;
++  /** Show the weather + animated-radar overlay controls. Plus / Org perk —
++   *  the caller passes the viewer's entitlement. Off everywhere by default. */
++  weather?: boolean;
+ }
+ 
+ type Status = "live" | "stale" | "dark" | "no_fix";
+@@ -110,6 +113,7 @@ export default function TrackingMap({
+   organizerEventId,
+   commandMode = false,
+   focusEntrantId,
++  weather = false,
+ }: Props) {
+   const container = useRef<HTMLDivElement>(null);
+   const map = useRef<mapboxgl.Map | null>(null);
+@@ -126,6 +130,12 @@ export default function TrackingMap({
+   const [ready, setReady] = useState(false);
+   const [weatherRain, setWeatherRain] = useState(false);
+   const [weatherTemp, setWeatherTemp] = useState(false);
++  // Animated radar timelapse (RainViewer). radarOn toggles the layer; frames
++  // are the recent past + nowcast; radarIdx is the frame currently painted.
++  const [radarOn, setRadarOn] = useState(false);
++  const [radarPlaying, setRadarPlaying] = useState(true);
++  const [radarFrames, setRadarFrames] = useState<{ time: number; key: string }[]>([]);
++  const [radarIdx, setRadarIdx] = useState(0);
+ 
+   // Keep the latest measuring state reachable from the map click handler,
+   // which is registered once and would otherwise close over a stale value.
+@@ -599,6 +609,60 @@ export default function TrackingMap({
+     sync("wx-rain", "precipitation", weatherRain, 1);
+   }, [weatherRain, weatherTemp, ready, layerId]);
+ 
++  // ── Radar timelapse (RainViewer, proxied) ─────────────────────
++  // Fetch the frame index the first time the animation is switched on.
++  useEffect(() => {
++    if (!radarOn || radarFrames.length > 0) return;
++    let cancelled = false;
++    fetch("/api/weather/radar-frames")
++      .then((r) => (r.ok ? r.json() : null))
++      .then((d) => {
++        if (cancelled || !d?.frames?.length) return;
++        setRadarFrames(d.frames as { time: number; key: string }[]);
++        setRadarIdx(d.frames.length - 1); // start on the most recent frame
++      })
++      .catch(() => {});
++    return () => { cancelled = true; };
++  }, [radarOn, radarFrames.length]);
++
++  // Add / update / remove the radar raster layer, swapping tiles per frame.
++  useEffect(() => {
++    const m = map.current;
++    if (!m || !ready) return;
++
++    const OVERLAYS = ["event-route", "entrant-track", "stage-waypoints", "measure-"];
++    const beforeId = m.getStyle().layers?.find((l) =>
++      OVERLAYS.some((pfx) => l.id.startsWith(pfx))
++    )?.id;
++
++    const frame = radarFrames[radarIdx];
++    if (radarOn && frame) {
++      const tiles = [`/api/weather/radar/${frame.key}/{z}/{x}/{y}`];
++      const src = m.getSource("wx-radar") as (mapboxgl.RasterTileSource & { setTiles?: (t: string[]) => void }) | undefined;
++      if (!src) {
++        m.addSource("wx-radar", { type: "raster", tiles, tileSize: 256 });
++        m.addLayer(
++          { id: "wx-radar", type: "raster", source: "wx-radar", paint: { "raster-opacity": 0.75 } },
++          beforeId && m.getLayer(beforeId) ? beforeId : undefined
++        );
++      } else if (src.setTiles) {
++        src.setTiles(tiles);
++      }
++    } else {
++      if (m.getLayer("wx-radar")) m.removeLayer("wx-radar");
++      if (m.getSource("wx-radar")) m.removeSource("wx-radar");
++    }
++  }, [radarOn, radarIdx, radarFrames, ready, layerId]);
++
++  // Advance the frame while playing.
++  useEffect(() => {
++    if (!radarOn || !radarPlaying || radarFrames.length < 2) return;
++    const iv = setInterval(() => {
++      setRadarIdx((i) => (i + 1) % radarFrames.length);
++    }, 650);
++    return () => clearInterval(iv);
++  }, [radarOn, radarPlaying, radarFrames.length]);
++
+   // ── Measurement overlay ───────────────────────────────────────
+   useEffect(() => {
+     const m = map.current;
+@@ -681,7 +745,7 @@ export default function TrackingMap({
+           aria-expanded={layerMenuOpen}
+         >
+           {getLayer(layerId).name}
+-          {(weatherRain || weatherTemp) && (
++          {(weatherRain || weatherTemp || radarOn) && (
+             <span style={{ marginLeft: 6, color: theme.accent, fontSize: text.xxs, fontWeight: 700 }}>● WX</span>
+           )}
+           <span style={{ marginLeft: 6, opacity: 0.6 }}>▾</span>
+@@ -705,6 +769,7 @@ export default function TrackingMap({
+                 </div>
+               </button>
+             ))}
++            {weather && (
+             <div style={{ borderTop: `1px solid ${theme.hairline}`, marginTop: 4 }}>
+               <div style={{ padding: "8px 12px 4px", fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted }}>
+                 Weather overlay
+@@ -712,6 +777,7 @@ export default function TrackingMap({
+               {([
+                 ["Rain", weatherRain, () => setWeatherRain((v) => !v)],
+                 ["Temperature", weatherTemp, () => setWeatherTemp((v) => !v)],
++                ["Radar (animated)", radarOn, () => setRadarOn((v) => !v)],
+               ] as [string, boolean, () => void][]).map(([label, on, toggle]) => (
+                 <button
+                   key={label}
+@@ -731,9 +797,10 @@ export default function TrackingMap({
+                 </button>
+               ))}
+               <div style={{ padding: "4px 12px 8px", fontSize: text.xxs, color: theme.muted }}>
+-                OpenWeather · refreshes ~10 min
++                OpenWeather · radar by RainViewer · ~10 min
+               </div>
+             </div>
++            )}
+           </div>
+         )}
+         </div>
+@@ -794,6 +861,30 @@ export default function TrackingMap({
+         </div>
+       )}
+ 
++      {/* Radar timelapse transport — play/pause, scrub, and the frame time */}
++      {weather && radarOn && radarFrames.length > 0 && (
++        <div style={{ position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)", zIndex: 2, background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, minWidth: 240, boxShadow: "0 2px 10px rgba(0,0,0,.4)" }}>
++          <button
++            onClick={() => setRadarPlaying((v) => !v)}
++            aria-label={radarPlaying ? "Pause radar" : "Play radar"}
++            style={{ background: theme.surfaceHi, color: theme.accent, border: `1px solid ${theme.hairline}`, borderRadius: 4, width: 28, height: 28, cursor: "pointer", fontSize: 12, flexShrink: 0, lineHeight: 1 }}
++          >
++            {radarPlaying ? "❚❚" : "▶"}
++          </button>
++          <input
++            type="range"
++            min={0}
++            max={radarFrames.length - 1}
++            value={radarIdx}
++            onChange={(e) => { setRadarPlaying(false); setRadarIdx(Number(e.target.value)); }}
++            style={{ flex: 1, accentColor: theme.accent as string, cursor: "pointer" }}
++          />
++          <span style={{ font: `700 11px ${font.sans}`, color: theme.ink, whiteSpace: "nowrap", minWidth: 52, textAlign: "right" }}>
++            {radarFrames[radarIdx] ? new Date(radarFrames[radarIdx].time * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}
++          </span>
++        </div>
++      )}
++
+       {/* Attribution for non-Mapbox rasters */}
+       <div
+         style={{
+diff --git a/web/supabase/migrations/034_plan_entitlements.sql b/web/supabase/migrations/034_plan_entitlements.sql
+new file mode 100644
+index 0000000..0e6a980
+--- /dev/null
++++ b/web/supabase/migrations/034_plan_entitlements.sql
+@@ -0,0 +1,86 @@
++-- 034_plan_entitlements.sql
++-- Turn the pricing tiers into real entitlements. Until now every personal
++-- feature was open to any signed-in user, so the $15 / $29 subscriptions
++-- unlocked nothing. This adds plan-aware helpers and gates the paid features:
++--
++--   Free            → live share, group of 10, ICE, trip stories, last 30 days
++--                     of ride history
++--   Individual $15  → unlimited ride history + privacy zones
++--   Individual Plus → everything in Individual + weather/radar + radar
++--     $29             timelapse + an unbranded (custom) share page
++--
++-- An active Org plan includes the personal perks for the organizer's own
++-- account, so the helpers below treat Org as >= Plus.
++
++-- ── Which personal plan does this user hold? ───────────────────────────────
++-- 'plus' | 'individual' | 'none'. Looks only at the personal subscription;
++-- Org is folded in by the boolean helpers below, not here.
++create or replace function public.user_plan(p_user_id uuid)
++returns text language sql security definer set search_path = public as $$
++  select case
++    when exists (
++      select 1 from user_subscriptions s
++      where s.user_id = p_user_id
++        and s.status = 'active'
++        and (s.current_period_end is null or s.current_period_end > now())
++        and s.plan = 'individual_plus'
++    ) then 'plus'
++    when exists (
++      select 1 from user_subscriptions s
++      where s.user_id = p_user_id
++        and s.status = 'active'
++        and (s.current_period_end is null or s.current_period_end > now())
++    ) then 'individual'
++    else 'none'
++  end;
++$$;
++grant execute on function public.user_plan(uuid) to anon, authenticated;
++
++-- Any paid personal plan (Individual or Plus), OR an active Org plan.
++-- Gates: unlimited ride history, privacy zones.
++create or replace function public.user_has_paid_plan(p_user_id uuid)
++returns boolean language sql security definer set search_path = public as $$
++  select public.user_has_subscription(p_user_id)
++      or coalesce(public.user_has_org(p_user_id), false);
++$$;
++grant execute on function public.user_has_paid_plan(uuid) to anon, authenticated;
++
++-- Plus-level entitlement: an active Individual Plus sub, OR an active Org plan.
++-- Gates: weather/radar overlay, radar timelapse, unbranded share page.
++create or replace function public.user_has_plus(p_user_id uuid)
++returns boolean language sql security definer set search_path = public as $$
++  select public.user_plan(p_user_id) = 'plus'
++      or coalesce(public.user_has_org(p_user_id), false);
++$$;
++grant execute on function public.user_has_plus(uuid) to anon, authenticated;
++
++-- ── Public share-page branding ─────────────────────────────────────────────
++-- The share link is served by an anon client, so it can't read the owner's
++-- subscription (RLS) directly. This SECURITY DEFINER helper returns just what
++-- the public page needs: whether the owner gets the unbranded page, and the
++-- name to show in place of the Waypoint wordmark.
++create or replace function public.share_branding(p_user_id uuid)
++returns jsonb language sql security definer set search_path = public as $$
++  select jsonb_build_object(
++    'plus', public.user_has_plus(p_user_id),
++    'name', (select display_name from profiles where id = p_user_id)
++  );
++$$;
++grant execute on function public.share_branding(uuid) to anon, authenticated;
++
++-- ── Privacy zones become a paid feature ────────────────────────────────────
++-- Existing zones keep working (read / update / delete stay open to the owner),
++-- but creating a NEW zone now requires a paid plan. Replaces the single
++-- for-all policy from the base schema.
++drop policy if exists "Users manage own privacy zones" on public.privacy_zones;
++
++create policy "own zones read" on public.privacy_zones
++  for select using (auth.uid() = user_id);
++create policy "own zones update" on public.privacy_zones
++  for update using (auth.uid() = user_id);
++create policy "own zones delete" on public.privacy_zones
++  for delete using (auth.uid() = user_id);
++create policy "paid zones insert" on public.privacy_zones
++  for insert with check (
++    auth.uid() = user_id and public.user_has_paid_plan(auth.uid())
++  );
+-- 
+2.43.0
+

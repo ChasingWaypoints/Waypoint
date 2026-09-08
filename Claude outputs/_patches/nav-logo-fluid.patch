@@ -1,0 +1,28 @@
+diff --git a/web/components/SiteNav.tsx b/web/components/SiteNav.tsx
+index 6ae16e5..75adaa5 100644
+--- a/web/components/SiteNav.tsx
++++ b/web/components/SiteNav.tsx
+@@ -26,9 +26,12 @@ export function SiteNav() {
+         .wpnav { position: relative; z-index: 30; display: flex; align-items: center;
+           justify-content: space-between; padding: 16px 22px;
+           border-bottom: 1px solid #1E3B4C; background: #0C1E29; }
+-        .wpnav-brand { display: inline-flex; align-items: center; gap: 11px; color: #fff;
+-          font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+-          text-decoration: none; font-size: 22px; line-height: 1; }
++        /* Fluid brand: logo + wordmark scale with the viewport (bigger on wide
++           screens, comfortably smaller on phones) instead of a fixed size. */
++        .wpnav-brand { display: inline-flex; align-items: center; gap: clamp(9px, 1vw, 13px);
++          color: #fff; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
++          text-decoration: none; font-size: clamp(20px, 2.2vw, 30px); line-height: 1; }
++        .wpnav-brand svg { width: clamp(30px, 3.2vw, 44px); height: clamp(30px, 3.2vw, 44px); }
+         .wpnav-links { display: flex; align-items: center; gap: 4px; }
+         .wpnav-link { color: #C8D4DC; font-size: 15px; font-weight: 600;
+           text-decoration: none; padding: 9px 14px; border-radius: 5px; }
+@@ -45,7 +48,6 @@ export function SiteNav() {
+         @media (max-width: 780px) {
+           .wpnav-links { display: none; }
+           .wpnav-burger { display: inline-flex; }
+-          .wpnav-brand { font-size: 21px; }
+           .wpnav-sheet { display: block; position: absolute; top: 100%; left: 0; right: 0;
+             z-index: 40; background: #0C1E29; border-bottom: 1px solid #1E3B4C;
+             box-shadow: 0 12px 30px rgba(0,0,0,.45); padding: 8px 14px 16px; }

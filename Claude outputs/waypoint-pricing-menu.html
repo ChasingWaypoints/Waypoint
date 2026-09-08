@@ -1,0 +1,93 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Waypoint — Pricing</title>
+<style>
+  :root{--canvas:#0A0A0A;--surface:#0C1E29;--hair:#24445A;--lime:#CCFF00;--yellow:#FFFE15;--ink:#fff;--body:#C8D4DC;--muted:#8598A5;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  @page{size:8.5in 11in;margin:0;}
+  html,body{background:#000;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .page{width:8.5in;height:11in;background:var(--canvas);color:var(--body);padding:0.5in 0.5in 0.4in;display:flex;flex-direction:column;}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .wm{color:var(--ink);font-weight:800;letter-spacing:3px;font-size:18px;}
+  .disc{width:26px;height:26px;}
+  .kick{color:var(--lime);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+  h1{color:var(--ink);font-size:24px;font-weight:800;letter-spacing:-.5px;margin:2px 0 2px;}
+  .sub{color:var(--muted);font-size:11px;margin-bottom:11px;}
+  .ladder{display:flex;flex-direction:column;gap:9px;}
+  .tier{background:var(--surface);border:1px solid var(--hair);border-left:4px solid;border-radius:8px;padding:11px 16px;}
+  .thead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .tname{color:var(--ink);font-size:16px;font-weight:800;letter-spacing:-.2px;}
+  .ttag{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0;}
+  .tprice{white-space:nowrap;}
+  .amt{font-size:20px;font-weight:800;}
+  .per{color:var(--muted);font-size:11px;font-weight:600;margin-left:3px;}
+  .builds{color:var(--body);font-size:10.5px;font-weight:700;margin:5px 0 6px;}
+  .builds b{color:var(--ink);}
+  .builds.free{color:var(--muted);font-weight:600;}
+  .feats{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;}
+  .feats li{display:flex;gap:7px;align-items:flex-start;color:var(--body);font-size:10.5px;line-height:1.35;}
+  .feats li b{color:var(--ink);}
+  .ck{color:var(--lime);font-weight:800;flex-shrink:0;font-size:10px;line-height:1.5;}
+  .foot{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .foot .note{color:var(--muted);font-size:9.5px;line-height:1.4;max-width:5.2in;}
+  .foot .cta{background:var(--lime);color:#0C1E29;font-weight:800;font-size:12px;padding:9px 15px;border-radius:5px;white-space:nowrap;}
+</style></head><body>
+  <div class="page">
+    <div class="top">
+      <div class="brand">
+        <svg class="disc" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="#CCFF00" stroke="#0C1E29" stroke-width="5"/><text x="32" y="34" text-anchor="middle" dominant-baseline="central" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="26" letter-spacing="-1" fill="#0C1E29">WP</text></svg>
+        <span class="wm">WAYPOINT</span>
+      </div>
+      <span class="kick">Pricing</span>
+    </div>
+    <h1>One live map. Priced to grow with you.</h1>
+    <div class="sub">Start free. Each tier includes everything below it, plus more. Riders keep the beacons they already own.</div>
+    <div class="ladder">
+      
+    <div class="tier" style="border-left-color:#5B6E7A">
+      <div class="thead">
+        <div class="tname">Free<span class="ttag"> · Ride &amp; share.</span></div>
+        <div class="tprice"><span class="amt" style="color:#5B6E7A">$0</span><span class="per">forever</span></div>
+      </div>
+      <div class="builds free">The place to start — free, forever.</div>
+      <ul class="feats"><li><span class="ck">&#10003;</span><span>Live tracking from the beacon you already own — Garmin inReach, SPOT, ZOLEO</span></li><li><span class="ck">&#10003;</span><span>Share your live ride with family &amp; friends — just a link, no app to install</span></li><li><span class="ck">&#10003;</span><span>Start a group ride — up to <b>10 riders</b> on one live map</span></li><li><span class="ck">&#10003;</span><span>Join any event with a code</span></li><li><span class="ck">&#10003;</span><span>Emergency ICE card with QR</span></li></ul>
+    </div>
+    <div class="tier" style="border-left-color:#1FE0A0">
+      <div class="thead">
+        <div class="tname">Individual<span class="ttag"> · For the rider who&rsquo;s always out there.</span></div>
+        <div class="tprice"><span class="amt" style="color:#1FE0A0">$15</span><span class="per">/ year</span></div>
+      </div>
+      <div class="builds">Everything in <b>Free</b>, plus:</div>
+      <ul class="feats"><li><span class="ck">&#10003;</span><span>Unlimited ride history &mdash; every trip kept, not just the last few</span></li><li><span class="ck">&#10003;</span><span>Shareable trip stories &mdash; a replay link of any ride</span></li><li><span class="ck">&#10003;</span><span>Privacy zones — hide your home or start point</span></li><li><span class="ck">&#10003;</span><span>Priority in the RallyTrak cellular tracking apps</span></li></ul>
+    </div>
+    <div class="tier" style="border-left-color:#3AD1FF">
+      <div class="thead">
+        <div class="tname">Individual Plus<span class="ttag"> · For the rider who wants the full picture.</span></div>
+        <div class="tprice"><span class="amt" style="color:#3AD1FF">$29</span><span class="per">/ year</span></div>
+      </div>
+      <div class="builds">Everything in <b>Individual</b>, plus:</div>
+      <ul class="feats"><li><span class="ck">&#10003;</span><span>Live weather &amp; radar overlaid on your map</span></li><li><span class="ck">&#10003;</span><span>Radar timelapse &mdash; see the storm cell move before you ride into it</span></li><li><span class="ck">&#10003;</span><span>Custom share page &mdash; your name &amp; photo, no Waypoint branding</span></li><li><span class="ck">&#10003;</span><span>Priority support &mdash; a real person, fast</span></li></ul>
+    </div>
+    <div class="tier" style="border-left-color:#CCFF00">
+      <div class="thead">
+        <div class="tname">Event<span class="ttag"> · Run a real event.</span></div>
+        <div class="tprice"><span class="amt" style="color:#CCFF00">$200</span><span class="per">/ event</span></div>
+      </div>
+      <div class="builds">Everything in <b>Individual Plus</b>, plus:</div>
+      <ul class="feats"><li><span class="ck">&#10003;</span><span><b>40 rider seats</b> (then +$40 per 10) — or let riders pay to join ($10&ndash;$15 each)</span></li><li><span class="ck">&#10003;</span><span>Command view — a live recovery &amp; race-control map</span></li><li><span class="ck">&#10003;</span><span>Google Earth Pro recovery feed — logged, revocable credentials</span></li><li><span class="ck">&#10003;</span><span>Embed the live map on your own website</span></li><li><span class="ck">&#10003;</span><span>Make it <b>private</b> — no public page, seen only by your team</span></li></ul>
+    </div>
+    <div class="tier" style="border-left-color:#FFFE15">
+      <div class="thead">
+        <div class="tname">Org / Series<span class="ttag"> · For promoters &amp; teams running many events.</span></div>
+        <div class="tprice"><span class="amt" style="color:#FFFE15">$3,500</span><span class="per">/ year</span></div>
+      </div>
+      <div class="builds">Everything in <b>Event</b>, plus:</div>
+      <ul class="feats"><li><span class="ck">&#10003;</span><span><b>1,500-rider pool</b> across unlimited events</span></li><li><span class="ck">&#10003;</span><span>White-label — your logo &amp; colors on every map and embed</span></li><li><span class="ck">&#10003;</span><span>Every event can be private</span></li><li><span class="ck">&#10003;</span><span>Priority support</span></li></ul>
+    </div>
+    </div>
+    <div class="foot">
+      <div class="note">Event &amp; Org are for organizers and include the personal features above for the organizer&rsquo;s own account. Entrant-paid pricing is set by event length (up to 3 days $10 · up to 7 days $12 · up to 30 days $15 per rider).</div>
+      <span class="cta">WaypointTracking.com</span>
+    </div>
+  </div>
+</body></html>
