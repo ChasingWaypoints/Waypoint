@@ -80,6 +80,7 @@ export default function EventDetailPage() {
   const [riders, setRiders] = useState<Rider[]>([]);
   const [myGepToken, setMyGepToken] = useState<string | null>(null);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [hasPlus, setHasPlus] = useState(false);
   const [credentials, setCredentials] = useState<GepCredential[]>([]);
   const [accessLog, setAccessLog] = useState<AccessEntry[]>([]);
   const [tab, setTab] = useState<Tab>("map");
@@ -146,6 +147,8 @@ export default function EventDetailPage() {
       if (!sess) { router.push("/auth/login"); return; }
       setSession(sess);
       load(sess);
+      supabase.rpc("user_has_plus", { p_user_id: sess.user.id })
+        .then(({ data }) => setHasPlus(data === true));
     });
   }, []);
 
@@ -656,7 +659,7 @@ export default function EventDetailPage() {
       {/* ── MAP TAB ── */}
       {tab === "map" && (
         <div style={{ flex: 1, minHeight: 0 }}>
-          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} />
+          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} weather={hasPlus} />
         </div>
       )}
 

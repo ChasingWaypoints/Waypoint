@@ -49,15 +49,18 @@ export async function GET(
     .eq("trip_id", trip.id)
     .order("recorded_at", { ascending: true });
 
-  // Load privacy zones for the trip owner and mask points inside them
+  // Load privacy zones for the trip owner and mask points inside them. The
+  // columns are center_lat / center_lng / radius_miles (converted to metres).
   const { data: privacyZones } = await supabase
     .from("privacy_zones")
-    .select("lat, lng, radius_m")
+    .select("center_lat, center_lng, radius_miles")
     .eq("user_id", trip.user_id);
 
   const zones = privacyZones ?? [];
   const points = (rawPoints ?? []).filter((p) =>
-    !zones.some((z) => haversineMeters(p.lat, p.lng, z.lat, z.lng) <= z.radius_m)
+    !zones.some(
+      (z) => haversineMeters(p.lat, p.lng, z.center_lat, z.center_lng) <= z.radius_miles * 1609.344
+    )
   );
 
   // Compute basic stats
@@ -68,6 +71,11 @@ export async function GET(
     }
   }
 
+  // Branding: a Plus (or Org) owner gets an unbranded share page carrying
+  // their own name instead of the Waypoint wordmark.
+  const { data: branding } = await supabase.rpc("share_branding", { p_user_id: trip.user_id });
+  const b = (branding ?? {}) as { plus?: boolean; name?: string | null };
+
   return NextResponse.json({
     trip: {
       id: trip.id,
@@ -77,6 +85,7 @@ export async function GET(
       ended_at: trip.ended_at,
       share_token: trip.share_token,
     },
+    branding: { plus: b.plus === true, name: b.name ?? null },
     points: points ?? [],
     stats: {
       point_count: points?.length ?? 0,

@@ -15,6 +15,7 @@ interface TripData {
   trip: { id: string; name: string; status: string; started_at: string; ended_at: string; share_token: string };
   points: { lat: number; lng: number; altitude_m: number; speed_kmh: number; recorded_at: string; source: string }[];
   stats: { point_count: number; distance_km: number; duration_minutes: number | null };
+  branding?: { plus: boolean; name: string | null };
 }
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -223,7 +224,9 @@ export default function SharePage() {
       {/* Header */}
       <div style={{ background: "#CCFF00", color: "#0C1E29", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
-          <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>Waypoint</p>
+          <p style={{ fontSize: text.xxs, fontWeight: 700, letterSpacing: 1.5, color: "#C8D4DC", textTransform: "uppercase", margin: 0 }}>
+            {data.branding?.plus ? (data.branding.name || "Live tracking") : "Waypoint"}
+          </p>
           <h1 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 0", color: "#fff" }}>{data.trip.name}</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>

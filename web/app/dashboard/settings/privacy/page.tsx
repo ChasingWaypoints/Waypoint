@@ -40,6 +40,7 @@ export default function PrivacyZonesPage() {
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [uid, setUid] = useState<string | null>(null);
+  const [paid, setPaid] = useState<boolean | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
   const [name, setName] = useState("");
   const [radius, setRadius] = useState(0.5);
@@ -58,6 +59,8 @@ export default function PrivacyZonesPage() {
       if (!session?.user) { window.location.href = "/auth/login"; return; }
       setUid(session.user.id);
       loadZones(session.user.id);
+      supabase.rpc("user_has_paid_plan", { p_user_id: session.user.id })
+        .then(({ data }) => setPaid(data === true));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -100,6 +103,7 @@ export default function PrivacyZonesPage() {
 
   async function saveZone() {
     if (!uid || !center || !name.trim()) return;
+    if (paid === false) { window.location.href = "/dashboard?upgrade=1"; return; }
     setSaving(true);
     const { error } = await supabase.from("privacy_zones").insert({
       user_id: uid, name: name.trim(), center_lat: center.lat, center_lng: center.lng, radius_miles: radius,
@@ -134,7 +138,17 @@ export default function PrivacyZonesPage() {
           Mark a circle around a place you want kept private — home, work. While you&apos;re inside it, your live position is hidden from shared maps. Click the map to set a center, set a radius, and save.
         </p>
 
-        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr", marginBottom: 24 }}>
+        {paid === false && (
+          <div style={{ background: theme.surface, border: `1px solid ${theme.track}`, borderRadius: 8, padding: "16px 18px", margin: "0 0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ maxWidth: 520 }}>
+              <div style={{ color: theme.ink, fontWeight: 700, fontSize: text.md, marginBottom: 4 }}>Privacy zones are an Individual feature</div>
+              <div style={{ color: theme.muted, fontSize: text.sm, lineHeight: 1.5 }}>Upgrade to Individual ($15/yr) to hide your home or start point on every shared map. Any zones you already created still work.</div>
+            </div>
+            <Link href="/dashboard?upgrade=1" style={{ background: theme.track, color: theme.accentInk, padding: "10px 18px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 6, whiteSpace: "nowrap" }}>Upgrade · $15/yr</Link>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr", marginBottom: 24, opacity: paid === false ? 0.5 : 1, pointerEvents: paid === false ? "none" : "auto" }}>
           <div ref={container} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden", border: `1px solid ${theme.hairline}` }} />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Zone name (e.g. Home)"

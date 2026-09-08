@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authFetch } from "../../../../../lib/authFetch";
 import LiveEventMap from "../../../../../components/LiveEventMap";
 import EventShareLinks from "../../../../../components/EventShareLinks";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { theme, font } from "../../../../../lib/theme";
 
 /**
@@ -27,6 +28,7 @@ export default function EventTrackPage({
   const [event, setEvent] = useState<{ name: string; share_token: string; status: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const [hasPlus, setHasPlus] = useState(false);
   const isMobile = useIsMobile(640);
 
   useEffect(() => {
@@ -38,6 +40,13 @@ export default function EventTrackPage({
         setEvent(d.event ?? d);
       })
       .catch((e) => setError(e.message));
+    const supabase = getSupabaseClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        supabase.rpc("user_has_plus", { p_user_id: session.user.id })
+          .then(({ data }) => setHasPlus(data === true));
+      }
+    });
   }, [id]);
 
   if (error) {
@@ -114,7 +123,7 @@ export default function EventTrackPage({
       </header>
 
       <main style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto" }}>
-        {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} />}
+        {tab === "map" && <LiveEventMap shareToken={event.share_token} organizerEventId={id} weather={hasPlus} />}
         {tab === "share" && (
           <div style={{ padding: 24, maxWidth: 800 }}>
             <EventShareLinks eventId={id} shareToken={event.share_token} origin={origin} />

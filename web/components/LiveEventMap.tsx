@@ -22,6 +22,8 @@ interface Props {
   refreshMs?: number;
   /** Organizer view of this event — enables the emergency-info popup. */
   organizerEventId?: string;
+  /** Show weather + animated-radar overlay (Plus / Org perk). */
+  weather?: boolean;
 }
 
 export default function LiveEventMap({
@@ -29,6 +31,7 @@ export default function LiveEventMap({
   compact = false,
   refreshMs = 30_000,
   organizerEventId,
+  weather = false,
 }: Props) {
   const [event, setEvent] = useState<EventMeta | null>(null);
   const [stages, setStages] = useState<StageLine[]>([]);
@@ -393,6 +396,7 @@ export default function LiveEventMap({
           selectedTrack={track}
           organizerEventId={organizerEventId}
           focusEntrantId={sosFocus}
+          weather={weather}
         />
       </div>
     </div>

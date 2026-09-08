@@ -15,6 +15,7 @@ interface TripData {
   trip: { id: string; name: string; status: string; started_at: string | null; ended_at: string | null };
   points: { lat: number; lng: number; altitude_m: number | null; speed_kmh: number | null; recorded_at: string }[];
   stats: { point_count: number; distance_km: number; duration_minutes: number | null };
+  branding?: { plus: boolean; name: string | null };
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -188,9 +189,15 @@ export default function StoryPage() {
 
       {/* Nav */}
       <nav style={{ background: "#0C1E29", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
-          Waypoint
-        </Link>
+        {data.branding?.plus ? (
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase" }}>
+            {data.branding.name || "Trip Story"}
+          </span>
+        ) : (
+          <Link href="/" style={{ color: "#fff", fontWeight: 700, fontSize: text.md, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none" }}>
+            Waypoint
+          </Link>
+        )}
         <Link
           href={`/share/${token}`}
           style={{ background: "#CCFF00", color: "#0C1E29", padding: "7px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
@@ -264,19 +271,21 @@ export default function StoryPage() {
           >
             View Live Map
           </Link>
-          <Link
-            href="/auth/signup"
-            style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
-          >
-            Track Your Own Trip
-          </Link>
+          {!data.branding?.plus && (
+            <Link
+              href="/auth/signup"
+              style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+            >
+              Track Your Own Trip
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Footer */}
       <footer style={{ background: "#0f1923", padding: "20px 24px", textAlign: "center" }}>
         <p style={{ fontSize: text.xs, color: "#1E3B4C", fontWeight: 300, margin: 0 }}>
-          © {new Date().getFullYear()} Waypoint · We never sell your location data. Ever.
+          © {new Date().getFullYear()} {data.branding?.plus ? (data.branding.name || "") : "Waypoint · "}We never sell your location data. Ever.
         </p>
       </footer>
 

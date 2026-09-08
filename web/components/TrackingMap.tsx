@@ -73,6 +73,9 @@ interface Props {
   organizerEventId?: string;
   commandMode?: boolean;
   focusEntrantId?: string;
+  /** Show the weather + animated-radar overlay controls. Plus / Org perk —
+   *  the caller passes the viewer's entitlement. Off everywhere by default. */
+  weather?: boolean;
 }
 
 type Status = "live" | "stale" | "dark" | "no_fix";
@@ -110,6 +113,7 @@ export default function TrackingMap({
   organizerEventId,
   commandMode = false,
   focusEntrantId,
+  weather = false,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -126,6 +130,12 @@ export default function TrackingMap({
   const [ready, setReady] = useState(false);
   const [weatherRain, setWeatherRain] = useState(false);
   const [weatherTemp, setWeatherTemp] = useState(false);
+  // Animated radar timelapse (RainViewer). radarOn toggles the layer; frames
+  // are the recent past + nowcast; radarIdx is the frame currently painted.
+  const [radarOn, setRadarOn] = useState(false);
+  const [radarPlaying, setRadarPlaying] = useState(true);
+  const [radarFrames, setRadarFrames] = useState<{ time: number; key: string }[]>([]);
+  const [radarIdx, setRadarIdx] = useState(0);
 
   // Keep the latest measuring state reachable from the map click handler,
   // which is registered once and would otherwise close over a stale value.
@@ -599,6 +609,60 @@ export default function TrackingMap({
     sync("wx-rain", "precipitation", weatherRain, 1);
   }, [weatherRain, weatherTemp, ready, layerId]);
 
+  // ── Radar timelapse (RainViewer, proxied) ─────────────────────
+  // Fetch the frame index the first time the animation is switched on.
+  useEffect(() => {
+    if (!radarOn || radarFrames.length > 0) return;
+    let cancelled = false;
+    fetch("/api/weather/radar-frames")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.frames?.length) return;
+        setRadarFrames(d.frames as { time: number; key: string }[]);
+        setRadarIdx(d.frames.length - 1); // start on the most recent frame
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [radarOn, radarFrames.length]);
+
+  // Add / update / remove the radar raster layer, swapping tiles per frame.
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready) return;
+
+    const OVERLAYS = ["event-route", "entrant-track", "stage-waypoints", "measure-"];
+    const beforeId = m.getStyle().layers?.find((l) =>
+      OVERLAYS.some((pfx) => l.id.startsWith(pfx))
+    )?.id;
+
+    const frame = radarFrames[radarIdx];
+    if (radarOn && frame) {
+      const tiles = [`/api/weather/radar/${frame.key}/{z}/{x}/{y}`];
+      const src = m.getSource("wx-radar") as (mapboxgl.RasterTileSource & { setTiles?: (t: string[]) => void }) | undefined;
+      if (!src) {
+        m.addSource("wx-radar", { type: "raster", tiles, tileSize: 256 });
+        m.addLayer(
+          { id: "wx-radar", type: "raster", source: "wx-radar", paint: { "raster-opacity": 0.75 } },
+          beforeId && m.getLayer(beforeId) ? beforeId : undefined
+        );
+      } else if (src.setTiles) {
+        src.setTiles(tiles);
+      }
+    } else {
+      if (m.getLayer("wx-radar")) m.removeLayer("wx-radar");
+      if (m.getSource("wx-radar")) m.removeSource("wx-radar");
+    }
+  }, [radarOn, radarIdx, radarFrames, ready, layerId]);
+
+  // Advance the frame while playing.
+  useEffect(() => {
+    if (!radarOn || !radarPlaying || radarFrames.length < 2) return;
+    const iv = setInterval(() => {
+      setRadarIdx((i) => (i + 1) % radarFrames.length);
+    }, 650);
+    return () => clearInterval(iv);
+  }, [radarOn, radarPlaying, radarFrames.length]);
+
   // ── Measurement overlay ───────────────────────────────────────
   useEffect(() => {
     const m = map.current;
@@ -681,7 +745,7 @@ export default function TrackingMap({
           aria-expanded={layerMenuOpen}
         >
           {getLayer(layerId).name}
-          {(weatherRain || weatherTemp) && (
+          {(weatherRain || weatherTemp || radarOn) && (
             <span style={{ marginLeft: 6, color: theme.accent, fontSize: text.xxs, fontWeight: 700 }}>● WX</span>
           )}
           <span style={{ marginLeft: 6, opacity: 0.6 }}>▾</span>
@@ -705,6 +769,7 @@ export default function TrackingMap({
                 </div>
               </button>
             ))}
+            {weather && (
             <div style={{ borderTop: `1px solid ${theme.hairline}`, marginTop: 4 }}>
               <div style={{ padding: "8px 12px 4px", fontSize: text.xxs, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: theme.muted }}>
                 Weather overlay
@@ -712,6 +777,7 @@ export default function TrackingMap({
               {([
                 ["Rain", weatherRain, () => setWeatherRain((v) => !v)],
                 ["Temperature", weatherTemp, () => setWeatherTemp((v) => !v)],
+                ["Radar (animated)", radarOn, () => setRadarOn((v) => !v)],
               ] as [string, boolean, () => void][]).map(([label, on, toggle]) => (
                 <button
                   key={label}
@@ -731,9 +797,10 @@ export default function TrackingMap({
                 </button>
               ))}
               <div style={{ padding: "4px 12px 8px", fontSize: text.xxs, color: theme.muted }}>
-                OpenWeather · refreshes ~10 min
+                OpenWeather · radar by RainViewer · ~10 min
               </div>
             </div>
+            )}
           </div>
         )}
         </div>
@@ -791,6 +858,30 @@ export default function TrackingMap({
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2, font: `9px ${font.sans}`, color: theme.muted }}>
             <span>0°F</span><span>32°</span><span>60°</span><span>100°F</span>
           </div>
+        </div>
+      )}
+
+      {/* Radar timelapse transport — play/pause, scrub, and the frame time */}
+      {weather && radarOn && radarFrames.length > 0 && (
+        <div style={{ position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)", zIndex: 2, background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 6, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, minWidth: 240, boxShadow: "0 2px 10px rgba(0,0,0,.4)" }}>
+          <button
+            onClick={() => setRadarPlaying((v) => !v)}
+            aria-label={radarPlaying ? "Pause radar" : "Play radar"}
+            style={{ background: theme.surfaceHi, color: theme.accent, border: `1px solid ${theme.hairline}`, borderRadius: 4, width: 28, height: 28, cursor: "pointer", fontSize: 12, flexShrink: 0, lineHeight: 1 }}
+          >
+            {radarPlaying ? "❚❚" : "▶"}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={radarFrames.length - 1}
+            value={radarIdx}
+            onChange={(e) => { setRadarPlaying(false); setRadarIdx(Number(e.target.value)); }}
+            style={{ flex: 1, accentColor: theme.accent as string, cursor: "pointer" }}
+          />
+          <span style={{ font: `700 11px ${font.sans}`, color: theme.ink, whiteSpace: "nowrap", minWidth: 52, textAlign: "right" }}>
+            {radarFrames[radarIdx] ? new Date(radarFrames[radarIdx].time * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}
+          </span>
         </div>
       )}
 

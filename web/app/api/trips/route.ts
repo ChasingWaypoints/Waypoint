@@ -8,15 +8,28 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
+  // Ride-history retention is a paid perk: Free accounts see the last 30 days,
+  // any paid plan (Individual / Plus / Org) keeps the full history. A single
+  // shared trip stays reachable by its own link regardless — this only caps
+  // what shows in the owner's history list.
+  const { data: paid } = await supabase.rpc("user_has_paid_plan", { p_user_id: user.id });
+
+  let query = supabase
     .from("trips")
     .select("*")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
+  if (paid !== true) {
+    const cutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    query = query.gte("created_at", cutoff);
+  }
+
+  const { data, error } = await query;
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(data ?? []);
 }
 
 // POST /api/trips — create a new trip
