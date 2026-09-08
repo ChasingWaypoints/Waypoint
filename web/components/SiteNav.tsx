@@ -60,7 +60,7 @@ export function SiteNav() {
 
       <nav className="wpnav">
         <Link href="/" className="wpnav-brand" onClick={() => setOpen(false)}>
-          <LogoMark size={30} />WAYPOINT
+          <LogoMark size={30} /><span>WAY<span style={{ color: "#CCFF00" }}>POINT</span></span>
         </Link>
 
         {/* Desktop links */}
