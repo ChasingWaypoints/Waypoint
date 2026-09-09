@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   // overrides it when set in Vercel.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://waypointtracking.com"),
   title: {
-    default: "Waypoint — Live Event Tracking for Rally & Off-Road",
+    default: "Waypoint — Live Event Tracking for Rally, Off-Road & Adventure",
     template: "%s — Waypoint",
   },
   description:

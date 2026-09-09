@@ -1,0 +1,48 @@
+diff --git a/web/app/share/[token]/story/page.tsx b/web/app/share/[token]/story/page.tsx
+index 73dc103..376f805 100644
+--- a/web/app/share/[token]/story/page.tsx
++++ b/web/app/share/[token]/story/page.tsx
+@@ -248,10 +248,11 @@ export default function StoryPage() {
+           <button
+             onClick={replayAnimation}
+             style={{
+-              position: "absolute", top: 12, left: 12,
++              // Top-right so it never overlaps the basemap selector (top-left).
++              position: "absolute", top: 12, right: 12,
+               background: "#CCFF00", color: "#0C1E29", border: "none",
+               padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.8,
+-              textTransform: "uppercase", cursor: "pointer",
++              textTransform: "uppercase", cursor: "pointer", zIndex: 2,
+             }}
+           >
+             ↺ Replay Route
+@@ -280,6 +281,29 @@ export default function StoryPage() {
+             </Link>
+           )}
+         </div>
++
++        {/* Download the GPS track — works on phone; saves to Files / Downloads */}
++        <div style={{ marginTop: 24 }}>
++          <p style={{ fontSize: text.xs, color: "#54697A", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 10px" }}>
++            Download this ride
++          </p>
++          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
++            <a
++              href={`/api/trips/${data.trip.id}/track.gpx?token=${token}`}
++              download
++              style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #24445A", padding: "10px 20px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4 }}
++            >
++              GPX ↓
++            </a>
++            <a
++              href={`/api/share/${token}/track.kml`}
++              download
++              style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #24445A", padding: "10px 20px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4 }}
++            >
++              KML ↓
++            </a>
++          </div>
++        </div>
+       </div>
+ 
+       {/* Footer */}

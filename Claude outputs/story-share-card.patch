@@ -1,0 +1,181 @@
+diff --git a/web/app/share/[token]/story/page.tsx b/web/app/share/[token]/story/page.tsx
+index 73dc103..f9fd691 100644
+--- a/web/app/share/[token]/story/page.tsx
++++ b/web/app/share/[token]/story/page.tsx
+@@ -174,6 +174,111 @@ export default function StoryPage() {
+     return min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+   };
+ 
++  // Build a branded 1080×1920 social share card of this ride (route + stats),
++  // drawn on a canvas so it works on any phone without tainting from map tiles.
++  function downloadShareCard() {
++    if (!data) return;
++    const pts = data.points;
++    const W = 1080, H = 1920, PAD = 90;
++    const LIME = "#CCFF00", YEL = "#FFFE15", INK = "#FFFFFF", MUTE = "#8598A5";
++    const canvas = document.createElement("canvas");
++    canvas.width = W; canvas.height = H;
++    const ctx = canvas.getContext("2d");
++    if (!ctx) return;
++
++    // Background + top glow
++    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0, 0, W, H);
++    const glow = ctx.createRadialGradient(W * 0.8, -40, 0, W * 0.8, -40, 1000);
++    glow.addColorStop(0, "rgba(12,30,41,0.95)"); glow.addColorStop(1, "rgba(10,10,10,0)");
++    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
++
++    // Brand: WP disc + WAY(white)POINT(lime) wordmark
++    const dR = 34, dX = PAD + dR, dY = 150 + dR;
++    ctx.beginPath(); ctx.arc(dX, dY, dR, 0, Math.PI * 2);
++    ctx.fillStyle = LIME; ctx.fill();
++    ctx.lineWidth = 6; ctx.strokeStyle = "#0C1E29"; ctx.stroke();
++    ctx.fillStyle = "#0C1E29"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
++    ctx.font = "800 32px Arial, sans-serif"; ctx.fillText("WP", dX, dY + 1);
++    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.font = "800 42px Arial, sans-serif";
++    const wmX = dX + dR + 22;
++    ctx.fillStyle = INK; ctx.fillText("WAY", wmX, dY);
++    ctx.fillStyle = LIME; ctx.fillText("POINT", wmX + ctx.measureText("WAY").width, dY);
++
++    // Eyebrow + trip title (up to 2 lines)
++    ctx.textBaseline = "alphabetic";
++    let y = 348;
++    ctx.fillStyle = LIME; ctx.font = "800 28px Arial, sans-serif";
++    ctx.fillText("TRIP STORY", PAD, y);
++    y += 78;
++    ctx.fillStyle = INK; ctx.font = "800 76px Arial, sans-serif";
++    const words = (data.trip.name || "My Ride").toUpperCase().split(" ");
++    const lines: string[] = []; let ln = "";
++    for (const w of words) {
++      const t = ln ? ln + " " + w : w;
++      if (ctx.measureText(t).width > W - 2 * PAD && ln) { lines.push(ln); ln = w; } else ln = t;
++    }
++    if (ln) lines.push(ln);
++    for (const l of lines.slice(0, 2)) { ctx.fillText(l, PAD, y); y += 86; }
++
++    // Route drawn from the real GPS points, scaled to fit (north up)
++    const rBox = { x: PAD, y: y + 10, w: W - 2 * PAD, h: 760 };
++    if (pts.length >= 2) {
++      const lats = pts.map(p => p.lat), lngs = pts.map(p => p.lng);
++      const minLat = Math.min(...lats), maxLat = Math.max(...lats);
++      const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
++      const cos = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180) || 1;
++      const dLng = ((maxLng - minLng) * cos) || 1e-6;
++      const dLat = (maxLat - minLat) || 1e-6;
++      const scale = Math.min(rBox.w / dLng, rBox.h / dLat) * 0.9;
++      const ox = rBox.x + (rBox.w - dLng * scale) / 2;
++      const oy = rBox.y + (rBox.h - dLat * scale) / 2;
++      const proj = pts.map(p => ({ x: ox + (p.lng - minLng) * cos * scale, y: oy + (maxLat - p.lat) * scale }));
++      ctx.lineJoin = "round"; ctx.lineCap = "round";
++      ctx.beginPath();
++      proj.forEach((pt, i) => (i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y)));
++      ctx.strokeStyle = LIME; ctx.lineWidth = 10; ctx.stroke();
++      const dot = (pt: { x: number; y: number }, c: string) => {
++        ctx.beginPath(); ctx.arc(pt.x, pt.y, 16, 0, Math.PI * 2);
++        ctx.fillStyle = c; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = "#0A0A0A"; ctx.stroke();
++      };
++      dot(proj[0], LIME); dot(proj[proj.length - 1], YEL);
++    }
++
++    // Stats row
++    const stats: [string, string][] = [["DISTANCE", `${data.stats.distance_km} km`]];
++    if (data.stats.duration_minutes) stats.push(["DURATION", fmtDuration(data.stats.duration_minutes)!]);
++    if (maxSpeed > 0) stats.push(["MAX SPEED", `${Math.round(maxSpeed)} km/h`]);
++    if (maxElev !== null) stats.push(["MAX ELEV", `${maxElev} m`]);
++    const cols = Math.min(stats.length, 4);
++    const colW = (W - 2 * PAD) / cols;
++    const sY = rBox.y + rBox.h + 96;
++    stats.slice(0, cols).forEach(([label, val], i) => {
++      const cx = PAD + colW * i;
++      ctx.textAlign = "left";
++      ctx.fillStyle = MUTE; ctx.font = "800 24px Arial, sans-serif"; ctx.fillText(label, cx, sY);
++      ctx.fillStyle = INK; ctx.font = "800 50px Arial, sans-serif"; ctx.fillText(val, cx, sY + 60);
++    });
++
++    // Footer
++    const fY = H - 150;
++    ctx.textAlign = "left"; ctx.fillStyle = MUTE; ctx.font = "700 30px Arial, sans-serif";
++    ctx.fillText("Tracked live with", PAD, fY);
++    ctx.fillStyle = INK; ctx.font = "800 36px Arial, sans-serif"; ctx.fillText("WAY", PAD, fY + 50);
++    ctx.fillStyle = LIME; ctx.fillText("POINT", PAD + ctx.measureText("WAY").width, fY + 50);
++    ctx.textAlign = "right"; ctx.fillStyle = MUTE; ctx.font = "700 28px Arial, sans-serif";
++    ctx.fillText("waypointtracking.com", W - PAD, fY + 50);
++
++    const slug = (data.trip.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "trip";
++    canvas.toBlob((blob) => {
++      if (!blob) return;
++      const url = URL.createObjectURL(blob);
++      const a = document.createElement("a");
++      a.href = url; a.download = `${slug}-waypoint.png`;
++      document.body.appendChild(a); a.click(); a.remove();
++      setTimeout(() => URL.revokeObjectURL(url), 2000);
++    }, "image/png");
++  }
++
+   if (loading) return <StorySkeleton />;
+ 
+   if (error) return (
+@@ -248,10 +353,11 @@ export default function StoryPage() {
+           <button
+             onClick={replayAnimation}
+             style={{
+-              position: "absolute", top: 12, left: 12,
++              // Top-right so it never overlaps the basemap selector (top-left).
++              position: "absolute", top: 12, right: 12,
+               background: "#CCFF00", color: "#0C1E29", border: "none",
+               padding: "8px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.8,
+-              textTransform: "uppercase", cursor: "pointer",
++              textTransform: "uppercase", cursor: "pointer", zIndex: 2,
+             }}
+           >
+             ↺ Replay Route
+@@ -262,12 +368,18 @@ export default function StoryPage() {
+       {/* CTA */}
+       <div style={{ background: "#0C1E29", padding: "48px 24px", textAlign: "center" }}>
+         <p style={{ fontSize: text.base, color: "#7E93A0", fontWeight: 300, margin: "0 0 20px" }}>
+-          Follow this trip live — or track your own.
++          Post your ride — or follow it live.
+         </p>
+         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
++          <button
++            onClick={downloadShareCard}
++            style={{ background: "#CCFF00", color: "#0C1E29", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", border: "none", cursor: "pointer" }}
++          >
++            ↓ Download Share Card
++          </button>
+           <Link
+             href={`/share/${token}`}
+-            style={{ background: "#CCFF00", color: "#0C1E29", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
++            style={{ background: "transparent", color: "#fff", border: "1px solid #3a4550", padding: "14px 28px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", textDecoration: "none" }}
+           >
+             View Live Map
+           </Link>
+@@ -280,6 +392,29 @@ export default function StoryPage() {
+             </Link>
+           )}
+         </div>
++
++        {/* Download the GPS track — works on phone; saves to Files / Downloads */}
++        <div style={{ marginTop: 24 }}>
++          <p style={{ fontSize: text.xs, color: "#54697A", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 10px" }}>
++            Download this ride
++          </p>
++          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
++            <a
++              href={`/api/trips/${data.trip.id}/track.gpx?token=${token}`}
++              download
++              style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #24445A", padding: "10px 20px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4 }}
++            >
++              GPX ↓
++            </a>
++            <a
++              href={`/api/share/${token}/track.kml`}
++              download
++              style={{ background: "transparent", color: "#C8D4DC", border: "1px solid #24445A", padding: "10px 20px", fontSize: text.sm, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4 }}
++            >
++              KML ↓
++            </a>
++          </div>
++        </div>
+       </div>
+ 
+       {/* Footer */}

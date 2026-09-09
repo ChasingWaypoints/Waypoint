@@ -1,0 +1,13 @@
+diff --git a/web/components/SiteNav.tsx b/web/components/SiteNav.tsx
+index 75adaa5..7a811e4 100644
+--- a/web/components/SiteNav.tsx
++++ b/web/components/SiteNav.tsx
+@@ -60,7 +60,7 @@ export function SiteNav() {
+ 
+       <nav className="wpnav">
+         <Link href="/" className="wpnav-brand" onClick={() => setOpen(false)}>
+-          <LogoMark size={30} />WAYPOINT
++          <LogoMark size={30} /><span>WAY<span style={{ color: "#CCFF00" }}>POINT</span></span>
+         </Link>
+ 
+         {/* Desktop links */}

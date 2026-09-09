@@ -4,11 +4,11 @@ import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
 
 export const metadata: Metadata = {
-  title: "Waypoint — Live Event Tracking for Rally & Off-Road",
+  title: "Waypoint — Live Event Tracking for Rally, Off-Road & Adventure",
   description:
     "Every entrant's beacon on one live map. Garmin inReach, SPOT and ZOLEO, no app required. Google Earth Pro feeds for recovery teams, an embeddable map for your event site, and a roster you load in one CSV.",
   openGraph: {
-    title: "Waypoint — Live Event Tracking for Rally & Off-Road",
+    title: "Waypoint — Live Event Tracking for Rally, Off-Road & Adventure",
     description: "Every entrant's beacon on one live map. No app required.",
     url: "/",
     type: "website",
@@ -75,7 +75,7 @@ export default function LandingPage() {
           <span style={{ color: C.accent }}>One live map.</span>
         </h1>
         <p style={{ fontSize: 19, lineHeight: 1.55, maxWidth: 620, margin: "0 0 36px", color: C.body }}>
-          Built for rally raids, desert races and long-distance rides. Riders keep the satellite
+          Built for rally raids, desert races and adventure rides. Riders keep the satellite
           beacons they already carry. Organizers see all of them at once — and hand the recovery
           team a Google Earth Pro feed that just works.
         </p>

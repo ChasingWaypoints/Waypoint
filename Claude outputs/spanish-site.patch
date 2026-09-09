@@ -1,0 +1,596 @@
+diff --git a/web/app/es/page.tsx b/web/app/es/page.tsx
+new file mode 100644
+index 0000000..757f7d6
+--- /dev/null
++++ b/web/app/es/page.tsx
+@@ -0,0 +1,199 @@
++import { text } from "../../lib/theme";
++import type { Metadata } from "next";
++import Link from "next/link";
++import { SiteNav } from "@/components/SiteNav";
++
++export const metadata: Metadata = {
++  title: "Waypoint — Rastreo de eventos en vivo para rally y off-road",
++  description:
++    "El localizador de cada piloto en un solo mapa en vivo. Garmin inReach, SPOT y ZOLEO, sin app. Feeds de Google Earth Pro para equipos de recuperación, un mapa para incrustar en tu sitio, y un roster que cargas con un CSV.",
++  openGraph: {
++    title: "Waypoint — Rastreo de eventos en vivo",
++    description: "El localizador de cada piloto en un solo mapa en vivo. Sin app.",
++    url: "/es",
++    type: "website",
++  },
++};
++
++const C = {
++  canvas: "#0A0A0A",
++  surface: "#0C1E29",
++  surfaceHi: "#14303F",
++  hairline: "#1E3B4C",
++  accent: "#FFFE15",
++  accentInk: "#0C1E29",
++  lime: "#CCFF00",
++  track: "#CCFF00",
++  ink: "#FFFFFF",
++  body: "#C8D4DC",
++  muted: "#7E93A0",
++};
++
++const sans = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
++
++const PILLARS = [
++  {
++    title: "Cada localizador, un mapa",
++    body: "Los pilotos usan el localizador que ya tienen. Agregas su enlace de Garmin MapShare o su feed de SPOT al roster y aparecen en el mapa — sin app que instalar, nada que configurar para el piloto.",
++  },
++  {
++    title: "Google Earth Pro para el equipo de recuperación",
++    body: "Entrega a tu equipo de seguridad un enlace KML. Se abre una vez y se actualiza solo cada treinta segundos. Cada enlace es personal y cada acceso queda registrado, así un feed filtrado es rastreable.",
++  },
++  {
++    title: "Incrústalo en tu propio sitio",
++    body: "Un iframe pone el mapa en vivo en el sitio de tu evento. Aficionados, familias y patrocinadores lo siguen ahí. Nada que mantener una vez que arranca el evento.",
++  },
++];
++
++const STEPS = [
++  { n: "01", title: "Crea el evento", body: "Ponle nombre, fija las fechas, sube el GPX de la ruta si lo tienes." },
++  { n: "02", title: "Carga el roster", body: "Un CSV con nombre, número, categoría y el enlace del localizador de cada piloto. Las filas con errores se marcan por línea — el resto se importa." },
++  { n: "03", title: "Comparte los enlaces", body: "Código para incrustar en tu web, feeds de Google Earth Pro para el equipo, un panel privado para ti." },
++];
++
++const DEVICES = ["Garmin inReach", "SPOT", "ZOLEO"];
++
++export default function LandingPageES() {
++  return (
++    <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
++      <SiteNav es />
++
++      {/* Hero */}
++      <div style={{
++        backgroundImage: "linear-gradient(180deg, rgba(10,10,10,0.45) 0%, rgba(10,10,10,0.68) 55%, rgba(10,10,10,0.97) 100%), url(/hero.jpg)",
++        backgroundSize: "cover",
++        backgroundPosition: "center 28%",
++      }}>
++      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "120px 28px 100px" }}>
++        <div style={{ color: C.accent, fontSize: text.sm, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 20 }}>
++          Rastreo de eventos en vivo
++        </div>
++        <h1 style={{ color: C.ink, fontSize: "clamp(40px, 7vw, 76px)", lineHeight: 1.02, fontWeight: 800, letterSpacing: -1.5, margin: "0 0 26px", maxWidth: 860 }}>
++          Cada piloto.<br />
++          <span style={{ color: C.accent }}>Un solo mapa en vivo.</span>
++        </h1>
++        <p style={{ fontSize: 19, lineHeight: 1.55, maxWidth: 640, margin: "0 0 36px", color: C.body }}>
++          Hecho para rally raids, carreras del desierto y rodadas de larga distancia. Los pilotos usan
++          los localizadores satelitales que ya traen. Los organizadores los ven a todos a la vez — y le
++          dan al equipo de recuperación un feed de Google Earth Pro que simplemente funciona.
++        </p>
++        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
++          <Link
++            href="/auth/signup"
++            style={{ background: C.lime, color: C.accentInk, fontWeight: 800, fontSize: text.lg, padding: "14px 26px", borderRadius: 4, textDecoration: "none", letterSpacing: 0.2 }}
++          >
++            Inicia una rodada gratis
++          </Link>
++          <a
++            href="#how"
++            style={{ border: `1px solid ${C.hairline}`, color: C.ink, fontWeight: 600, fontSize: text.lg, padding: "14px 26px", borderRadius: 4, textDecoration: "none" }}
++          >
++            Cómo funciona
++          </a>
++        </div>
++
++        <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 44, alignItems: "center" }}>
++          <span style={{ color: C.muted, fontSize: text.sm, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Compatible con</span>
++          {DEVICES.map((d) => (
++            <span key={d} style={{ color: C.ink, fontSize: text.md, fontWeight: 700 }}>{d}</span>
++          ))}
++          <span style={{ color: C.muted, fontSize: text.md }}>· sin app</span>
++        </div>
++      </section>
++      </div>
++
++      {/* Map strip */}
++      <section style={{ borderTop: `1px solid ${C.hairline}`, borderBottom: `1px solid ${C.hairline}`, background: C.surface }}>
++        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "28px 28px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24 }}>
++          {[
++            ["Imágenes satelitales", "Esri World Imagery por defecto — la cobertura más nítida sobre desierto y montaña. Cambia a topográfico o calles con un clic."],
++            ["Mide lo que sea", "Mide distancias y rumbos con un clic directo en el mapa, en kilómetros o millas."],
++            ["Estado de un vistazo", "En vivo, sin señal reciente u oscuro — con código de color por piloto y la hora del último fix, en el mapa y en el roster."],
++            ["Rastros, no solo puntos", "Toca cualquier piloto para ver por dónde ha pasado. Exporta todo el evento como KML al terminar."],
++          ].map(([t, b]) => (
++            <div key={t}>
++              <div style={{ color: C.track, fontSize: text.base, fontWeight: 800, letterSpacing: 0.5, marginBottom: 6 }}>{t}</div>
++              <div style={{ color: C.body, fontSize: text.md, lineHeight: 1.5 }}>{b}</div>
++            </div>
++          ))}
++        </div>
++      </section>
++
++      {/* Pillars */}
++      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "80px 28px 40px" }}>
++        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
++          {PILLARS.map((p) => (
++            <div key={p.title} style={{ background: C.surface, border: `1px solid ${C.hairline}`, borderRadius: 6, padding: 26 }}>
++              <div style={{ width: 28, height: 4, background: C.accent, marginBottom: 18 }} />
++              <h3 style={{ color: C.ink, fontSize: 19, fontWeight: 800, margin: "0 0 10px", letterSpacing: -0.2 }}>{p.title}</h3>
++              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.body }}>{p.body}</p>
++            </div>
++          ))}
++        </div>
++      </section>
++
++      {/* How it works */}
++      <section id="how" style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 28px 80px" }}>
++        <div style={{ color: C.accent, fontSize: text.sm, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 14 }}>
++          Para organizadores
++        </div>
++        <h2 style={{ color: C.ink, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800, letterSpacing: -0.8, margin: "0 0 36px" }}>
++          Tres pasos. Luego solo ves la carrera.
++        </h2>
++        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 28 }}>
++          {STEPS.map((s) => (
++            <div key={s.n}>
++              <div style={{ color: C.accent, fontSize: 40, fontWeight: 800, letterSpacing: -1, lineHeight: 1, marginBottom: 14 }}>{s.n}</div>
++              <h3 style={{ color: C.ink, fontSize: 17, fontWeight: 800, margin: "0 0 8px" }}>{s.title}</h3>
++              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.body }}>{s.body}</p>
++            </div>
++          ))}
++        </div>
++      </section>
++
++      {/* CTA */}
++      <section style={{ background: C.accent }}>
++        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
++          <div>
++            <h2 style={{ color: C.accentInk, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, letterSpacing: -0.6, margin: "0 0 8px" }}>
++              Gratis para rodadas en grupo.
++            </h2>
++            <p style={{ color: C.accentInk, opacity: 0.8, fontSize: text.lg, margin: 0 }}>
++              Las rodadas de hasta 10 pilotos son gratis. Ve más lejos por $15/año, agrega clima y radar por $29, u organiza un evento por $200.
++            </p>
++          </div>
++          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
++            <Link
++              href="/es/pricing"
++              style={{ background: C.accentInk, color: C.accent, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
++            >
++              Ver precios
++            </Link>
++            <Link
++              href="/auth/signup"
++              style={{ background: "transparent", color: C.accentInk, border: `1.5px solid ${C.accentInk}`, fontWeight: 800, fontSize: text.lg, padding: "14px 28px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap" }}
++            >
++              Crear una cuenta
++            </Link>
++          </div>
++        </div>
++      </section>
++
++      {/* Footer */}
++      <footer style={{ borderTop: `1px solid ${C.hairline}`, padding: "28px", background: C.surface }}>
++        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: text.base, color: C.muted }}>
++          <span>&copy; {new Date().getFullYear()} Waypoint &middot; un producto de Chasing Waypoints</span>
++          <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
++            <a href="#how" style={{ color: C.muted, textDecoration: "none" }}>Cómo funciona</a>
++            <Link href="/es/pricing" style={{ color: C.muted, textDecoration: "none" }}>Precios</Link>
++            <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Términos</Link>
++            <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacidad</Link>
++            <Link href="/" style={{ color: C.muted, textDecoration: "none" }}>English</Link>
++            <span style={{ color: C.body }}>Nunca vendemos tu ubicación. Jamás.</span>
++          </span>
++        </div>
++      </footer>
++    </main>
++  );
++}
+diff --git a/web/app/es/pricing/page.tsx b/web/app/es/pricing/page.tsx
+new file mode 100644
+index 0000000..6ab53fe
+--- /dev/null
++++ b/web/app/es/pricing/page.tsx
+@@ -0,0 +1,281 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { getSupabaseClient } from "@/lib/supabase/client";
++import { SiteNav } from "@/components/SiteNav";
++
++/**
++ * Spanish pricing page. Mirrors /pricing with translated copy; the checkout
++ * logic is identical and hits the same Stripe endpoints.
++ */
++
++const C = {
++  canvas: "#0A0A0A",
++  surface: "#0C1E29",
++  surfaceHi: "#14303F",
++  hairline: "#1E3B4C",
++  accent: "#FFFE15",
++  accentInk: "#0C1E29",
++  lime: "#CCFF00",
++  ink: "#FFFFFF",
++  body: "#C8D4DC",
++  muted: "#8598A5",
++};
++const sans = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
++
++type CTA =
++  | { kind: "signup" }
++  | { kind: "subscribe"; plan: "individual" | "individual_plus" }
++  | { kind: "event" }
++  | { kind: "org" };
++
++interface Tier {
++  name: string;
++  price: string;
++  per: string;
++  tag: string;
++  accent: string;
++  builds: string | null;
++  featured?: boolean;
++  cta: { label: string; action: CTA };
++  feats: string[];
++}
++
++const TIERS: Tier[] = [
++  {
++    name: "Gratis",
++    price: "$0",
++    per: "para siempre",
++    tag: "Rueda y comparte.",
++    accent: "#5B6E7A",
++    builds: null,
++    cta: { label: "Crear cuenta", action: { kind: "signup" } },
++    feats: [
++      "Rastreo en vivo con el localizador que ya tienes — Garmin inReach, SPOT, ZOLEO",
++      "Comparte tu rodada en vivo con familia y amigos — solo un enlace, sin app",
++      "Inicia una rodada en grupo — hasta 10 pilotos en un mapa en vivo",
++      "Únete a cualquier evento con un código",
++      "Tarjeta de emergencia ICE con QR",
++    ],
++  },
++  {
++    name: "Individual",
++    price: "$15",
++    per: "/ año",
++    tag: "Para el piloto que siempre anda afuera.",
++    accent: "#1FE0A0",
++    builds: "Gratis",
++    cta: { label: "Obtener Individual", action: { kind: "subscribe", plan: "individual" } },
++    feats: [
++      "Historial de rodadas ilimitado — cada viaje guardado, no solo los últimos 30 días",
++      "Historias de ruta para compartir — un enlace de repetición de cualquier rodada",
++      "Zonas privadas — oculta tu casa o punto de inicio",
++      "Prioridad en las apps de rastreo celular de RallyTrak",
++    ],
++  },
++  {
++    name: "Individual Plus",
++    price: "$29",
++    per: "/ año",
++    tag: "Para el piloto que quiere el panorama completo.",
++    accent: "#3AD1FF",
++    builds: "Individual",
++    featured: true,
++    cta: { label: "Obtener Plus", action: { kind: "subscribe", plan: "individual_plus" } },
++    feats: [
++      "Clima y radar en vivo sobre tu mapa",
++      "Radar en cámara rápida — mira moverse la tormenta antes de meterte en ella",
++      "Página para compartir personalizada — tu nombre y foto, sin marca Waypoint",
++      "Soporte prioritario — una persona real, rápido",
++    ],
++  },
++  {
++    name: "Evento",
++    price: "$200",
++    per: "/ evento",
++    tag: "Organiza un evento real.",
++    accent: "#CCFF00",
++    builds: "Individual Plus",
++    cta: { label: "Crear un evento", action: { kind: "event" } },
++    feats: [
++      "40 lugares de piloto (luego +$40 por 10) — o deja que los pilotos paguen para unirse ($10–$15 c/u)",
++      "Vista de comando — un mapa en vivo de recuperación y control de carrera",
++      "Feed de recuperación en Google Earth Pro — credenciales registradas y revocables",
++      "Incrusta el mapa en vivo en tu propio sitio web",
++      "Hazlo privado — sin página pública, solo lo ve tu equipo",
++    ],
++  },
++  {
++    name: "Org / Serie",
++    price: "$3,500",
++    per: "/ año",
++    tag: "Para promotores y equipos con muchos eventos.",
++    accent: "#FFFE15",
++    builds: "Evento",
++    cta: { label: "Obtener Org", action: { kind: "org" } },
++    feats: [
++      "Bolsa de 1,500 pilotos en eventos ilimitados",
++      "Marca propia — tu logo y colores en cada mapa e incrustación",
++      "Cada evento puede ser privado",
++      "Soporte prioritario",
++    ],
++  },
++];
++
++export default function PricingPageES() {
++  const [busy, setBusy] = useState<string | null>(null);
++  const [err, setErr] = useState<string | null>(null);
++
++  async function run(tierName: string, action: CTA) {
++    setErr(null);
++    const supabase = getSupabaseClient();
++    const { data: { session } } = await supabase.auth.getSession();
++
++    const nextFor: Record<string, string> = {
++      signup: "/dashboard",
++      subscribe: "/es/pricing",
++      event: "/dashboard/events/create",
++      org: "/es/pricing",
++    };
++
++    if (action.kind === "signup") { window.location.href = "/auth/signup"; return; }
++
++    if (!session) {
++      window.location.href = `/auth/signup?next=${encodeURIComponent(nextFor[action.kind])}`;
++      return;
++    }
++
++    if (action.kind === "event") { window.location.href = "/dashboard/events/create"; return; }
++
++    setBusy(tierName);
++    const endpoint = action.kind === "org" ? "/api/billing/org-checkout" : "/api/billing/subscribe";
++    const body = action.kind === "subscribe" ? JSON.stringify({ plan: action.plan }) : "{}";
++    try {
++      const res = await fetch(endpoint, {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
++        body,
++      });
++      const data = await res.json().catch(() => ({}));
++      if (data.url) { window.location.href = data.url; return; }
++      setErr(data.error ?? "No se pudo iniciar el pago. Inténtalo de nuevo.");
++    } catch {
++      setErr("Error de red al iniciar el pago. Inténtalo de nuevo.");
++    } finally {
++      setBusy(null);
++    }
++  }
++
++  return (
++    <main style={{ background: C.canvas, color: C.body, fontFamily: sans, minHeight: "100vh" }}>
++      <SiteNav es />
++
++      {/* Header */}
++      <section style={{ maxWidth: 1040, margin: "0 auto", padding: "56px 28px 24px", textAlign: "center" }}>
++        <div style={{ color: C.lime, fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", marginBottom: 14 }}>Precios</div>
++        <h1 style={{ color: C.ink, fontSize: "clamp(30px, 5vw, 46px)", lineHeight: 1.05, fontWeight: 800, letterSpacing: -1, margin: "0 0 14px" }}>
++          Un solo mapa en vivo.<br />Precios que crecen contigo.
++        </h1>
++        <p style={{ fontSize: 17, lineHeight: 1.55, maxWidth: 640, margin: "0 auto", color: C.body }}>
++          Empieza gratis. Cada nivel incluye todo lo de abajo, y más. Los pilotos usan los localizadores satelitales que ya tienen.
++        </p>
++      </section>
++
++      {err && (
++        <div style={{ maxWidth: 720, margin: "0 auto 8px", padding: "10px 16px", background: "#2A1214", border: "1px solid #5A2530", color: "#FF9B9B", borderRadius: 6, fontSize: 14, textAlign: "center" }}>{err}</div>
++      )}
++
++      {/* Ladder */}
++      <section style={{ maxWidth: 1040, margin: "0 auto", padding: "16px 28px 8px", display: "flex", flexDirection: "column", gap: 16 }}>
++        {TIERS.map((t) => (
++          <div
++            key={t.name}
++            style={{
++              background: C.surface,
++              border: `1px solid ${t.featured ? t.accent : C.hairline}`,
++              borderLeft: `4px solid ${t.accent}`,
++              borderRadius: 10,
++              padding: "22px 24px",
++              boxShadow: t.featured ? `0 0 0 1px ${t.accent}22, 0 8px 30px rgba(0,0,0,.3)` : "none",
++            }}
++          >
++            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
++              <div style={{ flex: "1 1 340px", minWidth: 260 }}>
++                <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
++                  <h2 style={{ color: C.ink, fontSize: 21, fontWeight: 800, letterSpacing: -0.3, margin: 0 }}>{t.name}</h2>
++                  {t.featured && (
++                    <span style={{ background: t.accent, color: C.accentInk, fontSize: 10, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", padding: "3px 8px", borderRadius: 100 }}>Más popular</span>
++                  )}
++                </div>
++                <div style={{ color: C.muted, fontSize: 13.5, fontWeight: 600, marginTop: 4 }}>{t.tag}</div>
++                <div style={{ color: C.body, fontSize: 13, fontWeight: 700, margin: "12px 0 10px" }}>
++                  {t.builds
++                    ? <>Todo lo de <span style={{ color: C.ink }}>{t.builds}</span>, más:</>
++                    : <span style={{ color: C.muted, fontWeight: 600 }}>El punto de partida — gratis, para siempre.</span>}
++                </div>
++                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr", gap: 7 }}>
++                  {t.feats.map((f, i) => (
++                    <li key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 14, lineHeight: 1.4, color: C.body }}>
++                      <span style={{ color: t.accent, fontWeight: 800, flexShrink: 0, fontSize: 12, lineHeight: 1.5 }}>✓</span>
++                      <span>{f}</span>
++                    </li>
++                  ))}
++                </ul>
++              </div>
++
++              <div style={{ flex: "0 0 auto", textAlign: "right", minWidth: 170 }}>
++                <div style={{ whiteSpace: "nowrap" }}>
++                  <span style={{ color: t.accent, fontSize: 32, fontWeight: 800 }}>{t.price}</span>
++                  <span style={{ color: C.muted, fontSize: 13, fontWeight: 600, marginLeft: 4 }}>{t.per}</span>
++                </div>
++                <button
++                  onClick={() => run(t.name, t.cta.action)}
++                  disabled={busy === t.name}
++                  style={{
++                    marginTop: 12,
++                    width: "100%",
++                    background: t.featured ? t.accent : (t.name === "Gratis" ? "transparent" : C.lime),
++                    color: t.featured ? C.accentInk : (t.name === "Gratis" ? C.body : C.accentInk),
++                    border: t.name === "Gratis" ? `1px solid ${C.hairline}` : "none",
++                    fontSize: 14,
++                    fontWeight: 800,
++                    letterSpacing: 0.3,
++                    padding: "12px 18px",
++                    borderRadius: 6,
++                    cursor: busy === t.name ? "default" : "pointer",
++                    opacity: busy === t.name ? 0.7 : 1,
++                    whiteSpace: "nowrap",
++                  }}
++                >
++                  {busy === t.name ? "Iniciando…" : t.cta.label}
++                </button>
++              </div>
++            </div>
++          </div>
++        ))}
++      </section>
++
++      {/* Entrant-paid note */}
++      <section style={{ maxWidth: 1040, margin: "0 auto", padding: "8px 28px 8px" }}>
++        <div style={{ background: C.surfaceHi, border: `1px solid ${C.hairline}`, borderRadius: 8, padding: "14px 18px", fontSize: 13, color: C.body, lineHeight: 1.5 }}>
++          <strong style={{ color: C.ink }}>¿Prefieres que los pilotos paguen su parte?</strong> En cualquier evento puedes cambiar a pago por piloto — cada piloto paga una cuota pequeña al registrarse, según la duración del evento: hasta 3 días <strong style={{ color: C.ink }}>$10</strong> · hasta 7 días <strong style={{ color: C.ink }}>$12</strong> · hasta 30 días <strong style={{ color: C.ink }}>$15</strong> por piloto. Los niveles Evento y Org incluyen las funciones personales de arriba para la cuenta del organizador.
++        </div>
++      </section>
++
++      {/* Footer */}
++      <footer style={{ borderTop: `1px solid ${C.hairline}`, padding: "28px", background: C.surface, marginTop: 32 }}>
++        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: 14, color: C.muted }}>
++          <span>&copy; {new Date().getFullYear()} Waypoint &middot; un producto de Chasing Waypoints</span>
++          <span style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
++            <Link href="/es" style={{ color: C.muted, textDecoration: "none" }}>Inicio</Link>
++            <Link href="/terms" style={{ color: C.muted, textDecoration: "none" }}>Términos</Link>
++            <Link href="/privacy" style={{ color: C.muted, textDecoration: "none" }}>Privacidad</Link>
++            <Link href="/pricing" style={{ color: C.muted, textDecoration: "none" }}>English</Link>
++            <span style={{ color: C.body }}>Nunca vendemos tu ubicación. Jamás.</span>
++          </span>
++        </div>
++      </footer>
++    </main>
++  );
++}
+diff --git a/web/components/SiteNav.tsx b/web/components/SiteNav.tsx
+index 7a811e4..6ab182d 100644
+--- a/web/components/SiteNav.tsx
++++ b/web/components/SiteNav.tsx
+@@ -6,28 +6,42 @@ import { LogoMark } from "@/components/LogoMark";
+ 
+ /**
+  * Shared marketing-site nav. One row of links on desktop; on mobile the links
+- * collapse behind a hamburger so they never wrap into a messy stack. Used on
+- * the landing page, guide, how-it-works and pricing.
++ * collapse behind a hamburger. Pass `es` for the Spanish site — it swaps the
++ * labels/targets and flips the EN/ES language toggle. Used on the landing,
++ * guide, how-it-works and pricing (and their /es counterparts).
+  */
+ 
+-const LINKS = [
+-  { href: "/how-it-works", label: "How it works" },
+-  { href: "/guide", label: "Guide" },
+-  { href: "/pricing", label: "Pricing" },
+-  { href: "/auth/login", label: "Sign in" },
+-];
+-
+-export function SiteNav() {
++export function SiteNav({ es = false }: { es?: boolean }) {
+   const [open, setOpen] = useState(false);
+ 
++  const T = es
++    ? {
++        home: "/es",
++        cta: "Comenzar",
++        links: [
++          { href: "/es/pricing", label: "Precios" },
++          { href: "/auth/login", label: "Iniciar sesión" },
++        ],
++        lang: { href: "/", label: "EN" },
++      }
++    : {
++        home: "/",
++        cta: "Get started",
++        links: [
++          { href: "/how-it-works", label: "How it works" },
++          { href: "/guide", label: "Guide" },
++          { href: "/pricing", label: "Pricing" },
++          { href: "/auth/login", label: "Sign in" },
++        ],
++        lang: { href: "/es", label: "ES" },
++      };
++
+   return (
+     <>
+       <style>{`
+         .wpnav { position: relative; z-index: 30; display: flex; align-items: center;
+           justify-content: space-between; padding: 16px 22px;
+           border-bottom: 1px solid #1E3B4C; background: #0C1E29; }
+-        /* Fluid brand: logo + wordmark scale with the viewport (bigger on wide
+-           screens, comfortably smaller on phones) instead of a fixed size. */
+         .wpnav-brand { display: inline-flex; align-items: center; gap: clamp(9px, 1vw, 13px);
+           color: #fff; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+           text-decoration: none; font-size: clamp(20px, 2.2vw, 30px); line-height: 1; }
+@@ -36,6 +50,9 @@ export function SiteNav() {
+         .wpnav-link { color: #C8D4DC; font-size: 15px; font-weight: 600;
+           text-decoration: none; padding: 9px 14px; border-radius: 5px; }
+         .wpnav-link:hover { color: #fff; background: #14303F; }
++        .wpnav-lang { color: #C8D4DC; font-size: 13px; font-weight: 800; letter-spacing: .5px;
++          text-decoration: none; padding: 7px 12px; border: 1px solid #24445A; border-radius: 5px; }
++        .wpnav-lang:hover { color: #fff; border-color: #3a5b6e; }
+         .wpnav-cta { background: #CCFF00; color: #0C1E29; font-size: 15px; font-weight: 800;
+           text-decoration: none; padding: 10px 18px; border-radius: 5px;
+           letter-spacing: .3px; margin-left: 6px; white-space: nowrap; }
+@@ -59,16 +76,17 @@ export function SiteNav() {
+       `}</style>
+ 
+       <nav className="wpnav">
+-        <Link href="/" className="wpnav-brand" onClick={() => setOpen(false)}>
++        <Link href={T.home} className="wpnav-brand" onClick={() => setOpen(false)}>
+           <LogoMark size={30} /><span>WAY<span style={{ color: "#CCFF00" }}>POINT</span></span>
+         </Link>
+ 
+         {/* Desktop links */}
+         <div className="wpnav-links">
+-          {LINKS.map((l) => (
++          {T.links.map((l) => (
+             <Link key={l.href} href={l.href} className="wpnav-link">{l.label}</Link>
+           ))}
+-          <Link href="/auth/signup" className="wpnav-cta">Get started</Link>
++          <Link href={T.lang.href} className="wpnav-lang">{T.lang.label}</Link>
++          <Link href="/auth/signup" className="wpnav-cta">{T.cta}</Link>
+         </div>
+ 
+         {/* Mobile hamburger */}
+@@ -92,10 +110,11 @@ export function SiteNav() {
+         {/* Mobile sheet */}
+         {open && (
+           <div className="wpnav-sheet">
+-            {LINKS.map((l) => (
++            {T.links.map((l) => (
+               <Link key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Link>
+             ))}
+-            <Link href="/auth/signup" className="cta" onClick={() => setOpen(false)}>Get started</Link>
++            <Link href={T.lang.href} onClick={() => setOpen(false)}>{es ? "English" : "Español"}</Link>
++            <Link href="/auth/signup" className="cta" onClick={() => setOpen(false)}>{T.cta}</Link>
+           </div>
+         )}
+       </nav>
