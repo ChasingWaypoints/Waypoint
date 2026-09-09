@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import LiveEventMap from "../../../components/LiveEventMap";
+import { SpectatorGuide } from "../../../components/onboarding/SpectatorGuide";
 
 /**
  * Public spectator page for a group event.
@@ -105,8 +106,9 @@ export default function EventPage() {
           ))}
         </div>
       </div>
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
         <LiveEventMap shareToken={token} />
+        <SpectatorGuide variant="event" />
       </div>
 
       {stripSponsors.length > 0 && (

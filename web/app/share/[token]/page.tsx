@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 // @ts-ignore
 import mapboxgl from "mapbox-gl";
 import { BLANK_STYLE, installBasemaps } from "../../../components/basemaps";
+import { SpectatorGuide } from "../../../components/onboarding/SpectatorGuide";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
@@ -275,7 +276,10 @@ export default function SharePage() {
       </div>
 
       {/* Map */}
-      <div ref={mapContainer} style={{ flex: 1 }} />
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        <div ref={mapContainer} style={{ position: "absolute", inset: 0 }} />
+        <SpectatorGuide variant="trip" />
+      </div>
     </div>
   );
 }
