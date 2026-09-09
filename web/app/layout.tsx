@@ -41,7 +41,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.chasingwaypoints.com"),
+  // The public marketing domain — used to resolve absolute og:image / og:url
+  // for link previews (Facebook, iMessage, X, etc.). NEXT_PUBLIC_SITE_URL
+  // overrides it when set in Vercel.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://waypointtracking.com"),
   title: {
     default: "Waypoint — Live Event Tracking for Rally & Off-Road",
     template: "%s — Waypoint",
