@@ -2,5 +2,5 @@
 .env*
 
 # Local credentials for automated EAS builds — never commit
-.eas-token
+.eas-token*
 .secrets/
