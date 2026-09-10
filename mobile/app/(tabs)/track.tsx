@@ -1,42 +1,56 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { useCallback } from "react";
-import * as Location from "expo-location";
 import { supabase } from "../../lib/supabase";
+import {
+  startBeacon,
+  stopBeacon,
+  getBeaconStatus,
+  syncNow,
+  type Tier,
+} from "../../lib/backgroundTracking";
 
-const INTERVALS = [
-  { label: "1 min", value: 60, battery: "High drain" },
-  { label: "3 min", value: 180, battery: "Moderate" },
-  { label: "5 min", value: 300, battery: "Moderate" },
-  { label: "15 min", value: 900, battery: "Low drain" },
-  { label: "30 min", value: 1800, battery: "Minimal" },
+const TIER_OPTIONS: { label: string; value: Tier; battery: string }[] = [
+  { label: "Race", value: "race", battery: "30 s · high drain" },
+  { label: "Trail", value: "trail", battery: "1 min · moderate" },
+  { label: "Idle", value: "idle", battery: "5 min · low" },
+  { label: "Parked", value: "parked", battery: "15 min · minimal" },
 ];
 
 export default function TrackScreen() {
   const [tracking, setTracking] = useState(false);
-  const [interval, setInterval] = useState(180); // default 3 min (matches Garmin polling)
+  const [tier, setTier] = useState<Tier>("trail");
   const [activeTrip, setActiveTrip] = useState<{ id: string; name: string } | null>(null);
-  const [pointCount, setPointCount] = useState(0);
-  const [lastPing, setLastPing] = useState<Date | null>(null);
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [queued, setQueued] = useState(0);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    checkPermissions();
+  const refreshStatus = useCallback(async () => {
+    const s = await getBeaconStatus();
+    setTracking(s.active);
+    setQueued(s.queued);
+    if (s.active) setTier(s.tier);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchActiveTrip();
-    }, [])
+      refreshStatus();
+      // While this screen is open, keep the queue counter honest.
+      pollRef.current = setInterval(refreshStatus, 5000);
+      return () => {
+        if (pollRef.current) clearInterval(pollRef.current);
+      };
+    }, [refreshStatus])
   );
 
-  async function checkPermissions() {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    setPermissionGranted(status === "granted");
-  }
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
 
   async function fetchActiveTrip() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -52,63 +66,41 @@ export default function TrackScreen() {
     setActiveTrip(data ?? null);
   }
 
-  async function sendLocation() {
-    if (!activeTrip) return;
-    try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase.from("track_points").insert({
-        trip_id: activeTrip.id,
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-        altitude_m: location.coords.altitude,
-        speed_kmh: location.coords.speed ? location.coords.speed * 3.6 : null,
-        accuracy_m: location.coords.accuracy,
-        source: "phone",
-        recorded_at: new Date(location.timestamp).toISOString(),
-      });
-
-      setPointCount((c) => c + 1);
-      setLastPing(new Date());
-    } catch (err) {
-      console.error("Location error:", err);
-    }
-  }
-
-  function startTracking() {
-    if (!permissionGranted) {
-      setError("Location permission required. Please enable it in Settings.");
-      return;
-    }
+  async function handleStart() {
     if (!activeTrip) {
       setError("No active trip. Start a trip from the Trips tab first.");
       return;
     }
     setError("");
-    setTracking(true);
-    sendLocation(); // immediate first ping
-    scheduleNext();
+    try {
+      await startBeacon({ mode: "trip", tripId: activeTrip.id }, tier);
+      await refreshStatus();
+    } catch (err: any) {
+      setError(err?.message ?? "Could not start tracking.");
+    }
   }
 
-  function scheduleNext() {
-    timerRef.current = setTimeout(() => {
-      sendLocation();
-      scheduleNext();
-    }, interval * 1000);
+  async function handleStop() {
+    try {
+      await stopBeacon();
+    } catch (err: any) {
+      setError(err?.message ?? "Could not stop tracking.");
+    }
+    await refreshStatus();
   }
 
-  function stopTracking() {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setTracking(false);
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const r = await syncNow();
+      setQueued(r.remaining);
+      if (r.sent > 0) setLastSync(new Date());
+      if (r.skipped === "offline") setError("No connection — points are safe in the queue.");
+      else setError("");
+    } finally {
+      setSyncing(false);
+    }
   }
-
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   return (
     <ScrollView className="flex-1 bg-surface-dark">
@@ -130,33 +122,65 @@ export default function TrackScreen() {
           <Text className={`text-lg font-bold mb-1 ${tracking ? "text-emerald-400" : "text-on-dark-soft"}`}>
             {tracking ? "Tracking Active" : "Not Tracking"}
           </Text>
-          {tracking && lastPing && (
+          {tracking && (
             <Text className="text-emerald-300 text-xs mt-1">
-              Last ping: {lastPing.toLocaleTimeString()} · {pointCount} points sent
+              Recording in the background · {TIER_OPTIONS.find((t) => t.value === tier)?.label}
+            </Text>
+          )}
+          {lastSync && (
+            <Text className="text-on-dark-soft text-xs mt-1">
+              Last upload {lastSync.toLocaleTimeString()}
             </Text>
           )}
         </View>
 
-        {/* Interval selector */}
+        {/* Offline queue — the thing that tells a rider nothing was lost */}
+        <View className="bg-surface-dark-elevated rounded-xl p-4 mb-5 flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            <Text className="text-on-dark-soft text-xs uppercase font-bold mb-1">Waiting to upload</Text>
+            <Text className="text-white text-base font-semibold">
+              {queued === 0 ? "All caught up" : `${queued} point${queued === 1 ? "" : "s"} queued`}
+            </Text>
+            {queued > 0 && (
+              <Text className="text-on-dark-soft text-xs mt-1">
+                Saved on this phone. They upload as soon as you have signal.
+              </Text>
+            )}
+          </View>
+          <TouchableOpacity
+            className={`rounded-lg px-4 py-2 ${queued > 0 ? "bg-primary" : "bg-surface-dark"}`}
+            onPress={handleSync}
+            disabled={syncing || queued === 0}
+          >
+            <Text className={`font-bold text-sm ${queued > 0 ? "text-white" : "text-on-dark-soft"}`}>
+              {syncing ? "Syncing…" : "Sync"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Cadence selector */}
         {!tracking && (
           <View className="mb-5">
-            <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">Update Interval</Text>
+            <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">Update Rate</Text>
             <View className="flex-row gap-2 flex-wrap">
-              {INTERVALS.map((opt) => (
+              {TIER_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt.value}
-                  onPress={() => setInterval(opt.value)}
-                  className={`flex-1 rounded-xl p-3 items-center min-w-16 ${interval === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
+                  onPress={() => setTier(opt.value)}
+                  className={`flex-1 rounded-xl p-3 items-center min-w-16 ${tier === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
                 >
-                  <Text className={`font-bold text-sm ${interval === opt.value ? "text-white" : "text-on-dark"}`}>
+                  <Text className={`font-bold text-sm ${tier === opt.value ? "text-white" : "text-on-dark"}`}>
                     {opt.label}
                   </Text>
-                  <Text className={`text-xs mt-0.5 ${interval === opt.value ? "text-emerald-100" : "text-on-dark-soft"}`}>
+                  <Text className={`text-xs mt-0.5 ${tier === opt.value ? "text-emerald-100" : "text-on-dark-soft"}`}>
                     {opt.battery}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
+            <Text className="text-on-dark-soft text-xs mt-3">
+              Waypoint slows the rate on its own when you stop moving, and speeds it back up when you ride.
+            </Text>
           </View>
         )}
 
@@ -166,7 +190,7 @@ export default function TrackScreen() {
         {/* Main button */}
         <TouchableOpacity
           className={`rounded-xl py-5 items-center ${tracking ? "bg-red-500/80" : "bg-primary"}`}
-          onPress={tracking ? stopTracking : startTracking}
+          onPress={tracking ? handleStop : handleStart}
         >
           <Text className="text-white font-bold text-lg">
             {tracking ? "Stop Tracking" : "Start Tracking"}

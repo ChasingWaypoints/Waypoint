@@ -6,12 +6,16 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.d.ts",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "css-modules.d.ts"
   ]
 }

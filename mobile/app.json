@@ -13,8 +13,8 @@
       "bundleIdentifier": "com.chasingwaypoints.waypoint",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Waypoint needs your location to track your adventure in real time.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Waypoint uses your location in the background to keep tracking even when the app is minimized.",
+        "NSLocationWhenInUseUsageDescription": "Waypoint uses your location to place you on your event's live map so organizers, your crew, and your emergency contacts can see where you are.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Waypoint shares your position with your event organizer and emergency contacts while you're riding, including when your phone is in your pocket or the screen is off. Tracking runs only while you have a session started, and you can stop it at any time.",
         "UIBackgroundModes": ["location"]
       }
     },
@@ -32,7 +32,10 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "ACCESS_NETWORK_STATE",
+        "WAKE_LOCK"
       ]
     },
     "web": {

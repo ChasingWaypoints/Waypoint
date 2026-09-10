@@ -78,7 +78,19 @@ const baseConfig = ({ config }: { config: Record<string, unknown> }): Record<str
     "expo-router",
     "expo-status-bar",
     "expo-web-browser",
+    "expo-sqlite",
     "@rnmapbox/maps",
+    [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "Waypoint uses your location to place you on your event's live map so organizers, your crew, and your emergency contacts can see where you are.",
+        locationAlwaysAndWhenInUsePermission:
+          "Waypoint shares your position with your event organizer and emergency contacts while you're riding, including when your phone is in your pocket or the screen is off. Tracking runs only while you have a session started, and you can stop it at any time.",
+        isAndroidBackgroundLocationEnabled: true,
+        isAndroidForegroundServiceEnabled: true,
+      },
+    ],
   ],
 });
 
