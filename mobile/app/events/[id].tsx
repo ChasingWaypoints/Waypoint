@@ -7,9 +7,11 @@ import {
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { Camera, MapView, MarkerView, ShapeSource, LineLayer } from "@rnmapbox/maps";
 import { supabase } from "../../lib/supabase";
+import { hasMapboxToken } from "../../lib/mapbox";
+import MapUnavailable from "../../components/MapUnavailable";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
-// Mapbox token is already initialised in TripMap.tsx — do not call setAccessToken again
+// Mapbox token is set once in lib/mapbox.ts, imported at app root.
 
 // MapView only accepts Mapbox components as children — use Fragment, not View
 function MapboxFragment({ children }: { children: React.ReactNode }) {
@@ -303,7 +305,13 @@ export default function EventDetailScreen() {
         </View>
 
         {/* ── MAP TAB ── */}
-        {tab === "map" && (
+        {tab === "map" && !hasMapboxToken && (
+          <View style={{ flex: 1 }}>
+            <MapUnavailable note="This build has no Mapbox token, so the event map can't load here. The rest of the event — roster, stages and status — works, and the live map on the web is unaffected." />
+          </View>
+        )}
+
+        {tab === "map" && hasMapboxToken && (
           <View style={{ flex: 1 }}>
             <MapView
               style={{ flex: 1 }}

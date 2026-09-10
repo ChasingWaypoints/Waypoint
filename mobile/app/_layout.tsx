@@ -2,6 +2,8 @@ import "../global.css";
 // Must run at module-evaluation time so TaskManager.defineTask() registers the
 // background location task before any navigation renders.
 import "../lib/backgroundTracking";
+// Sets the Mapbox access token exactly once, before any screen can mount a map.
+import "../lib/mapbox";
 import { useEffect, useState } from "react";
 import { Stack, router } from "expo-router";
 import { Session } from "@supabase/supabase-js";

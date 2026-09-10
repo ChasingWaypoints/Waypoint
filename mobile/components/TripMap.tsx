@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, Animated, Easing, StyleSheet, TouchableOpacity } from "react-native";
 import Mapbox, { Camera, MapView, ShapeSource, LineLayer, PointAnnotation, MarkerView } from "@rnmapbox/maps";
 import { supabase } from "../lib/supabase";
+import { hasMapboxToken } from "../lib/mapbox";
+import MapUnavailable from "./MapUnavailable";
 
 const MAP_STYLES = [
   { id: "outdoors", label: "Terrain", url: "mapbox://styles/mapbox/outdoors-v12" },
   { id: "satellite", label: "Satellite", url: "mapbox://styles/mapbox/satellite-streets-v12" },
 ];
 
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
+// Token is set once in lib/mapbox.ts, imported at app root.
 
 interface TrackPoint {
   lat: number;
@@ -157,6 +159,8 @@ export default function TripMap({ tripId, tripStatus }: TripMapProps) {
     geometry: { type: "LineString", coordinates: points.map((p) => [p.lng, p.lat]) },
     properties: {},
   };
+
+  if (!hasMapboxToken) return <MapUnavailable />;
 
   return (
     <View style={{ flex: 1 }}>
