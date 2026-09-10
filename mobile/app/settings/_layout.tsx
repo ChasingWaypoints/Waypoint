@@ -10,6 +10,7 @@ export default function SettingsLayout() {
         headerShadowVisible: false,
       }}
     >
+      <Stack.Screen name="beacon" options={{ title: "Phone Beacon" }} />
       <Stack.Screen name="devices" options={{ title: "Devices" }} />
       <Stack.Screen name="add-device" options={{ title: "Add Device" }} />
       <Stack.Screen name="setup-garmin" options={{ title: "Garmin inReach" }} />

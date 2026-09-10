@@ -17,6 +17,7 @@
 import * as Network from "expo-network";
 import { supabase } from "./supabase";
 import { peek, drop, pendingCount, type QueuedPing } from "./pingQueue";
+import { getDeviceToken } from "./deviceIdentity";
 
 /** One request per burst. Small enough to survive a marginal connection. */
 const BATCH_SIZE = 200;
@@ -45,10 +46,11 @@ export async function flushQueue(): Promise<FlushResult> {
     // Network module unavailable — fall through and just try the request.
   }
 
+  // A session is optional. Event points authenticate with the device token, so
+  // a rider who never signed in still uploads. Personal trip points write to
+  // track_points under RLS and do need one — those stay queued until sign-in.
   const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session) {
-    return { sent: 0, remaining: await pendingCount(), skipped: "no-session" };
-  }
+  const hasSession = !!sessionData?.session;
 
   flushing = true;
   let sent = 0;
@@ -64,7 +66,7 @@ export async function flushQueue(): Promise<FlushResult> {
       let progressed = false;
 
       for (const group of groups) {
-        const ok = await sendGroup(group);
+        const ok = await sendGroup(group, hasSession);
         if (!ok) continue;
         await drop(group.rows.map((r) => r.id!).filter(Boolean));
         sent += group.rows.length;
@@ -111,23 +113,41 @@ function groupByDestination(rows: QueuedPing[]): Group[] {
   return [...map.values()];
 }
 
-async function sendGroup(g: Group): Promise<boolean> {
+async function sendGroup(g: Group, hasSession: boolean): Promise<boolean> {
   try {
     if (g.mode === "event") {
-      if (!g.participantId) return false;
+      const points = g.rows.map((r) => ({
+        recorded_at: r.recorded_at,
+        lat: r.lat,
+        lng: r.lng,
+        altitude_m: r.altitude_m,
+        speed_kmh: r.speed_kmh,
+        accuracy_m: r.accuracy_m,
+        heading_deg: r.heading_deg,
+        battery_pct: r.battery_pct,
+      }));
+
+      // Primary path: the device token. Works signed out, and the server
+      // resolves the participant itself so the phone can't spoof one.
+      const token = await getDeviceToken();
+      const { data: beaconData, error: beaconErr } = await supabase.rpc(
+        "beacon_ingest",
+        { p_token: token, p_points: points }
+      );
+      if (!beaconErr && (beaconData as any)?.ok) return true;
+
+      const reason = beaconErr?.message ?? (beaconData as any)?.error;
+      // Only fall back when a session can actually do better — an unclaimed
+      // device or an unset event is not something a retry fixes.
+      if (!hasSession || !g.participantId) {
+        console.warn("[sync] beacon ingest refused:", reason);
+        return false;
+      }
+
       const { error } = await supabase.rpc("ingest_phone_points", {
         p_participant_id: g.participantId,
         p_event_id: g.contextId,
-        p_points: g.rows.map((r) => ({
-          recorded_at: r.recorded_at,
-          lat: r.lat,
-          lng: r.lng,
-          altitude_m: r.altitude_m,
-          speed_kmh: r.speed_kmh,
-          accuracy_m: r.accuracy_m,
-          heading_deg: r.heading_deg,
-          battery_pct: r.battery_pct,
-        })),
+        p_points: points,
       });
       if (error) {
         console.warn("[sync] event flush failed:", error.message);
@@ -135,6 +155,8 @@ async function sendGroup(g: Group): Promise<boolean> {
       }
       return true;
     }
+
+    if (!hasSession) return false; // trip points are RLS-protected
 
     const { error } = await supabase.from("track_points").insert(
       g.rows.map((r) => ({

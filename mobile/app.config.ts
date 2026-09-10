@@ -79,6 +79,7 @@ const baseConfig = ({ config }: { config: Record<string, unknown> }): Record<str
     "expo-status-bar",
     "expo-web-browser",
     "expo-sqlite",
+    "expo-secure-store",
     "@rnmapbox/maps",
     [
       "expo-location",

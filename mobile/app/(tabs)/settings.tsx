@@ -55,6 +55,7 @@ export default function SettingsScreen() {
         {/* Devices section */}
         <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mb-2">Devices</Text>
         <View className="border-t border-hairline">
+          <SettingsRow label="Use This Phone as a Beacon" onPress={() => router.push("/settings/beacon")} />
           <SettingsRow label="Manage Devices" onPress={() => router.push("/settings/devices")} />
           <SettingsRow label="Add New Device" onPress={() => router.push("/settings/add-device")} />
         </View>
