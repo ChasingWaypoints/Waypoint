@@ -1,2 +1,6 @@
 .vercel
 .env*
+
+# Local credentials for automated EAS builds — never commit
+.eas-token
+.secrets/
