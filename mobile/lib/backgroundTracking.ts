@@ -32,6 +32,8 @@ export const BG_LOCATION_TASK = "waypoint-bg-location";
 const SESSION_KEY = "waypoint_beacon_session";
 const TIER_KEY = "waypoint_beacon_tier";
 const LAST_FIX_KEY = "waypoint_beacon_last_fix";
+/** Wall-clock of the last fix the OS actually delivered. The honest heartbeat. */
+const LAST_FIX_AT_KEY = "waypoint_beacon_last_fix_at";
 
 // Brand: dark ground, acid accents. The old #FAA634 was in no part of the palette.
 const NOTIFICATION_COLOR = "#CCFF00";
@@ -132,6 +134,7 @@ try {
     }
 
     const newest = locations[locations.length - 1];
+    await AsyncStorage.setItem(LAST_FIX_AT_KEY, String(Date.now()));
     await maybeRetier(newest);
 
     // Best-effort. If it fails the fixes stay queued, which is the point.
@@ -247,7 +250,7 @@ export async function startBeacon(session: BeaconSession, tier?: Tier): Promise<
 
   await initQueue();
   await setSession(session);
-  await AsyncStorage.removeItem(LAST_FIX_KEY);
+  await AsyncStorage.multiRemove([LAST_FIX_KEY, LAST_FIX_AT_KEY]);
 
   const resolved: Tier = tier ?? (session.mode === "event" ? "race" : "trail");
   await AsyncStorage.setItem(TIER_KEY, resolved);
@@ -262,7 +265,7 @@ export async function stopBeacon(): Promise<void> {
   const running = await Location.hasStartedLocationUpdatesAsync(BG_LOCATION_TASK).catch(() => false);
   if (running) await Location.stopLocationUpdatesAsync(BG_LOCATION_TASK);
   await setSession(null);
-  await AsyncStorage.removeItem(LAST_FIX_KEY);
+  await AsyncStorage.multiRemove([LAST_FIX_KEY, LAST_FIX_AT_KEY]);
   // One last drain so a rider who stops in cell coverage uploads immediately.
   await flushQueue().catch(() => undefined);
 }
@@ -276,16 +279,58 @@ export type BeaconStatus = {
   session: BeaconSession | null;
   tier: Tier;
   queued: number;
+  /** ms since the OS last handed us a fix, or null if none yet this session. */
+  lastFixAgeMs: number | null;
+  /**
+   * The session says we should be tracking but the OS says we are not. This is
+   * what an OEM battery killer looks like from inside the app: no error, no
+   * callback, the task simply stops being called. Worth shouting about.
+   */
+  stalled: boolean;
+};
+
+/**
+ * How long without a fix before we call it stalled. Generous multiples of the
+ * tier interval, because a phone in a canyon can legitimately go quiet for a
+ * while without anything being wrong.
+ */
+const STALL_AFTER: Record<Tier, number> = {
+  race: 6 * 60_000,
+  trail: 8 * 60_000,
+  idle: 20 * 60_000,
+  parked: 45 * 60_000,
 };
 
 export async function getBeaconStatus(): Promise<BeaconStatus> {
   await initQueue();
-  return {
-    active: await isTrackingActive(),
-    session: await getSession(),
-    tier: await getTier(),
-    queued: await pendingCount(),
-  };
+  const [active, session, tier, queued, lastFixRaw] = await Promise.all([
+    isTrackingActive(),
+    getSession(),
+    getTier(),
+    pendingCount(),
+    AsyncStorage.getItem(LAST_FIX_AT_KEY),
+  ]);
+
+  const lastFixAt = lastFixRaw ? Number(lastFixRaw) : null;
+  const lastFixAgeMs = lastFixAt ? Date.now() - lastFixAt : null;
+
+  // Two ways to be stalled: the OS dropped the task entirely, or it kept the
+  // task but stopped delivering fixes.
+  const stalled =
+    !!session &&
+    (!active || (lastFixAgeMs !== null && lastFixAgeMs > STALL_AFTER[tier]));
+
+  return { active, session, tier, queued, lastFixAgeMs, stalled };
+}
+
+/**
+ * Restart a session the OS killed, without making the rider re-pick anything.
+ * Called from the Track screen's recovery banner.
+ */
+export async function resumeBeacon(): Promise<void> {
+  const session = await getSession();
+  if (!session) throw new Error("No session to resume.");
+  await startBeacon(session, await getTier());
 }
 
 /** Manual "sync now" for the Status screen. */

@@ -14,6 +14,15 @@ import {
   fetchBeaconEvents,
   type BeaconState,
 } from "../../lib/deviceIdentity";
+import { resumeBeacon } from "../../lib/backgroundTracking";
+import {
+  needsBatteryGuidance,
+  hasAcknowledged,
+  acknowledge,
+  openBatterySettings,
+  BATTERY_GUIDANCE_TITLE,
+  BATTERY_GUIDANCE_BODY,
+} from "../../lib/batteryGuidance";
 
 const TIER_OPTIONS: { label: string; value: Tier; battery: string }[] = [
   { label: "Race", value: "race", battery: "30 s · high drain" },
@@ -21,6 +30,15 @@ const TIER_OPTIONS: { label: string; value: Tier; battery: string }[] = [
   { label: "Idle", value: "idle", battery: "5 min · low" },
   { label: "Parked", value: "parked", battery: "15 min · minimal" },
 ];
+
+function formatAge(ms: number | null): string {
+  if (ms == null) return "not yet";
+  const s = Math.round(ms / 1000);
+  if (s < 90) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  if (m < 90) return `${m} min ago`;
+  return `${Math.round(m / 60)}h ago`;
+}
 
 export default function TrackScreen() {
   const [tracking, setTracking] = useState(false);
@@ -31,6 +49,9 @@ export default function TrackScreen() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
   const [beacon, setBeacon] = useState<BeaconState | null>(null);
+  const [stalled, setStalled] = useState(false);
+  const [lastFixAgeMs, setLastFixAgeMs] = useState<number | null>(null);
+  const [showBattery, setShowBattery] = useState(false);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -38,6 +59,8 @@ export default function TrackScreen() {
     const s = await getBeaconStatus();
     setTracking(s.active);
     setQueued(s.queued);
+    setStalled(s.stalled);
+    setLastFixAgeMs(s.lastFixAgeMs);
     if (s.active) setTier(s.tier);
   }, []);
 
@@ -64,6 +87,7 @@ export default function TrackScreen() {
       fetchActiveTrip();
       refreshStatus();
       refreshBeacon();
+      if (needsBatteryGuidance()) hasAcknowledged().then((ack) => setShowBattery(!ack));
       // While this screen is open, keep the queue counter honest.
       pollRef.current = setInterval(refreshStatus, 5000);
       return () => {
@@ -142,6 +166,16 @@ export default function TrackScreen() {
     await refreshStatus();
   }
 
+  async function handleResume() {
+    setError("");
+    try {
+      await resumeBeacon();
+      await refreshStatus();
+    } catch (err: any) {
+      setError(err?.message ?? "Could not resume tracking.");
+    }
+  }
+
   async function handleSync() {
     setSyncing(true);
     try {
@@ -158,6 +192,50 @@ export default function TrackScreen() {
   return (
     <ScrollView className="flex-1 bg-surface-dark">
       <View className="px-6 pt-6 pb-10">
+
+        {/* Tracking died without telling us — the OEM battery-killer signature */}
+        {stalled && (
+          <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
+            <Text className="text-red-300 font-bold text-sm mb-1">Tracking stopped</Text>
+            <Text className="text-on-dark-soft text-xs leading-5 mb-3">
+              {tracking
+                ? `No position fix for ${formatAge(lastFixAgeMs)}. Your phone may have put Waypoint to sleep.`
+                : "Your session is still set but the phone is no longer tracking. This is usually battery optimization shutting the app down."}
+            </Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={handleResume}>
+                <Text className="text-white font-bold text-sm">Resume tracking</Text>
+              </TouchableOpacity>
+              {needsBatteryGuidance() && (
+                <TouchableOpacity
+                  className="bg-surface-dark-elevated rounded-lg px-4 py-2"
+                  onPress={openBatterySettings}
+                >
+                  <Text className="text-on-dark font-bold text-sm">Fix battery settings</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* One-time Android setup nudge, before it matters in the desert */}
+        {showBattery && !stalled && (
+          <View className="bg-surface-dark-elevated border border-amber-500/30 rounded-xl p-4 mb-5">
+            <Text className="text-amber-300 font-bold text-sm mb-1">{BATTERY_GUIDANCE_TITLE}</Text>
+            <Text className="text-on-dark-soft text-xs leading-5 mb-3">{BATTERY_GUIDANCE_BODY}</Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={openBatterySettings}>
+                <Text className="text-white font-bold text-sm">Open settings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="bg-surface-dark rounded-lg px-4 py-2"
+                onPress={async () => { await acknowledge(); setShowBattery(false); }}
+              >
+                <Text className="text-on-dark-soft font-bold text-sm">Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Where this session's points are going */}
         <View className="bg-surface-dark-elevated rounded-xl p-4 mb-5">
@@ -192,6 +270,11 @@ export default function TrackScreen() {
           {tracking && (
             <Text className="text-emerald-300 text-xs mt-1">
               Recording in the background · {TIER_OPTIONS.find((t) => t.value === tier)?.label}
+            </Text>
+          )}
+          {tracking && (
+            <Text className="text-on-dark-soft text-xs mt-1">
+              Last fix {formatAge(lastFixAgeMs)}
             </Text>
           )}
           {lastSync && (
