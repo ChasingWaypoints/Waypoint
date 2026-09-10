@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../lib/theme";
 
 function TabIcon({ icon }: { icon: string }) {
@@ -7,6 +8,11 @@ function TabIcon({ icon }: { icon: string }) {
 }
 
 export default function TabsLayout() {
+  // A fixed bar height renders underneath the system navigation buttons on
+  // phones that have them — the XCover Pro among them. Grow the bar by the
+  // bottom inset instead, so the labels always clear the hardware.
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -20,9 +26,9 @@ export default function TabsLayout() {
           borderTopColor: theme.hairline,
           borderTopWidth: 1,
           elevation: 0,
-          height: 62,
+          height: 62 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: 8 + insets.bottom,
         },
         // Acid green marks the active tab, matching the track lines on the map.
         tabBarActiveTintColor: theme.action,

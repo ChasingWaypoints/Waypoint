@@ -4,8 +4,11 @@ import "../global.css";
 import "../lib/backgroundTracking";
 // Sets the Mapbox access token exactly once, before any screen can mount a map.
 import "../lib/mapbox";
+import { theme } from "../lib/theme";
 import { useEffect, useState } from "react";
 import { Stack, router } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { Session } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../lib/supabase";
@@ -50,6 +53,16 @@ export default function RootLayout() {
   }, [initialized, session]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    // Without this provider useSafeAreaInsets() returns zeros, which is how the
+    // tab bar ended up underneath the system navigation buttons.
+    <SafeAreaProvider>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.canvas },
+        }}
+      />
+    </SafeAreaProvider>
   );
 }
