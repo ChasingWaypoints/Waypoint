@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
+import { theme } from "../../lib/theme";
 
 function TabIcon({ icon }: { icon: string }) {
   return <Text style={{ fontSize: 18 }}>{icon}</Text>;
@@ -9,19 +10,24 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: "#ffffff" },
-        headerTintColor: "#262626",
+        headerStyle: { backgroundColor: theme.surface },
+        headerTintColor: theme.ink,
         headerTitleStyle: { fontWeight: "700", fontSize: 16, letterSpacing: 0.5 },
         headerShadowVisible: false,
+        sceneStyle: { backgroundColor: theme.canvas },
         tabBarStyle: {
-          backgroundColor: "#ffffff",
-          borderTopColor: "#e6e6e6",
+          backgroundColor: theme.surface,
+          borderTopColor: theme.hairline,
           borderTopWidth: 1,
           elevation: 0,
+          height: 62,
+          paddingTop: 6,
+          paddingBottom: 8,
         },
-        tabBarActiveTintColor: "#1c69d4",
-        tabBarInactiveTintColor: "#6b6b6b",
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
+        // Acid green marks the active tab, matching the track lines on the map.
+        tabBarActiveTintColor: theme.action,
+        tabBarInactiveTintColor: theme.muted,
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "700", letterSpacing: 1 },
       }}
     >
       <Tabs.Screen

@@ -1,14 +1,10 @@
 import { Stack } from "expo-router";
+import { stackHeader, theme } from "../../lib/theme";
 
 export default function TripsLayout() {
   return (
     <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: "#3E5F44" },
-        headerTintColor: "#ffffff",
-        headerTitleStyle: { fontWeight: "700", fontSize: 15 },
-        headerShadowVisible: false,
-      }}
+      screenOptions={{ ...stackHeader, contentStyle: { backgroundColor: theme.canvas } }}
     >
       <Stack.Screen name="[id]" options={{ title: "Trip" }} />
     </Stack>

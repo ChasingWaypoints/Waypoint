@@ -1,14 +1,10 @@
 import { Stack } from "expo-router";
+import { stackHeader, theme } from "../../lib/theme";
 
 export default function SettingsLayout() {
   return (
     <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: "#ffffff" },
-        headerTintColor: "#1c69d4",
-        headerTitleStyle: { fontWeight: "700", fontSize: 15 },
-        headerShadowVisible: false,
-      }}
+      screenOptions={{ ...stackHeader, contentStyle: { backgroundColor: theme.canvas } }}
     >
       <Stack.Screen name="beacon" options={{ title: "Phone Beacon" }} />
       <Stack.Screen name="devices" options={{ title: "Devices" }} />
