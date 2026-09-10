@@ -35,11 +35,16 @@ export async function flushQueue(): Promise<FlushResult> {
     return { sent: 0, remaining: await pendingCount(), skipped: "in-progress" };
   }
 
-  // Cheap early exit. A failed round trip on a dead connection costs battery
-  // and, on a metered satellite link, real money.
+  // Cheap early exit on a dead connection — a failed round trip costs battery,
+  // and on a metered satellite link, real money.
+  //
+  // But isInternetReachable is `boolean | undefined`, and Android frequently
+  // reports undefined when it simply has not determined reachability yet.
+  // Treating undefined as "offline" meant a phone with five bars queued fixes
+  // forever and never sent one. Only an explicit false counts as offline.
   try {
     const net = await Network.getNetworkStateAsync();
-    if (!net.isInternetReachable) {
+    if (net.isInternetReachable === false || net.isConnected === false) {
       return { sent: 0, remaining: await pendingCount(), skipped: "offline" };
     }
   } catch {
