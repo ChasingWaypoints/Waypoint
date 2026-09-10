@@ -27,6 +27,10 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.chasingwaypoints.waypoint",
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
