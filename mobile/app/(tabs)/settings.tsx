@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import Constants from "expo-constants";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
 
@@ -84,6 +85,16 @@ export default function SettingsScreen() {
             <Text className="text-error font-bold text-sm tracking-wider uppercase">Sign Out</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Build identity — so a tester can say which APK they are on */}
+        <Text className="text-muted-soft text-xs font-light text-center px-6 mt-8">
+          Waypoint {Constants.expoConfig?.version ?? "?"}
+          {Constants.expoConfig?.android?.versionCode
+            ? ` (${Constants.expoConfig.android.versionCode})`
+            : ""}
+          {" · "}
+          {String((Constants.expoConfig?.extra as { commit?: string } | undefined)?.commit ?? "local")}
+        </Text>
 
         {/* Privacy notice */}
         <Text className="text-muted-soft text-xs font-light text-center px-6 mt-6">

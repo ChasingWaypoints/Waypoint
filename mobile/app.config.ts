@@ -74,6 +74,13 @@ const withMapboxMavenRepo = (config: Record<string, unknown>): Record<string, un
 
 const baseConfig = ({ config }: { config: Record<string, unknown> }): Record<string, unknown> => ({
   ...config,
+  extra: {
+    ...((config.extra as Record<string, unknown>) ?? {}),
+    // EAS sets this on the builder. Without it every preview APK looks
+    // identical from inside the app, which is how you end up testing a build
+    // you already replaced.
+    commit: (process.env.EAS_BUILD_GIT_COMMIT_HASH ?? "local").slice(0, 8),
+  },
   plugins: [
     "expo-router",
     "expo-status-bar",
