@@ -80,7 +80,20 @@ const baseConfig = ({ config }: { config: Record<string, unknown> }): Record<str
     "expo-web-browser",
     "expo-sqlite",
     "expo-secure-store",
-    "@rnmapbox/maps",
+    [
+      "@rnmapbox/maps",
+      {
+        // The Mapbox SDK is fetched from a private Maven repo that needs a
+        // secret download token. The plugin looks for RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
+        // but the EAS secret on this project is named MAPBOX_DOWNLOAD_TOKEN —
+        // accept either rather than requiring the secret be recreated. Without
+        // it Gradle falls back to JitPack and times out.
+        RNMapboxMapsDownloadToken:
+          process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN ??
+          process.env.MAPBOX_DOWNLOAD_TOKEN ??
+          process.env.MAPBOX_DOWNLOADS_TOKEN,
+      },
+    ],
     [
       "expo-location",
       {
