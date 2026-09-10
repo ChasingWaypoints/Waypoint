@@ -50,11 +50,17 @@ export type Tier = "race" | "trail" | "idle" | "parked";
 
 type TierSpec = { timeInterval: number; distanceInterval: number; accuracy: Location.LocationAccuracy };
 
+// distanceInterval is a *displacement filter*: the OS withholds every fix until
+// the phone has moved that far. Combined with timeInterval it does not mean
+// "whichever comes first" — it means both must be satisfied. With 50 m on the
+// race tier, a rider sitting at the start line produced no fixes at all, ever,
+// and the tiers already control the rate. So the filter is off, and cadence is
+// purely time-driven.
 const TIERS: Record<Tier, TierSpec> = {
-  race:   { timeInterval: 30_000,    distanceInterval: 50,  accuracy: Location.Accuracy.High },
-  trail:  { timeInterval: 60_000,    distanceInterval: 100, accuracy: Location.Accuracy.High },
-  idle:   { timeInterval: 300_000,   distanceInterval: 250, accuracy: Location.Accuracy.Balanced },
-  parked: { timeInterval: 900_000,   distanceInterval: 500, accuracy: Location.Accuracy.Balanced },
+  race:   { timeInterval: 30_000,  distanceInterval: 0, accuracy: Location.Accuracy.High },
+  trail:  { timeInterval: 60_000,  distanceInterval: 0, accuracy: Location.Accuracy.High },
+  idle:   { timeInterval: 300_000, distanceInterval: 0, accuracy: Location.Accuracy.Balanced },
+  parked: { timeInterval: 900_000, distanceInterval: 0, accuracy: Location.Accuracy.Balanced },
 };
 
 /** Metres of movement below which the rider counts as stationary. */
@@ -259,6 +265,46 @@ export async function startBeacon(session: BeaconSession, tier?: Tier): Promise<
   if (running) await Location.stopLocationUpdatesAsync(BG_LOCATION_TASK);
 
   await Location.startLocationUpdatesAsync(BG_LOCATION_TASK, buildOptions(TIERS[resolved]));
+
+  // Even with the filter off, the first scheduled fix is one interval away —
+  // up to 30 seconds of a rider staring at "not yet" wondering if it works.
+  // Take one now, queue it, and push it.
+  void captureImmediateFix(session).catch((e) =>
+    console.warn("[BG] immediate fix failed:", e)
+  );
+}
+
+async function captureImmediateFix(session: BeaconSession): Promise<void> {
+  const loc = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.High,
+  });
+
+  let battery: number | null = null;
+  try {
+    const level = await Battery.getBatteryLevelAsync();
+    battery = level >= 0 ? Math.round(level * 100) : null;
+  } catch {
+    battery = null;
+  }
+
+  await enqueue({
+    recorded_at: new Date(loc.timestamp).toISOString(),
+    lat: loc.coords.latitude,
+    lng: loc.coords.longitude,
+    altitude_m: loc.coords.altitude ?? null,
+    speed_kmh:
+      loc.coords.speed != null && loc.coords.speed >= 0 ? loc.coords.speed * 3.6 : null,
+    accuracy_m: loc.coords.accuracy ?? null,
+    heading_deg:
+      loc.coords.heading != null && loc.coords.heading >= 0 ? loc.coords.heading : null,
+    battery_pct: battery,
+    mode: session.mode,
+    context_id: session.mode === "trip" ? session.tripId : session.eventId,
+    participant_id: session.mode === "event" ? session.participantId : null,
+  });
+
+  await AsyncStorage.setItem(LAST_FIX_AT_KEY, String(Date.now()));
+  await flushQueue();
 }
 
 export async function stopBeacon(): Promise<void> {
