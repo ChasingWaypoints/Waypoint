@@ -204,7 +204,7 @@ export default function TrackScreen() {
             </Text>
             <View className="flex-row gap-2">
               <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={handleResume}>
-                <Text className="text-white font-bold text-sm">Resume tracking</Text>
+                <Text className="text-on-primary font-bold text-sm">Resume tracking</Text>
               </TouchableOpacity>
               {needsBatteryGuidance() && (
                 <TouchableOpacity
@@ -225,7 +225,7 @@ export default function TrackScreen() {
             <Text className="text-on-dark-soft text-xs leading-5 mb-3">{BATTERY_GUIDANCE_BODY}</Text>
             <View className="flex-row gap-2">
               <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={openBatterySettings}>
-                <Text className="text-white font-bold text-sm">Open settings</Text>
+                <Text className="text-on-primary font-bold text-sm">Open settings</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="bg-surface-dark rounded-lg px-4 py-2"
@@ -302,7 +302,7 @@ export default function TrackScreen() {
             onPress={handleSync}
             disabled={syncing || queued === 0}
           >
-            <Text className={`font-bold text-sm ${queued > 0 ? "text-white" : "text-on-dark-soft"}`}>
+            <Text className={`font-bold text-sm ${queued > 0 ? "text-on-primary" : "text-on-dark-soft"}`}>
               {syncing ? "Syncing…" : "Sync"}
             </Text>
           </TouchableOpacity>
@@ -319,7 +319,7 @@ export default function TrackScreen() {
                   onPress={() => setTier(opt.value)}
                   className={`flex-1 rounded-xl p-3 items-center min-w-16 ${tier === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
                 >
-                  <Text className={`font-bold text-sm ${tier === opt.value ? "text-white" : "text-on-dark"}`}>
+                  <Text className={`font-bold text-sm ${tier === opt.value ? "text-on-primary" : "text-on-dark"}`}>
                     {opt.label}
                   </Text>
                   <Text className={`text-xs mt-0.5 ${tier === opt.value ? "text-emerald-100" : "text-on-dark-soft"}`}>
@@ -342,7 +342,7 @@ export default function TrackScreen() {
           className={`rounded-xl py-5 items-center ${tracking ? "bg-red-500/80" : "bg-primary"}`}
           onPress={tracking ? handleStop : handleStart}
         >
-          <Text className="text-white font-bold text-lg">
+          <Text className="text-on-primary font-bold text-lg">
             {tracking ? "Stop Tracking" : "Start Tracking"}
           </Text>
         </TouchableOpacity>

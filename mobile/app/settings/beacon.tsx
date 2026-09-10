@@ -114,7 +114,7 @@ export default function BeaconSetupScreen() {
                   onPress={copyCode}
                   disabled={!code}
                 >
-                  <Text className="text-white font-bold text-sm">
+                  <Text className="text-on-primary font-bold text-sm">
                     {copied ? "Copied" : "Copy code"}
                   </Text>
                 </TouchableOpacity>
@@ -167,7 +167,7 @@ export default function BeaconSetupScreen() {
             >
               <Text
                 className={`font-semibold ${
-                  !state?.active_event_id ? "text-white" : "text-on-dark"
+                  !state?.active_event_id ? "text-on-primary" : "text-on-dark"
                 }`}
               >
                 Personal trip
@@ -193,7 +193,7 @@ export default function BeaconSetupScreen() {
                   disabled={busy}
                 >
                   <Text
-                    className={`font-semibold ${active ? "text-white" : "text-on-dark"}`}
+                    className={`font-semibold ${active ? "text-on-primary" : "text-on-dark"}`}
                   >
                     {ev.name}
                   </Text>

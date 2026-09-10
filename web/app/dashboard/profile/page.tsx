@@ -598,6 +598,31 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* ── Phone beacon ── */}
+        <div style={{ marginBottom: 36 }}>
+          <SectionLabel>This Phone</SectionLabel>
+          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 20 }}>
+            <p style={{ margin: "0 0 6px", color: "#FFFFFF", fontWeight: 700 }}>
+              Use a phone as a beacon
+            </p>
+            <p style={{ margin: "0 0 16px", color: "#7E93A0", lineHeight: 1.6 }}>
+              No Garmin, SPOT or ZOLEO needed. Install Waypoint on the phone, open{" "}
+              <strong style={{ color: "#C8D4DC" }}>Settings → Use This Phone as a Beacon</strong>,
+              and link the 6-character code it shows. You only do this once per phone.
+            </p>
+            <Link
+              href="/claim"
+              style={{
+                display: "inline-block", background: "#CCFF00", color: "#0C1E29",
+                padding: "10px 18px", fontSize: text.xs, fontWeight: 700,
+                letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none",
+              }}
+            >
+              Link a phone
+            </Link>
+          </div>
+        </div>
+
         {/* ── Devices ── */}
         <div>
           <SectionLabel>Satellite Devices</SectionLabel>
