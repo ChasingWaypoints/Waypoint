@@ -24,6 +24,9 @@ interface Props {
   organizerEventId?: string;
   /** Show weather + animated-radar overlay (Plus / Org perk). */
   weather?: boolean;
+  /** External "fly to this rider" request (e.g. from the incident panel).
+   *  The `n` nonce lets the same rider be re-focused on repeated clicks. */
+  focusSignal?: { id: string; n: number };
 }
 
 export default function LiveEventMap({
@@ -32,6 +35,7 @@ export default function LiveEventMap({
   refreshMs = 30_000,
   organizerEventId,
   weather = false,
+  focusSignal,
 }: Props) {
   const [event, setEvent] = useState<EventMeta | null>(null);
   const [stages, setStages] = useState<StageLine[]>([]);
@@ -49,6 +53,16 @@ export default function LiveEventMap({
 
   const [sosFocus, setSosFocus] = useState<string | undefined>(undefined);
   const seenSosRef = useRef<Set<string>>(new Set());
+
+  // External focus request (from the incident panel). Re-fires on every click
+  // via the nonce, even for the rider already selected.
+  useEffect(() => {
+    if (!focusSignal) return;
+    setSelected(focusSignal.id);
+    setSosFocus(undefined);
+    const r = requestAnimationFrame(() => setSosFocus(focusSignal.id));
+    return () => cancelAnimationFrame(r);
+  }, [focusSignal]);
   const selectedRef = useRef(selected);
   useEffect(() => {
     selectedRef.current = selected;

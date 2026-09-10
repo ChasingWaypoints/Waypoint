@@ -11,6 +11,7 @@ import StagesManager from "../../../../components/StagesManager";
 import EventBranding from "../../../../components/EventBranding";
 import LiveEventMap from "../../../../components/LiveEventMap";
 import EntrantManager from "../../../../components/EntrantManager";
+import SosIncidentPanel from "../../../../components/SosIncidentPanel";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
@@ -78,6 +79,8 @@ export default function EventDetailPage() {
   const [session, setSession] = useState<any>(null);
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [riders, setRiders] = useState<Rider[]>([]);
+  const [mapFocus, setMapFocus] = useState<{ id: string; n: number } | undefined>(undefined);
+  const mapWrapRef = useRef<HTMLDivElement>(null);
   const [myGepToken, setMyGepToken] = useState<string | null>(null);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [hasPlus, setHasPlus] = useState(false);
@@ -658,8 +661,19 @@ export default function EventDetailPage() {
 
       {/* ── MAP TAB ── */}
       {tab === "map" && (
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} weather={hasPlus} />
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          {isOrganizer && (
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #1E3B4C", background: "#0A0A0A", maxHeight: "45vh", overflowY: "auto", flexShrink: 0 }}>
+              <SosIncidentPanel
+                eventId={event.id}
+                roster={riders.map((r) => ({ id: r.id, name: r.display_name, number: r.rider_number }))}
+                onLocate={(id) => { setMapFocus({ id, n: Date.now() }); mapWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }}
+              />
+            </div>
+          )}
+          <div ref={mapWrapRef} style={{ flex: 1, minHeight: 0 }}>
+            <LiveEventMap shareToken={event.share_token} organizerEventId={isOrganizer || event.is_demo ? event.id : undefined} weather={hasPlus} focusSignal={mapFocus} />
+          </div>
         </div>
       )}
 
