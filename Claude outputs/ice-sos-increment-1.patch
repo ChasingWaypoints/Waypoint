@@ -1,0 +1,466 @@
+From 1d8bfa2b7760aeb0061d95b66b25c8bb56a94623 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 10 Sep 2026 20:15:19 +0000
+Subject: [PATCH] ICE minimization increment 1: client-side ICE card + SOS
+ incident schema
+
+- app/ice-card: 100% client-side personal ICE card (QR vCard, PNG/print), no server storage
+- migration 037: sos_incidents + sos_incident_log tables, RLS, open/log/resolve RPCs, purge_expired_event_ice() (7-day), ice_captured_at
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ web/app/ice-card/page.tsx                     | 277 ++++++++++++++++++
+ .../037_ice_minimization_sos_log.sql          | 157 ++++++++++
+ 2 files changed, 434 insertions(+)
+ create mode 100644 web/app/ice-card/page.tsx
+ create mode 100644 web/supabase/migrations/037_ice_minimization_sos_log.sql
+
+diff --git a/web/app/ice-card/page.tsx b/web/app/ice-card/page.tsx
+new file mode 100644
+index 0000000..23f143c
+--- /dev/null
++++ b/web/app/ice-card/page.tsx
+@@ -0,0 +1,277 @@
++"use client";
++
++import { useEffect, useMemo, useRef, useState } from "react";
++import QRCode from "qrcode";
++import { theme, font, text } from "../../lib/theme";
++
++/**
++ * Personal ICE (In Case of Emergency) card — 100% client-side.
++ *
++ * Privacy by design: everything the rider types here stays in the browser. We
++ * never send it to a server, never store it in our database, and never attach
++ * it to their account. They fill it in, preview it, and download a PNG (or
++ * print it) for a phone lock screen, a bracelet, or a helmet sticker. The card
++ * carries an OFFLINE QR code that embeds the info itself (vCard) — a responder
++ * scans it with no internet and no call to us.
++ *
++ * This is the everyone-tier replacement for the old server-backed ICE card.
++ */
++
++const BLOOD_TYPES = ["", "O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-", "Unknown"];
++
++type Fields = {
++  name: string;
++  ownPhone: string;
++  blood: string;
++  allergies: string;
++  conditions: string;
++  meds: string;
++  iceName: string;
++  icePhone: string;
++  iceRel: string;
++};
++
++const EMPTY: Fields = {
++  name: "", ownPhone: "", blood: "", allergies: "", conditions: "", meds: "",
++  iceName: "", icePhone: "", iceRel: "",
++};
++
++// A vCard string — scannable straight into a phone's contacts, with the
++// emergency contact as the callable number and medical detail in the note.
++function toVCard(f: Fields): string {
++  const note = [
++    f.blood && `Blood: ${f.blood}`,
++    f.allergies && `Allergies: ${f.allergies}`,
++    f.conditions && `Conditions: ${f.conditions}`,
++    f.meds && `Meds: ${f.meds}`,
++    f.iceName && `ICE: ${f.iceName}${f.iceRel ? ` (${f.iceRel})` : ""} ${f.icePhone}`.trim(),
++  ].filter(Boolean).join(" | ");
++  return [
++    "BEGIN:VCARD",
++    "VERSION:3.0",
++    `FN:${escapeV(f.name || "Rider")}`,
++    f.icePhone && `TEL;TYPE=CELL:${escapeV(f.icePhone)}`,
++    note && `NOTE:${escapeV(note)}`,
++    "END:VCARD",
++  ].filter(Boolean).join("\n");
++}
++function escapeV(s: string) { return s.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n"); }
++
++export default function IceCardPage() {
++  const [f, setF] = useState<Fields>(EMPTY);
++  const [qr, setQr] = useState<string>("");
++  const canvasRef = useRef<HTMLCanvasElement>(null);
++  const set = (k: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
++    setF((p) => ({ ...p, [k]: e.target.value }));
++
++  const hasAny = useMemo(() => Object.values(f).some((v) => v.trim()), [f]);
++
++  // Regenerate the offline QR whenever the fields change.
++  useEffect(() => {
++    let alive = true;
++    QRCode.toDataURL(toVCard(f), { margin: 1, width: 320, errorCorrectionLevel: "M",
++      color: { dark: "#0C1E29", light: "#FFFFFF" } })
++      .then((url) => { if (alive) setQr(url); })
++      .catch(() => { if (alive) setQr(""); });
++    return () => { alive = false; };
++  }, [f]);
++
++  async function download() {
++    const canvas = canvasRef.current;
++    if (!canvas) return;
++    await drawCard(canvas, f, qr);
++    canvas.toBlob((blob) => {
++      if (!blob) return;
++      const url = URL.createObjectURL(blob);
++      const a = document.createElement("a");
++      a.href = url;
++      a.download = `ICE-card-${(f.name || "rider").replace(/\s+/g, "-")}.png`;
++      document.body.appendChild(a);
++      a.click();
++      a.remove();
++      URL.revokeObjectURL(url);
++    }, "image/png");
++  }
++
++  return (
++    <main style={{ minHeight: "100vh", background: theme.canvas, color: theme.body, fontFamily: font.sans }}>
++      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "28px 20px 80px" }}>
++        {/* Header */}
++        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
++          <span style={{ width: 34, height: 34, borderRadius: "50%", background: theme.canvas, border: `3px solid ${theme.track}`, display: "inline-flex", alignItems: "center", justifyContent: "center", color: theme.track, font: `700 15px Arial`, letterSpacing: -1 }}>WP</span>
++          <span style={{ color: theme.ink, font: `800 ${text.xl}px ${font.sans}`, letterSpacing: 0.3 }}>Personal Emergency Card</span>
++        </div>
++        <p style={{ color: theme.muted, font: `${text.md}px/1.5 ${font.sans}`, maxWidth: 640, margin: "0 0 8px" }}>
++          Fill this in, then download or print it for your phone lock screen, a bracelet, or a helmet sticker. The card includes an offline QR a responder can scan with no internet.
++        </p>
++        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#10261A", border: `1px solid #1f5133`, color: "#7Fe6a1", borderRadius: 8, padding: "8px 12px", font: `700 ${text.sm}px ${font.sans}`, marginBottom: 22 }}>
++          🔒 Private — nothing here is sent to us or saved to your account. It stays on your device.
++        </div>
++
++        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 26, alignItems: "start" }}>
++          {/* ── Form ─────────────────────────────────── */}
++          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
++            <Field label="Full name"><input style={inp} value={f.name} onChange={set("name")} placeholder="Alex Rider" /></Field>
++            <Field label="Your phone (optional)"><input style={inp} value={f.ownPhone} onChange={set("ownPhone")} placeholder="+1 555 555 5555" inputMode="tel" /></Field>
++            <div style={{ display: "flex", gap: 12 }}>
++              <Field label="Blood type" grow>
++                <select style={inp} value={f.blood} onChange={set("blood")}>
++                  {BLOOD_TYPES.map((b) => <option key={b} value={b}>{b || "Select…"}</option>)}
++                </select>
++              </Field>
++            </div>
++            <Field label="Allergies"><input style={inp} value={f.allergies} onChange={set("allergies")} placeholder="Penicillin, bee stings…" /></Field>
++            <Field label="Medical conditions (optional)"><input style={inp} value={f.conditions} onChange={set("conditions")} placeholder="Diabetic, asthma…" /></Field>
++            <Field label="Medications (optional)"><input style={inp} value={f.meds} onChange={set("meds")} placeholder="Insulin, EpiPen…" /></Field>
++
++            <div style={{ height: 1, background: theme.hairline, margin: "6px 0" }} />
++            <div style={{ font: `800 ${text.xs}px ${font.sans}`, letterSpacing: 1.2, textTransform: "uppercase", color: theme.track }}>Emergency contact</div>
++            <Field label="Contact name"><input style={inp} value={f.iceName} onChange={set("iceName")} placeholder="Jordan Rider" /></Field>
++            <div style={{ display: "flex", gap: 12 }}>
++              <Field label="Contact phone" grow><input style={inp} value={f.icePhone} onChange={set("icePhone")} placeholder="+1 555 555 5555" inputMode="tel" /></Field>
++              <Field label="Relationship" grow><input style={inp} value={f.iceRel} onChange={set("iceRel")} placeholder="Spouse" /></Field>
++            </div>
++
++            <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
++              <button onClick={download} disabled={!hasAny} style={{ ...btn, opacity: hasAny ? 1 : 0.5, cursor: hasAny ? "pointer" : "not-allowed" }}>↓ Download card (PNG)</button>
++              <button onClick={() => window.print()} disabled={!hasAny} style={{ ...btnGhost, opacity: hasAny ? 1 : 0.5, cursor: hasAny ? "pointer" : "not-allowed" }}>Print</button>
++              <button onClick={() => setF(EMPTY)} style={btnGhost}>Clear</button>
++            </div>
++          </div>
++
++          {/* ── Live preview ─────────────────────────── */}
++          <div className="ice-print-area">
++            <CardPreview f={f} qr={qr} />
++          </div>
++        </div>
++      </div>
++
++      {/* Hidden canvas used to rasterize the downloadable PNG */}
++      <canvas ref={canvasRef} width={1080} height={1350} style={{ display: "none" }} />
++
++      <style>{`
++        @media print {
++          body * { visibility: hidden !important; }
++          .ice-print-area, .ice-print-area * { visibility: visible !important; }
++          .ice-print-area { position: absolute; left: 0; top: 0; }
++        }
++        input::placeholder { color: #4b5c68; }
++      `}</style>
++    </main>
++  );
++}
++
++function CardPreview({ f, qr }: { f: Fields; qr: string }) {
++  const row = (label: string, value: string, accent?: boolean) => value ? (
++    <div style={{ display: "flex", gap: 10, padding: "7px 0", borderBottom: `1px solid ${theme.hairlineSoft}` }}>
++      <span style={{ width: 96, flexShrink: 0, color: theme.muted, font: `700 ${text.xs}px ${font.sans}`, textTransform: "uppercase", letterSpacing: 0.6 }}>{label}</span>
++      <span style={{ color: accent ? theme.track : theme.ink, font: `${accent ? 800 : 600} ${text.md}px ${font.sans}` }}>{value}</span>
++    </div>
++  ) : null;
++
++  return (
++    <div style={{ background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 14, overflow: "hidden", maxWidth: 420 }}>
++      <div style={{ background: theme.danger, color: "#fff", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
++        <span style={{ font: `800 ${text.lg}px ${font.sans}`, letterSpacing: 1 }}>⛑ EMERGENCY INFO</span>
++        <span style={{ font: `700 ${text.xs}px ${font.sans}`, letterSpacing: 1 }}>WAYPOINT</span>
++      </div>
++      <div style={{ padding: "14px 16px" }}>
++        <div style={{ font: `800 ${text.xxl}px ${font.sans}`, color: theme.ink, marginBottom: 4 }}>{f.name || "Your name"}</div>
++        {f.ownPhone && <div style={{ color: theme.muted, font: `600 ${text.sm}px ${font.sans}`, marginBottom: 8 }}>{f.ownPhone}</div>}
++        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginTop: 6 }}>
++          <div style={{ flex: 1, minWidth: 0 }}>
++            {row("Blood", f.blood, true)}
++            {row("Allergies", f.allergies)}
++            {row("Conditions", f.conditions)}
++            {row("Meds", f.meds)}
++            {row("ICE", [f.iceName, f.iceRel && `(${f.iceRel})`].filter(Boolean).join(" "))}
++            {row("Call", f.icePhone, true)}
++          </div>
++          {qr && (
++            <div style={{ textAlign: "center", flexShrink: 0 }}>
++              {/* eslint-disable-next-line @next/next/no-img-element */}
++              <img src={qr} alt="Emergency QR" width={104} height={104} style={{ borderRadius: 8, background: "#fff", padding: 4 }} />
++              <div style={{ color: theme.faint, font: `600 9px ${font.sans}`, marginTop: 3, maxWidth: 104 }}>Scan for offline vCard</div>
++            </div>
++          )}
++        </div>
++      </div>
++    </div>
++  );
++}
++
++// Rasterize the card to a canvas for a crisp PNG download.
++async function drawCard(canvas: HTMLCanvasElement, f: Fields, qr: string) {
++  const ctx = canvas.getContext("2d");
++  if (!ctx) return;
++  const W = canvas.width, H = canvas.height;
++  ctx.fillStyle = "#0C1E29"; ctx.fillRect(0, 0, W, H);
++  // Red header band
++  ctx.fillStyle = "#FF3B30"; ctx.fillRect(0, 0, W, 120);
++  ctx.fillStyle = "#fff"; ctx.font = "800 46px Arial"; ctx.textBaseline = "middle";
++  ctx.fillText("⛑ EMERGENCY INFO", 40, 62);
++  ctx.font = "700 26px Arial"; ctx.textAlign = "right"; ctx.fillText("WAYPOINT", W - 40, 62); ctx.textAlign = "left";
++  // Name
++  ctx.fillStyle = "#fff"; ctx.font = "800 64px Arial"; ctx.fillText(f.name || "Rider", 40, 210);
++  if (f.ownPhone) { ctx.fillStyle = "#8598A5"; ctx.font = "600 30px Arial"; ctx.fillText(f.ownPhone, 40, 262); }
++  // Fields
++  const rows: [string, string, boolean][] = [
++    ["BLOOD", f.blood, true],
++    ["ALLERGIES", f.allergies, false],
++    ["CONDITIONS", f.conditions, false],
++    ["MEDS", f.meds, false],
++    ["ICE", [f.iceName, f.iceRel && `(${f.iceRel})`].filter(Boolean).join(" "), false],
++    ["CALL", f.icePhone, true],
++  ];
++  let y = 330;
++  for (const [label, value, accent] of rows) {
++    if (!value) continue;
++    ctx.fillStyle = "#7E93A0"; ctx.font = "700 24px Arial"; ctx.fillText(label, 40, y);
++    ctx.fillStyle = accent ? "#CCFF00" : "#FFFFFF"; ctx.font = `${accent ? 800 : 600} 38px Arial`;
++    wrapText(ctx, value, 250, y, W - 290, 46);
++    y += 78;
++  }
++  // QR bottom-right
++  if (qr) {
++    const img = await loadImg(qr);
++    const s = 300;
++    ctx.fillStyle = "#fff"; ctx.fillRect(W - s - 60, H - s - 90, s, s);
++    ctx.drawImage(img, W - s - 60, H - s - 90, s, s);
++    ctx.fillStyle = "#54697A"; ctx.font = "600 22px Arial"; ctx.textAlign = "center";
++    ctx.fillText("Scan for offline vCard", W - s / 2 - 60, H - 54); ctx.textAlign = "left";
++  }
++}
++function wrapText(ctx: CanvasRenderingContext2D, textStr: string, x: number, y: number, maxW: number, lh: number) {
++  const words = textStr.split(" "); let line = ""; let yy = y;
++  for (const w of words) {
++    const test = line ? line + " " + w : w;
++    if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; }
++    else line = test;
++  }
++  if (line) ctx.fillText(line, x, yy);
++}
++function loadImg(src: string): Promise<HTMLImageElement> {
++  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
++}
++
++// ── little styled bits ─────────────────────────────────
++function Field({ label, children, grow }: { label: string; children: React.ReactNode; grow?: boolean }) {
++  return (
++    <label style={{ display: "flex", flexDirection: "column", gap: 5, flex: grow ? 1 : undefined }}>
++      <span style={{ color: theme.muted, font: `700 ${text.xs}px ${font.sans}`, textTransform: "uppercase", letterSpacing: 0.6 }}>{label}</span>
++      {children}
++    </label>
++  );
++}
++const inp: React.CSSProperties = {
++  width: "100%", background: theme.surface, color: theme.ink, border: `1px solid ${theme.hairline}`,
++  borderRadius: 8, padding: "10px 12px", font: `600 ${text.md}px ${font.sans}`, outline: "none",
++};
++const btn: React.CSSProperties = {
++  background: theme.track, color: theme.accentInk, border: "none", borderRadius: 8,
++  padding: "11px 18px", font: `800 ${text.md}px ${font.sans}`,
++};
++const btnGhost: React.CSSProperties = {
++  background: "transparent", color: theme.body, border: `1px solid ${theme.hairline}`,
++  borderRadius: 8, padding: "11px 16px", font: `700 ${text.md}px ${font.sans}`, cursor: "pointer",
++};
+diff --git a/web/supabase/migrations/037_ice_minimization_sos_log.sql b/web/supabase/migrations/037_ice_minimization_sos_log.sql
+new file mode 100644
+index 0000000..2afb421
+--- /dev/null
++++ b/web/supabase/migrations/037_ice_minimization_sos_log.sql
+@@ -0,0 +1,157 @@
++-- ============================================================
++-- Migration v37 — ICE data minimization + SOS incident log
++--
++-- Implements the locked 2026-09-10 design:
++--   • ICE stays event-scoped (event_participants); add ice_captured_at.
++--   • SOS creates a persistent, timestamped incident record + response log
++--     that SURVIVES the 7-day ICE purge (its own 1-year retention).
++--   • purge_expired_event_ice(): nulls ICE 7 days after an event ends,
++--     except participants with an open incident. (Scheduling is a deploy step.)
++--
++-- Profile-level ICE removal (blood_type/allergies/emergency_contact_*/ice_token
++-- + get_ice_card) is a SEPARATE later migration, run only after the app has
++-- stopped reading/writing those columns.
++--
++-- Run in the WAYPOINT TRACKER Supabase project. Safe to re-run.
++-- ============================================================
++
++-- ── 1. Freshness marker on the event-scoped ICE ─────────────
++alter table public.event_participants
++  add column if not exists ice_captured_at timestamptz;
++
++-- ── 2. Incident record (one per SOS) ────────────────────────
++create table if not exists public.sos_incidents (
++  id             uuid primary key default gen_random_uuid(),
++  event_id       uuid not null references public.events(id) on delete cascade,
++  participant_id uuid not null references public.event_participants(id) on delete cascade,
++  opened_at      timestamptz not null default now(),   -- the "critical time"
++  trigger_lat    double precision,
++  trigger_lng    double precision,
++  ice_snapshot   jsonb,                                 -- ICE copied in at trigger time
++  status         text not null default 'open',          -- open | resolved
++  resolved_at    timestamptz,
++  retain_until   date not null default ((now() + interval '1 year')::date),
++  created_at     timestamptz not null default now()
++);
++create index if not exists sos_incidents_event on public.sos_incidents (event_id, opened_at desc);
++create index if not exists sos_incidents_open  on public.sos_incidents (status) where status = 'open';
++
++-- ── 3. Response timeline (many per incident) ────────────────
++create table if not exists public.sos_incident_log (
++  id           bigint generated always as identity primary key,
++  incident_id  uuid not null references public.sos_incidents(id) on delete cascade,
++  kind         text not null check (kind in
++                 ('acknowledge','dispatch','medic_onsite','helo_requested','helo_onsite',
++                  'recovery_dispatched','recovery_onsite','resolved','note')),
++  at           timestamptz not null default now(),
++  operator_id  uuid references public.profiles(id),
++  note         text,
++  created_at   timestamptz not null default now()
++);
++create index if not exists sos_incident_log_incident on public.sos_incident_log (incident_id, at);
++
++-- ── 4. RLS: organizer of the event (or super admin) only ────
++alter table public.sos_incidents   enable row level security;
++alter table public.sos_incident_log enable row level security;
++
++create or replace function public.is_event_organizer(p_event_id uuid)
++returns boolean language sql stable security definer set search_path = public as $$
++  select exists (
++    select 1 from public.events e
++    where e.id = p_event_id
++      and (e.organizer_id = auth.uid()
++        or exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_super_admin = true))
++  );
++$$;
++
++drop policy if exists "sos_incidents_organizer" on public.sos_incidents;
++create policy "sos_incidents_organizer" on public.sos_incidents
++  for select using (public.is_event_organizer(event_id));
++
++drop policy if exists "sos_log_organizer" on public.sos_incident_log;
++create policy "sos_log_organizer" on public.sos_incident_log
++  for select using (
++    exists (select 1 from public.sos_incidents i
++            where i.id = incident_id and public.is_event_organizer(i.event_id))
++  );
++-- Writes go only through the SECURITY DEFINER RPCs below (no direct client insert).
++
++-- ── 5. RPCs: open / log / resolve ───────────────────────────
++
++-- Open (or return the already-open) incident for a participant, snapshotting ICE.
++create or replace function public.open_sos_incident(p_participant_id uuid)
++returns uuid language plpgsql security definer set search_path = public as $$
++declare v_event uuid; v_id uuid; ep record;
++begin
++  select * into ep from public.event_participants where id = p_participant_id;
++  if ep is null then raise exception 'participant not found'; end if;
++  v_event := ep.event_id;
++  if not public.is_event_organizer(v_event) then raise exception 'not authorized'; end if;
++
++  select id into v_id from public.sos_incidents
++    where participant_id = p_participant_id and status = 'open'
++    order by opened_at desc limit 1;
++  if v_id is not null then return v_id; end if;
++
++  insert into public.sos_incidents (event_id, participant_id, trigger_lat, trigger_lng, ice_snapshot)
++  values (v_event, p_participant_id, ep.last_lat, ep.last_lng,
++          jsonb_build_object('name', ep.display_name, 'ice_name', ep.ice_name,
++            'ice_phone', ep.ice_phone, 'blood_type', ep.blood_type, 'allergies', ep.allergies))
++  returning id into v_id;
++
++  insert into public.sos_incident_log (incident_id, kind, operator_id, note)
++  values (v_id, 'note', auth.uid(), 'Incident opened');
++  return v_id;
++end; $$;
++
++-- Log one response milestone (or a free note) onto the timeline.
++create or replace function public.log_sos_event(p_incident_id uuid, p_kind text, p_note text default null)
++returns bigint language plpgsql security definer set search_path = public as $$
++declare v_event uuid; v_log bigint;
++begin
++  select event_id into v_event from public.sos_incidents where id = p_incident_id;
++  if v_event is null then raise exception 'incident not found'; end if;
++  if not public.is_event_organizer(v_event) then raise exception 'not authorized'; end if;
++  insert into public.sos_incident_log (incident_id, kind, operator_id, note)
++  values (p_incident_id, p_kind, auth.uid(), p_note)
++  returning id into v_log;
++  if p_kind = 'resolved' then
++    update public.sos_incidents set status = 'resolved', resolved_at = now() where id = p_incident_id;
++  end if;
++  return v_log;
++end; $$;
++
++revoke all on function public.open_sos_incident(uuid)   from public;
++revoke all on function public.log_sos_event(uuid, text, text) from public;
++grant execute on function public.open_sos_incident(uuid)   to authenticated;
++grant execute on function public.log_sos_event(uuid, text, text) to authenticated;
++
++-- ── 6. Purge function — 7 days after an event ends ──────────
++-- Nulls event-scoped ICE except for participants with an OPEN incident.
++-- Incident records (and their ice_snapshot) are untouched.
++-- Schedule via pg_cron or an edge function (deploy step); safe to run manually.
++create or replace function public.purge_expired_event_ice()
++returns integer language plpgsql security definer set search_path = public as $$
++declare v_count integer;
++begin
++  with expired as (
++    select e.id from public.events e
++    where e.ends_at is not null
++      and e.ends_at < now() - interval '7 days'
++  ),
++  cleared as (
++    update public.event_participants ep
++       set ice_name = null, ice_phone = null, blood_type = null,
++           allergies = null, ice_captured_at = null
++     where ep.event_id in (select id from expired)
++       and (ep.ice_name is not null or ep.ice_phone is not null
++            or ep.blood_type is not null or ep.allergies is not null)
++       and not exists (
++         select 1 from public.sos_incidents i
++         where i.participant_id = ep.id and i.status = 'open')
++    returning ep.id)
++  select count(*) into v_count from cleared;
++  return v_count;
++end; $$;
++revoke all on function public.purge_expired_event_ice() from public;
++-- Grant execute to the service role only (called by the scheduler), not clients.
+-- 
+2.43.0
+
