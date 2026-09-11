@@ -1,0 +1,476 @@
+From 97ee9656748f28f24a330c28aee580a4de6c2a6e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 10 Sep 2026 23:57:12 +0000
+Subject: [PATCH] ICE increment 4b: remove profile-stored ICE UI + old server
+ ICE card
+
+- profile page: drop the blood type, emergency contact, and server ICE-card sections; link to the client-side /ice-card instead; stop reading ice_token
+- delete app/ice/[token] page + app/api/ice/[token] route (get_ice_card)
+- migration 040: drop get_ice_card, set_ice_token trigger, ice_token column
+  (blood_type/emergency_contact_* remain until get_participant_emergency is repointed)
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ web/app/api/ice/[token]/route.ts              |  22 ---
+ web/app/dashboard/profile/page.tsx            | 127 ++-----------
+ web/app/ice/[token]/page.tsx                  | 173 ------------------
+ .../040_drop_profile_ice_plumbing.sql         |  18 ++
+ 4 files changed, 33 insertions(+), 307 deletions(-)
+ delete mode 100644 web/app/api/ice/[token]/route.ts
+ delete mode 100644 web/app/ice/[token]/page.tsx
+ create mode 100644 web/supabase/migrations/040_drop_profile_ice_plumbing.sql
+
+diff --git a/web/app/api/ice/[token]/route.ts b/web/app/api/ice/[token]/route.ts
+deleted file mode 100644
+index 39c0184..0000000
+--- a/web/app/api/ice/[token]/route.ts
++++ /dev/null
+@@ -1,22 +0,0 @@
+-import { NextRequest, NextResponse } from "next/server";
+-import { createAnonClient } from "../../../../lib/supabase/admin";
+-
+-// GET /api/ice/[token]
+-//
+-// Public ICE (In Case of Emergency) card, addressed by an unguessable
+-// token the rider chooses to share. Returns only the emergency fields.
+-export async function GET(
+-  _request: NextRequest,
+-  { params }: { params: Promise<{ token: string }> }
+-) {
+-  const { token } = await params;
+-  const supabase = createAnonClient();
+-
+-  const { data, error } = await supabase.rpc("get_ice_card", { p_token: token });
+-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+-  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+-
+-  return NextResponse.json(data, {
+-    headers: { "Cache-Control": "private, no-store" },
+-  });
+-}
+diff --git a/web/app/dashboard/profile/page.tsx b/web/app/dashboard/profile/page.tsx
+index cb6ae10..05cba4e 100644
+--- a/web/app/dashboard/profile/page.tsx
++++ b/web/app/dashboard/profile/page.tsx
+@@ -3,7 +3,6 @@ import { text } from "../../../lib/theme";
+ export const dynamic = "force-dynamic";
+ 
+ import { useEffect, useRef, useState } from "react";
+-import QRCode from "qrcode";
+ import { useRouter } from "next/navigation";
+ import Link from "next/link";
+ import { getSupabaseClient } from "@/lib/supabase/client";
+@@ -114,17 +113,13 @@ const INPUT: React.CSSProperties = {
+ 
+ // ── Rider / SAR profile ───────────────────────────────────────────────────────
+ type RiderProfile = {
+-  first_name: string; last_name: string; date_of_birth: string; blood_type: string;
+-  country: string; phone: string; emergency_contact_name: string;
+-  emergency_contact_phone: string; emergency_contact_relation: string;
++  first_name: string; last_name: string; date_of_birth: string;
++  country: string; phone: string;
+ };
+ const BLANK_PROFILE: RiderProfile = {
+-  first_name: "", last_name: "", date_of_birth: "", blood_type: "", country: "",
+-  phone: "", emergency_contact_name: "", emergency_contact_phone: "",
+-  emergency_contact_relation: "",
++  first_name: "", last_name: "", date_of_birth: "", country: "", phone: "",
+ };
+ const PROFILE_KEYS = Object.keys(BLANK_PROFILE) as (keyof RiderProfile)[];
+-const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"];
+ 
+ // Age from an ISO yyyy-mm-dd date of birth, or null.
+ function ageFrom(dob: string): number | null {
+@@ -158,10 +153,6 @@ export default function ProfilePage() {
+   const [savedProfile, setSavedProfile] = useState<RiderProfile>(BLANK_PROFILE);
+   const [waypointId, setWaypointId] = useState("");
+   const [wpCopied, setWpCopied] = useState(false);
+-  const [iceToken, setIceToken] = useState("");
+-  const [iceCopied, setIceCopied] = useState(false);
+-  const [iceQr, setIceQr] = useState("");
+-  const [origin, setOrigin] = useState("");
+   const [savingProfile, setSavingProfile] = useState(false);
+   const [profileSaved, setProfileSaved] = useState(false);
+ 
+@@ -188,7 +179,6 @@ export default function ProfilePage() {
+       if (!session) { router.push("/auth/login"); return; }
+       setToken(session.access_token);
+       setUserEmail(session.user.email ?? "");
+-      if (typeof window !== "undefined") setOrigin(window.location.origin);
+       setMemberSince(new Date(session.user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }));
+       const name = session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? "";
+       setDisplayName(name);
+@@ -209,7 +199,7 @@ export default function ProfilePage() {
+   async function loadProfile(uid: string) {
+     const { data } = await supabase
+       .from("profiles")
+-      .select(PROFILE_KEYS.join(",") + ",waypoint_id,ice_token")
++      .select(PROFILE_KEYS.join(",") + ",waypoint_id")
+       .eq("id", uid)
+       .single();
+     if (data) {
+@@ -222,7 +212,6 @@ export default function ProfilePage() {
+       setProfile(p);
+       setSavedProfile(p);
+       setWaypointId(rec.waypoint_id == null ? "" : String(rec.waypoint_id));
+-      setIceToken(rec.ice_token == null ? "" : String(rec.ice_token));
+     }
+   }
+ 
+@@ -233,21 +222,6 @@ export default function ProfilePage() {
+     setTimeout(() => setWpCopied(false), 1800);
+   }
+ 
+-  const iceUrl = iceToken && origin ? `${origin}/ice/${iceToken}` : "";
+-  async function copyIceLink() {
+-    if (!iceUrl) return;
+-    try { await navigator.clipboard.writeText(iceUrl); } catch {}
+-    setIceCopied(true);
+-    setTimeout(() => setIceCopied(false), 1800);
+-  }
+-
+-  useEffect(() => {
+-    if (!iceUrl) { setIceQr(""); return; }
+-    QRCode.toDataURL(iceUrl, { width: 240, margin: 1, color: { dark: "#0C1E29", light: "#FFFFFF" } })
+-      .then(setIceQr)
+-      .catch(() => setIceQr(""));
+-  }, [iceUrl]);
+-
+   async function saveProfile() {
+     setSavingProfile(true);
+     const payload: Record<string, string | null> = {};
+@@ -436,7 +410,7 @@ export default function ProfilePage() {
+                 </button>
+               </div>
+               <p style={{ fontSize: text.xs, color: "#7E93A0", margin: "6px 0 0" }}>
+-                Give this to an event organizer to link your account — it lets them reach your emergency info if something goes wrong.
++                Give this to an event organizer to link your account so they can track you during their event. Emergency info is entered per event when you register, not stored here.
+               </p>
+             </Field>
+ 
+@@ -482,20 +456,6 @@ export default function ProfilePage() {
+                   )}
+                 </Field>
+               </div>
+-              <div style={{ flex: 1 }}>
+-                <Field label="Blood Type">
+-                  <select
+-                    style={{ ...INPUT, appearance: "auto" }}
+-                    value={profile.blood_type}
+-                    onChange={(e) => setProfile({ ...profile, blood_type: e.target.value })}
+-                  >
+-                    <option value="">—</option>
+-                    {BLOOD_TYPES.map((b) => (
+-                      <option key={b} value={b}>{b}</option>
+-                    ))}
+-                  </select>
+-                </Field>
+-              </div>
+             </div>
+ 
+             <div style={{ display: "flex", gap: 16 }}>
+@@ -505,22 +465,7 @@ export default function ProfilePage() {
+           </div>
+         </div>
+ 
+-        {/* ── Emergency contact ── */}
+-        <div style={{ marginBottom: 24 }}>
+-          <SectionLabel>Emergency Contact</SectionLabel>
+-          <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
+-            <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 20px", lineHeight: 1.5 }}>
+-              Shown to your event organizer for search-and-rescue. Optional, but recommended for rally and backcountry events.
+-            </p>
+-            <div style={{ display: "flex", gap: 16 }}>
+-              <div style={{ flex: 1 }}>{pf("emergency_contact_name", "Contact Name", "text", "Full name")}</div>
+-              <div style={{ flex: 1 }}>{pf("emergency_contact_relation", "Relationship", "text", "e.g. Spouse")}</div>
+-            </div>
+-            {pf("emergency_contact_phone", "Contact Phone", "tel", "+1 555 123 4567")}
+-          </div>
+-        </div>
+-
+-        {/* ── Save personal + emergency ── */}
++        {/* ── Save personal ── */}
+         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
+           <button
+             onClick={saveProfile}
+@@ -539,65 +484,23 @@ export default function ProfilePage() {
+           )}
+         </div>
+ 
+-        {/* ── ICE share card ── */}
++        {/* ── Personal emergency card (on-device) ── */}
+         <div style={{ marginBottom: 48 }}>
+           <SectionLabel>Emergency Card (ICE)</SectionLabel>
+           <div style={{ background: "#0C1E29", border: "1px solid #1E3B4C", padding: 28 }}>
+             <p style={{ fontSize: text.sm, color: "#7E93A0", margin: "0 0 16px", lineHeight: 1.5 }}>
+-              A Waypoint-branded page showing your emergency info and Waypoint ID. Share this link, add it to a bracelet or bike sticker, or hand it to a first responder. The link is private until you share it — the rest of your account stays hidden.
++              Create a personal emergency card — blood type, allergies, and an emergency contact — that renders and downloads <strong style={{ color: "#C8D4DC" }}>entirely on your own device</strong>. Nothing is sent to us or saved to your account. Print it for a bracelet, helmet, or bike sticker; it carries an offline QR a responder can scan with no internet.
+             </p>
+-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+-              <code style={{ flex: 1, minWidth: 220, font: "13px ui-monospace, monospace", color: "#C8D4DC", background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "11px 14px", userSelect: "all", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+-                {iceUrl || "—"}
+-              </code>
+-              <button
+-                onClick={copyIceLink}
+-                disabled={!iceUrl}
+-                style={{ background: iceCopied ? "#CCFF00" : "#14303F", color: iceCopied ? "#0C1E29" : "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "11px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: iceUrl ? "pointer" : "default", whiteSpace: "nowrap" }}
+-              >
+-                {iceCopied ? "Copied \u2713" : "Copy Link"}
+-              </button>
+-              {iceUrl && (
+-                <a
+-                  href={iceUrl}
+-                  target="_blank"
+-                  rel="noopener noreferrer"
+-                  style={{ background: "#FFFE15", color: "#0C1E29", padding: "11px 16px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4, whiteSpace: "nowrap" }}
+-                >
+-                  Open Card
+-                </a>
+-              )}
+-            </div>
+-            <p style={{ fontSize: text.xs, color: "#54697A", margin: "10px 0 0" }}>
+-              Tip: fill in your blood type and emergency contact above so the card is useful.
+-            </p>
+-
+-            {iceQr && (
+-              <div style={{ marginTop: 20, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+-                <img
+-                  src={iceQr}
+-                  alt="ICE card QR code"
+-                  width={140}
+-                  height={140}
+-                  style={{ background: "#fff", borderRadius: 8, padding: 8, border: "1px solid #1E3B4C" }}
+-                />
+-                <div style={{ flex: 1, minWidth: 180 }}>
+-                  <p style={{ fontSize: text.sm, color: "#C8D4DC", margin: "0 0 10px", lineHeight: 1.5 }}>
+-                    Scan to open the card. Print it on a bracelet, helmet, or bike sticker so a responder can reach your info fast.
+-                  </p>
+-                  <a
+-                    href={iceQr}
+-                    download="waypoint-ice-qr.png"
+-                    style={{ display: "inline-block", background: "#14303F", color: "#C8D4DC", border: "1px solid #1E3B4C", borderRadius: 4, padding: "9px 14px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none" }}
+-                  >
+-                    Download QR
+-                  </a>
+-                </div>
+-              </div>
+-            )}
++            <Link
++              href="/ice-card"
++              style={{ display: "inline-block", background: "#FFFE15", color: "#0C1E29", padding: "11px 20px", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", textDecoration: "none", borderRadius: 4 }}
++            >
++              Create emergency card →
++            </Link>
+           </div>
+         </div>
+ 
++
+         {/* ── Devices ── */}
+         <div>
+           <SectionLabel>Satellite Devices</SectionLabel>
+diff --git a/web/app/ice/[token]/page.tsx b/web/app/ice/[token]/page.tsx
+deleted file mode 100644
+index 1004320..0000000
+--- a/web/app/ice/[token]/page.tsx
++++ /dev/null
+@@ -1,173 +0,0 @@
+-"use client";
+-import { text } from "../../../lib/theme";
+-export const dynamic = "force-dynamic";
+-
+-import { useEffect, useState, use } from "react";
+-
+-interface ICE {
+-  name: string | null;
+-  waypoint_id: string | null;
+-  blood_type: string | null;
+-  date_of_birth: string | null;
+-  phone: string | null;
+-  country: string | null;
+-  emergency_contact_name: string | null;
+-  emergency_contact_phone: string | null;
+-  emergency_contact_relation: string | null;
+-}
+-
+-const C = {
+-  canvas: "#0A0A0A",
+-  surface: "#0C1E29",
+-  hairline: "#1E3B4C",
+-  accent: "#FFFE15",
+-  ink: "#FFFFFF",
+-  body: "#C8D4DC",
+-  muted: "#7E93A0",
+-  danger: "#FF3B30",
+-  dangerSurface: "#2A1214",
+-  lime: "#CCFF00",
+-};
+-
+-function ageFrom(dob: string | null): number | null {
+-  if (!dob) return null;
+-  const d = new Date(dob + "T00:00:00");
+-  if (isNaN(d.getTime())) return null;
+-  const n = new Date();
+-  let a = n.getFullYear() - d.getFullYear();
+-  const m = n.getMonth() - d.getMonth();
+-  if (m < 0 || (m === 0 && n.getDate() < d.getDate())) a--;
+-  return a >= 0 && a < 130 ? a : null;
+-}
+-
+-function telHref(p: string | null): string | null {
+-  if (!p) return null;
+-  const cleaned = p.replace(/[^\d+]/g, "");
+-  return cleaned ? `tel:${cleaned}` : null;
+-}
+-
+-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+-  return (
+-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, padding: "12px 0", borderBottom: `1px solid ${C.hairline}` }}>
+-      <span style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: C.muted, textTransform: "uppercase" }}>{label}</span>
+-      <span style={{ fontSize: 16, color: C.ink, textAlign: "right", fontWeight: 600 }}>{children}</span>
+-    </div>
+-  );
+-}
+-
+-export default function ICEPage({ params }: { params: Promise<{ token: string }> }) {
+-  const { token } = use(params);
+-  const [data, setData] = useState<ICE | null>(null);
+-  const [state, setState] = useState<"loading" | "ok" | "missing">("loading");
+-
+-  useEffect(() => {
+-    fetch(`/api/ice/${token}`)
+-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+-      .then((d: ICE) => { setData(d); setState("ok"); })
+-      .catch(() => setState("missing"));
+-  }, [token]);
+-
+-  const wrap: React.CSSProperties = {
+-    minHeight: "100vh",
+-    background: C.canvas,
+-    color: C.body,
+-    fontFamily: "system-ui, -apple-system, sans-serif",
+-    display: "flex",
+-    flexDirection: "column",
+-    alignItems: "center",
+-    padding: "0 16px 40px",
+-  };
+-  const card: React.CSSProperties = {
+-    width: "100%",
+-    maxWidth: 460,
+-    marginTop: 20,
+-  };
+-
+-  if (state === "loading") {
+-    return <div style={{ ...wrap, justifyContent: "center" }}><p style={{ color: C.muted }}>Loading…</p></div>;
+-  }
+-  if (state === "missing" || !data) {
+-    return (
+-      <div style={{ ...wrap, justifyContent: "center", textAlign: "center" }}>
+-        <div style={{ maxWidth: 380 }}>
+-          <p style={{ color: C.accent, fontWeight: 800, letterSpacing: 2, fontSize: text.base, textTransform: "uppercase", margin: "0 0 12px" }}>Waypoint</p>
+-          <h1 style={{ color: C.ink, fontSize: 20, margin: "0 0 8px" }}>Card not found</h1>
+-          <p style={{ color: C.muted, fontSize: text.md }}>This emergency card link is invalid or has been revoked.</p>
+-        </div>
+-      </div>
+-    );
+-  }
+-
+-  const age = ageFrom(data.date_of_birth);
+-  const ecTel = telHref(data.emergency_contact_phone);
+-  const selfTel = telHref(data.phone);
+-  const hasEC = data.emergency_contact_name || data.emergency_contact_phone;
+-
+-  return (
+-    <div style={wrap}>
+-      <div style={card}>
+-        {/* Brand */}
+-        <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
+-          <span style={{ color: C.accent, fontWeight: 800, letterSpacing: 3, fontSize: text.lg, textTransform: "uppercase" }}>Waypoint</span>
+-        </div>
+-
+-        {/* Emergency banner */}
+-        <div style={{ background: C.dangerSurface, border: `1px solid ${C.danger}`, borderRadius: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+-          <span style={{ fontSize: text.xxl }}>⚠️</span>
+-          <span style={{ color: C.danger, fontWeight: 800, letterSpacing: 1.5, fontSize: text.md, textTransform: "uppercase" }}>In Case of Emergency</span>
+-        </div>
+-
+-        {/* Identity */}
+-        <div style={{ background: C.surface, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 20, marginBottom: 14 }}>
+-          <h1 style={{ color: C.ink, fontSize: 26, fontWeight: 800, margin: "0 0 4px" }}>{data.name || "Waypoint Rider"}</h1>
+-          {data.waypoint_id && (
+-            <p style={{ margin: 0, fontSize: text.base, color: C.muted }}>
+-              Waypoint ID{" "}
+-              <code style={{ color: C.lime, fontWeight: 700, letterSpacing: 2, fontFamily: "ui-monospace, monospace", fontSize: text.lg }}>{data.waypoint_id}</code>
+-            </p>
+-          )}
+-
+-          {/* Blood type — most safety-critical, made prominent */}
+-          {data.blood_type && (
+-            <div style={{ marginTop: 16, background: C.dangerSurface, border: `1px solid ${C.danger}`, borderRadius: 8, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+-              <span style={{ fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: C.danger, textTransform: "uppercase" }}>Blood Type</span>
+-              <span style={{ fontSize: 28, fontWeight: 800, color: C.ink }}>{data.blood_type}</span>
+-            </div>
+-          )}
+-
+-          <div style={{ marginTop: 8 }}>
+-            {age !== null && <Row label="Age">{age}</Row>}
+-            {data.country && <Row label="Country">{data.country}</Row>}
+-            {selfTel ? (
+-              <Row label="Phone"><a href={selfTel} style={{ color: C.accent, textDecoration: "none" }}>{data.phone}</a></Row>
+-            ) : data.phone ? <Row label="Phone">{data.phone}</Row> : null}
+-          </div>
+-        </div>
+-
+-        {/* Emergency contact */}
+-        {hasEC && (
+-          <div style={{ background: C.surface, border: `1px solid ${C.hairline}`, borderRadius: 10, padding: 20 }}>
+-            <p style={{ margin: "0 0 12px", fontSize: text.xs, fontWeight: 700, letterSpacing: 1, color: C.danger, textTransform: "uppercase" }}>Emergency Contact</p>
+-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.ink }}>
+-              {data.emergency_contact_name || "Contact"}
+-              {data.emergency_contact_relation && <span style={{ fontSize: text.md, fontWeight: 400, color: C.muted }}> · {data.emergency_contact_relation}</span>}
+-            </p>
+-            {ecTel && (
+-              <a href={ecTel} style={{ display: "block", marginTop: 14, background: C.danger, color: "#fff", textAlign: "center", padding: "14px", borderRadius: 8, fontSize: 16, fontWeight: 800, textDecoration: "none", letterSpacing: 0.5 }}>
+-                📞 Call {data.emergency_contact_name || "contact"}
+-              </a>
+-            )}
+-            {!ecTel && data.emergency_contact_phone && (
+-              <p style={{ marginTop: 10, fontSize: 16, color: C.ink }}>{data.emergency_contact_phone}</p>
+-            )}
+-          </div>
+-        )}
+-
+-        <p style={{ textAlign: "center", color: C.muted, fontSize: text.xs, marginTop: 24, lineHeight: 1.6 }}>
+-          Shared by the rider via Waypoint · chasingwaypoints.com<br />
+-          A division of RallyTrak
+-        </p>
+-      </div>
+-    </div>
+-  );
+-}
+diff --git a/web/supabase/migrations/040_drop_profile_ice_plumbing.sql b/web/supabase/migrations/040_drop_profile_ice_plumbing.sql
+new file mode 100644
+index 0000000..3eed7b0
+--- /dev/null
++++ b/web/supabase/migrations/040_drop_profile_ice_plumbing.sql
+@@ -0,0 +1,18 @@
++-- ============================================================
++-- Migration v40 — drop the profile-level ICE card plumbing.
++--
++-- The server-backed personal ICE card (/ice/<token> + get_ice_card) is replaced
++-- by the client-side /ice-card (nothing stored server-side), and the profile UI
++-- no longer reads or writes ice_token. Run AFTER the app change that removes
++-- those references is deployed. Safe to re-run.
++--
++-- NOTE: profiles.blood_type and profiles.emergency_contact_* are NOT dropped
++-- here — get_participant_emergency() still reads them for linked riders. Those
++-- columns come out in a later migration once that function is repointed to the
++-- event-scoped ICE on event_participants.
++-- ============================================================
++
++drop function if exists public.get_ice_card(text);
++drop trigger if exists profiles_set_ice_token on public.profiles;
++drop function if exists public.set_ice_token();
++alter table public.profiles drop column if exists ice_token;
+-- 
+2.43.0
+

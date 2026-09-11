@@ -1,0 +1,116 @@
+From e31753309bfcd165f9946d04db0c4540545fb658 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 11 Sep 2026 00:03:10 +0000
+Subject: [PATCH] ICE increment 4c: repoint emergency lookup to event-scoped
+ ICE + drop profile health columns
+
+- TrackingMap renderEmergency: source blood type/allergies/ICE contact from the event roster (adds Allergies; drops age/country/relation lines)
+- migration 041: get_participant_emergency() returns event_participants ICE + non-health identity from the linked account; then drops profiles.blood_type + emergency_contact_name/phone/relation
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ web/components/TrackingMap.tsx                | 18 ++-----
+ .../migrations/041_emergency_event_scoped.sql | 53 +++++++++++++++++++
+ 2 files changed, 56 insertions(+), 15 deletions(-)
+ create mode 100644 web/supabase/migrations/041_emergency_event_scoped.sql
+
+diff --git a/web/components/TrackingMap.tsx b/web/components/TrackingMap.tsx
+index 7d8ffa7..5662004 100644
+--- a/web/components/TrackingMap.tsx
++++ b/web/components/TrackingMap.tsx
+@@ -993,30 +993,18 @@ function emgLine(label: string, val: unknown): string {
+     + label + '</span><span style="color:#fff;font-size:12px">' + escapeHtml(String(val)) + '</span></div>';
+ }
+ function renderEmergency(d: Record<string, unknown>): string {
+-  let age = "";
+-  const dobRaw = d.date_of_birth ? String(d.date_of_birth) : "";
+-  if (dobRaw) {
+-    const dob = new Date(dobRaw + "T00:00:00");
+-    if (!isNaN(dob.getTime())) {
+-      const n = new Date();
+-      let a = n.getFullYear() - dob.getFullYear();
+-      const m = n.getMonth() - dob.getMonth();
+-      if (m < 0 || (m === 0 && n.getDate() < dob.getDate())) a--;
+-      if (a >= 0 && a < 130) age = String(a);
+-    }
+-  }
++  // Sourced from the event roster's ICE (entered at registration, purged 7 days
++  // after the event) — not from any standing profile record.
+   const contact = d.emergency_contact_name || d.emergency_contact_phone;
+   return '<div style="margin-top:6px;background:#1A0E10;border:1px solid #5A2530;border-radius:4px;padding:8px 10px">'
+     + emgLine("Name", d.name)
+     + emgLine("Blood type", d.blood_type)
+-    + (age ? emgLine("Age", age) : "")
++    + emgLine("Allergies", d.allergies)
+     + emgLine("Phone", d.phone)
+-    + emgLine("Country", d.country)
+     + (contact
+         ? '<div style="border-top:1px solid #5A2530;margin-top:6px;padding-top:6px">'
+           + '<div style="color:#FF6B6B;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Emergency contact</div>'
+           + emgLine("Name", d.emergency_contact_name)
+-          + emgLine("Relation", d.emergency_contact_relation)
+           + emgLine("Phone", d.emergency_contact_phone)
+           + '</div>'
+         : "")
+diff --git a/web/supabase/migrations/041_emergency_event_scoped.sql b/web/supabase/migrations/041_emergency_event_scoped.sql
+new file mode 100644
+index 0000000..288bb36
+--- /dev/null
++++ b/web/supabase/migrations/041_emergency_event_scoped.sql
+@@ -0,0 +1,53 @@
++-- ============================================================
++-- Migration v41 — repoint emergency lookup to event-scoped ICE, then drop the
++-- last standing profile health columns.
++--
++-- get_participant_emergency() used to return the linked rider's PROFILE health
++-- data (blood_type, emergency_contact_*). It now returns the EVENT roster's ICE
++-- (event_participants.blood_type/allergies/ice_name/ice_phone) — entered at
++-- registration and purged 7 days after the event — plus non-health identity
++-- (name/phone/waypoint_id) from the linked account.
++--
++-- Run AFTER the app change (TrackingMap renderEmergency) is deployed.
++-- Safe to re-run.
++-- ============================================================
++
++create or replace function public.get_participant_emergency(p_participant_id uuid)
++returns jsonb language plpgsql security definer set search_path = public as $$
++declare v_org uuid; ep record; v_fn text; v_ln text; v_phone text; v_wpid text;
++begin
++  select * into ep from event_participants where id = p_participant_id;
++  if not found then return jsonb_build_object('error', 'not_found'); end if;
++
++  -- Only the event's organizer may read a rider's emergency info.
++  select organizer_id into v_org from events where id = ep.event_id;
++  if v_org is null or v_org <> auth.uid() then
++    return jsonb_build_object('error', 'forbidden');
++  end if;
++
++  -- Non-health identity from the linked account, if any.
++  if ep.user_id is not null then
++    select first_name, last_name, phone, waypoint_id
++      into v_fn, v_ln, v_phone, v_wpid
++      from profiles where id = ep.user_id;
++  end if;
++
++  return jsonb_build_object(
++    'linked', ep.user_id is not null,
++    'name', coalesce(nullif(trim(coalesce(v_fn, '') || ' ' || coalesce(v_ln, '')), ''), ep.display_name),
++    'phone', v_phone,
++    'waypoint_id', v_wpid,
++    -- Event-scoped ICE (event_participants):
++    'blood_type', ep.blood_type,
++    'allergies', ep.allergies,
++    'emergency_contact_name', ep.ice_name,
++    'emergency_contact_phone', ep.ice_phone
++  );
++end; $$;
++
++-- No caller reads these profile columns any more — drop the standing health data.
++alter table public.profiles
++  drop column if exists blood_type,
++  drop column if exists emergency_contact_name,
++  drop column if exists emergency_contact_phone,
++  drop column if exists emergency_contact_relation;
+-- 
+2.43.0
+
