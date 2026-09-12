@@ -14,7 +14,11 @@ import {
   fetchBeaconEvents,
   type BeaconState,
 } from "../../lib/deviceIdentity";
-import { resumeBeacon } from "../../lib/backgroundTracking";
+import {
+  resumeBeacon,
+  getFailedStartStep,
+  clearFailedStartStep,
+} from "../../lib/backgroundTracking";
 import {
   needsBatteryGuidance,
   hasAcknowledged,
@@ -52,6 +56,7 @@ export default function TrackScreen() {
   const [stalled, setStalled] = useState(false);
   const [lastFixAgeMs, setLastFixAgeMs] = useState<number | null>(null);
   const [showBattery, setShowBattery] = useState(false);
+  const [failedStep, setFailedStep] = useState<string | null>(null);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -88,6 +93,7 @@ export default function TrackScreen() {
       refreshStatus();
       refreshBeacon();
       if (needsBatteryGuidance()) hasAcknowledged().then((ack) => setShowBattery(!ack));
+      getFailedStartStep().then(setFailedStep);
       // While this screen is open, keep the queue counter honest.
       pollRef.current = setInterval(refreshStatus, 5000);
       return () => {
@@ -192,6 +198,30 @@ export default function TrackScreen() {
   return (
     <ScrollView className="flex-1 bg-surface-dark">
       <View className="px-6 pt-6 pb-10">
+
+        {/* Last Start attempt never finished — almost certainly a native crash */}
+        {failedStep && !tracking && (
+          <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
+            <Text className="text-red-300 font-bold text-sm mb-1">
+              Last start attempt didn't finish
+            </Text>
+            <Text className="text-on-dark-soft text-xs leading-5 mb-1">
+              It stopped at: <Text className="text-white font-bold">{failedStep}</Text>
+            </Text>
+            <Text className="text-on-dark-soft text-xs leading-5 mb-3">
+              Send that line to support — it says exactly which step failed.
+            </Text>
+            <TouchableOpacity
+              className="bg-surface-dark-elevated rounded-lg px-4 py-2 self-start"
+              onPress={async () => {
+                await clearFailedStartStep();
+                setFailedStep(null);
+              }}
+            >
+              <Text className="text-on-dark font-bold text-sm">Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Tracking died without telling us — the OEM battery-killer signature */}
         {stalled && (

@@ -34,6 +34,13 @@ const TIER_KEY = "waypoint_beacon_tier";
 const LAST_FIX_KEY = "waypoint_beacon_last_fix";
 /** Wall-clock of the last fix the OS actually delivered. The honest heartbeat. */
 const LAST_FIX_AT_KEY = "waypoint_beacon_last_fix_at";
+/**
+ * Breadcrumb for the start sequence. A native crash kills the process before
+ * any JS error handler runs and there is no logcat on a rider's phone, so each
+ * step is written to disk BEFORE it is attempted. Whatever is still there after
+ * a relaunch is the step that died.
+ */
+const START_STEP_KEY = "waypoint_beacon_start_step";
 
 // Brand: dark ground, acid accents. The old #FAA634 was in no part of the palette.
 const NOTIFICATION_COLOR = "#CCFF00";
@@ -207,7 +214,10 @@ async function applyTier(tier: Tier): Promise<void> {
   console.log(`[BG] cadence → ${tier} (${spec.timeInterval / 1000}s)`);
 }
 
-function buildOptions(spec: TierSpec): Location.LocationTaskOptions {
+function buildOptions(
+  spec: TierSpec,
+  withForegroundService = true
+): Location.LocationTaskOptions {
   return {
     accuracy: spec.accuracy,
     timeInterval: spec.timeInterval,
@@ -217,11 +227,15 @@ function buildOptions(spec: TierSpec): Location.LocationTaskOptions {
     activityType: Location.ActivityType.AutomotiveNavigation,
     pausesUpdatesAutomatically: false,
     showsBackgroundLocationIndicator: true,
-    foregroundService: {
-      notificationTitle: "Waypoint is tracking",
-      notificationBody: "Your position is being recorded and shared.",
-      notificationColor: NOTIFICATION_COLOR,
-    },
+    ...(withForegroundService
+      ? {
+          foregroundService: {
+            notificationTitle: "Waypoint is tracking",
+            notificationBody: "Your position is being recorded and shared.",
+            notificationColor: NOTIFICATION_COLOR,
+          },
+        }
+      : {}),
   };
 }
 
@@ -238,15 +252,37 @@ function haversineM(aLat: number, aLng: number, bLat: number, bLng: number): num
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+async function step(name: string): Promise<void> {
+  await AsyncStorage.setItem(START_STEP_KEY, name);
+}
+
+/** Whatever step we died on last time, or null if the last start completed. */
+export async function getFailedStartStep(): Promise<string | null> {
+  return AsyncStorage.getItem(START_STEP_KEY);
+}
+
+export async function clearFailedStartStep(): Promise<void> {
+  await AsyncStorage.removeItem(START_STEP_KEY);
+}
+
 export async function startBeacon(session: BeaconSession, tier?: Tier): Promise<void> {
   // Android 13+ needs POST_NOTIFICATIONS for the foreground service notification.
+  // Without it the service cannot post its notification, and Android kills the
+  // process rather than returning an error we could catch.
+  let canPostNotifications = true;
   if (Platform.OS === "android" && Number(Platform.Version) >= 33) {
-    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+    await step("notification-permission");
+    const res = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+    canPostNotifications = res === PermissionsAndroid.RESULTS.GRANTED;
   }
 
+  await step("foreground-location-permission");
   const { status: fg } = await Location.requestForegroundPermissionsAsync();
   if (fg !== "granted") throw new Error("Foreground location permission denied");
 
+  await step("background-location-permission");
   const { status: bg } = await Location.requestBackgroundPermissionsAsync();
   if (bg !== "granted") {
     throw new Error(
@@ -254,17 +290,41 @@ export async function startBeacon(session: BeaconSession, tier?: Tier): Promise<
     );
   }
 
+  await step("open-queue-database");
   await initQueue();
+
+  await step("save-session");
   await setSession(session);
   await AsyncStorage.multiRemove([LAST_FIX_KEY, LAST_FIX_AT_KEY]);
 
   const resolved: Tier = tier ?? (session.mode === "event" ? "race" : "trail");
   await AsyncStorage.setItem(TIER_KEY, resolved);
 
+  await step("stop-existing-task");
   const running = await Location.hasStartedLocationUpdatesAsync(BG_LOCATION_TASK).catch(() => false);
   if (running) await Location.stopLocationUpdatesAsync(BG_LOCATION_TASK);
 
-  await Location.startLocationUpdatesAsync(BG_LOCATION_TASK, buildOptions(TIERS[resolved]));
+  // The foreground service is the riskiest call in the sequence: on Android 14+
+  // it throws if the manifest service type is missing, and on 13+ it throws if
+  // the notification cannot be posted — both as native exceptions. Try it with
+  // the service, and fall back to a plain background task rather than dying.
+  await step("start-location-updates");
+  try {
+    await Location.startLocationUpdatesAsync(
+      BG_LOCATION_TASK,
+      buildOptions(TIERS[resolved], canPostNotifications)
+    );
+  } catch (err) {
+    console.warn("[BG] foreground service start failed, retrying without it:", err);
+    await step("start-location-updates-no-service");
+    await Location.startLocationUpdatesAsync(
+      BG_LOCATION_TASK,
+      buildOptions(TIERS[resolved], false)
+    );
+  }
+
+  // Got here, so nothing crashed. Clear the breadcrumb.
+  await clearFailedStartStep();
 
   // Even with the filter off, the first scheduled fix is one interval away —
   // up to 30 seconds of a rider staring at "not yet" wondering if it works.
