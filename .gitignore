@@ -4,3 +4,6 @@
 # Local credentials for automated EAS builds — never commit
 .eas-token*
 .secrets/
+
+# Device logs captured for debugging
+crash*.log
