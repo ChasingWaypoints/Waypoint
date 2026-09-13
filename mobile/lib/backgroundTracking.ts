@@ -79,6 +79,36 @@ const IDLE_AFTER_MS = 5 * 60_000;
 /** Stationary this long → parked. */
 const PARKED_AFTER_MS = 30 * 60_000;
 
+// ─── Crash-loop guard ─────────────────────────────────────────────────────────
+
+/**
+ * If the task died mid-run, its breadcrumb is still on disk. Android will have
+ * re-armed the location task on the next launch, so it fires again, and kills
+ * the app again — a loop that strands the rider with an app they cannot even
+ * open to turn tracking off.
+ *
+ * So on every launch: if a breadcrumb survived, stop location updates before
+ * anything else can trigger them, and leave the breadcrumb in place so the
+ * Track screen can still say what failed.
+ */
+export async function breakCrashLoopIfNeeded(): Promise<string | null> {
+  try {
+    const step = await AsyncStorage.getItem(TASK_STEP_KEY);
+    if (!step) return null;
+
+    console.warn(`[BG] previous task run died at "${step}" — stopping tracking`);
+    const running = await Location.hasStartedLocationUpdatesAsync(BG_LOCATION_TASK).catch(
+      () => false
+    );
+    if (running) await Location.stopLocationUpdatesAsync(BG_LOCATION_TASK);
+    await setSession(null);
+    return step;
+  } catch (e) {
+    console.warn("[BG] crash-loop guard failed:", e);
+    return null;
+  }
+}
+
 // ─── Session helpers ──────────────────────────────────────────────────────────
 
 export async function getSession(): Promise<BeaconSession | null> {

@@ -2,6 +2,7 @@ import "../global.css";
 // Must run at module-evaluation time so TaskManager.defineTask() registers the
 // background location task before any navigation renders.
 import "../lib/backgroundTracking";
+import { breakCrashLoopIfNeeded } from "../lib/backgroundTracking";
 // Sets the Mapbox access token exactly once, before any screen can mount a map.
 import "../lib/mapbox";
 import { theme } from "../lib/theme";
@@ -17,6 +18,12 @@ import { ONBOARDING_KEY } from "./(auth)/onboarding";
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+
+  // Before anything else: if the last background run died, stop tracking so the
+  // app cannot be killed again on launch.
+  useEffect(() => {
+    breakCrashLoopIfNeeded();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
