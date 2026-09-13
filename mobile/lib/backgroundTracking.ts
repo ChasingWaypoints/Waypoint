@@ -41,6 +41,8 @@ const LAST_FIX_AT_KEY = "waypoint_beacon_last_fix_at";
  * a relaunch is the step that died.
  */
 const START_STEP_KEY = "waypoint_beacon_start_step";
+/** Same idea, for the background task callback — the other place we can die. */
+const TASK_STEP_KEY = "waypoint_beacon_task_step";
 
 // Brand: dark ground, acid accents. The old #FAA634 was in no part of the palette.
 const NOTIFICATION_COLOR = "#CCFF00";
@@ -115,15 +117,22 @@ try {
       return;
     }
 
+    // The task callback runs headless: a native crash here leaves no trace at
+    // all. Breadcrumb each step the same way the start sequence does.
+    await AsyncStorage.setItem(TASK_STEP_KEY, "open-queue-database");
     await initQueue();
 
+    await AsyncStorage.setItem(TASK_STEP_KEY, "read-battery");
     let battery: number | null = null;
     try {
       const level = await Battery.getBatteryLevelAsync();
       battery = level >= 0 ? Math.round(level * 100) : null;
-    } catch {
+    } catch (e) {
+      console.warn("[BG] battery read failed:", e);
       battery = null;
     }
+
+    await AsyncStorage.setItem(TASK_STEP_KEY, "queue-points");
 
     // The OS batches deliveries; queue every fix, not just the newest.
     for (const loc of locations) {
@@ -148,10 +157,14 @@ try {
 
     const newest = locations[locations.length - 1];
     await AsyncStorage.setItem(LAST_FIX_AT_KEY, String(Date.now()));
+
+    await AsyncStorage.setItem(TASK_STEP_KEY, "adjust-cadence");
     await maybeRetier(newest);
 
     // Best-effort. If it fails the fixes stay queued, which is the point.
+    await AsyncStorage.setItem(TASK_STEP_KEY, "upload");
     const result = await flushQueue();
+    await AsyncStorage.removeItem(TASK_STEP_KEY);
     if (result.remaining > 0) {
       console.log(`[BG] ${result.sent} sent, ${result.remaining} still queued`);
     }
@@ -209,8 +222,14 @@ async function applyTier(tier: Tier): Promise<void> {
 
   await AsyncStorage.setItem(TIER_KEY, tier);
   const spec = TIERS[tier];
-  // Re-issuing start with new options updates the running task in place.
-  await Location.startLocationUpdatesAsync(BG_LOCATION_TASK, buildOptions(spec));
+  // Re-issuing start updates the running task in place — but calling it from
+  // inside the task's own callback re-enters the native location manager while
+  // it is mid-delivery. Defer to a later tick so the callback finishes first.
+  setTimeout(() => {
+    Location.startLocationUpdatesAsync(BG_LOCATION_TASK, buildOptions(spec)).catch((e) =>
+      console.warn("[BG] cadence change failed:", e)
+    );
+  }, 0);
   console.log(`[BG] cadence → ${tier} (${spec.timeInterval / 1000}s)`);
 }
 
@@ -262,7 +281,12 @@ export async function getFailedStartStep(): Promise<string | null> {
 }
 
 export async function clearFailedStartStep(): Promise<void> {
-  await AsyncStorage.removeItem(START_STEP_KEY);
+  await AsyncStorage.multiRemove([START_STEP_KEY, TASK_STEP_KEY]);
+}
+
+/** Step the background task died on, or null if its last run completed. */
+export async function getFailedTaskStep(): Promise<string | null> {
+  return AsyncStorage.getItem(TASK_STEP_KEY);
 }
 
 export async function startBeacon(session: BeaconSession, tier?: Tier): Promise<void> {

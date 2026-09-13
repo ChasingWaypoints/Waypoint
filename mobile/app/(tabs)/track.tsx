@@ -17,6 +17,7 @@ import {
 import {
   resumeBeacon,
   getFailedStartStep,
+  getFailedTaskStep,
   clearFailedStartStep,
 } from "../../lib/backgroundTracking";
 import {
@@ -93,7 +94,9 @@ export default function TrackScreen() {
       refreshStatus();
       refreshBeacon();
       if (needsBatteryGuidance()) hasAcknowledged().then((ack) => setShowBattery(!ack));
-      getFailedStartStep().then(setFailedStep);
+      Promise.all([getFailedStartStep(), getFailedTaskStep()]).then(([a, b]) =>
+        setFailedStep(a ? `start: ${a}` : b ? `tracking: ${b}` : null)
+      );
       // While this screen is open, keep the queue counter honest.
       pollRef.current = setInterval(refreshStatus, 5000);
       return () => {
