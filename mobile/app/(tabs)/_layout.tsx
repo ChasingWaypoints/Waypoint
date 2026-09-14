@@ -4,13 +4,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../lib/theme";
 
 function TabIcon({ icon }: { icon: string }) {
-  return <Text style={{ fontSize: 18 }}>{icon}</Text>;
+  return <Text style={{ fontSize: 20 }}>{icon}</Text>;
 }
 
+/**
+ * Three tabs, deliberately.
+ *
+ * The app used to carry five — Trips, Map, Track, Events, Settings — which was
+ * two apps sharing a tab bar: a trip logger and a live tracker. Organizer work
+ * moved to the web, where a roster is actually editable, and personal rides
+ * fold into Track. What's left is: where am I, am I sharing it, and everything
+ * else. Three fat targets you can hit wearing gloves.
+ */
 export default function TabsLayout() {
   // A fixed bar height renders underneath the system navigation buttons on
-  // phones that have them — the XCover Pro among them. Grow the bar by the
-  // bottom inset instead, so the labels always clear the hardware.
+  // phones that have them — the XCover Pro among them. Grow by the inset.
   const insets = useSafeAreaInsets();
 
   return (
@@ -40,14 +48,6 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Waypoint",
-          tabBarLabel: "TRIPS",
-          tabBarIcon: () => <TabIcon icon="🗺️" />,
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: "Map",
           tabBarLabel: "MAP",
           tabBarIcon: () => <TabIcon icon="🧭" />,
         }}
@@ -58,14 +58,6 @@ export default function TabsLayout() {
           title: "Track",
           tabBarLabel: "TRACK",
           tabBarIcon: () => <TabIcon icon="📍" />,
-        }}
-      />
-      <Tabs.Screen
-        name="events"
-        options={{
-          title: "Events",
-          tabBarLabel: "EVENTS",
-          tabBarIcon: () => <TabIcon icon="🏁" />,
         }}
       />
       <Tabs.Screen

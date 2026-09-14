@@ -1,40 +1,48 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Share, Platform,
+} from "react-native";
+import { useFocusEffect, router } from "expo-router";
+import QRCode from "react-native-qrcode-svg";
+import * as Clipboard from "expo-clipboard";
 import { supabase } from "../../lib/supabase";
 import {
-  startBeacon,
-  stopBeacon,
-  getBeaconStatus,
-  syncNow,
+  startBeacon, stopBeacon, getBeaconStatus, syncNow, resumeBeacon,
+  getFailedStartStep, getFailedTaskStep, clearFailedStartStep,
   type Tier,
 } from "../../lib/backgroundTracking";
 import {
-  fetchBeaconState,
-  fetchBeaconEvents,
-  type BeaconState,
+  registerDevice, fetchBeaconState, fetchBeaconEvents, setBeaconEvent,
+  claimUrlFor, getCachedClaimCode,
+  type BeaconState, type BeaconEvent,
 } from "../../lib/deviceIdentity";
 import {
-  resumeBeacon,
-  getFailedStartStep,
-  getFailedTaskStep,
-  clearFailedStartStep,
-} from "../../lib/backgroundTracking";
-import {
-  needsBatteryGuidance,
-  hasAcknowledged,
-  acknowledge,
-  openBatterySettings,
-  BATTERY_GUIDANCE_TITLE,
-  BATTERY_GUIDANCE_BODY,
+  needsBatteryGuidance, hasAcknowledged, acknowledge, openBatterySettings,
+  BATTERY_GUIDANCE_TITLE, BATTERY_GUIDANCE_BODY,
 } from "../../lib/batteryGuidance";
 
-const TIER_OPTIONS: { label: string; value: Tier; battery: string }[] = [
-  { label: "Race", value: "race", battery: "30 s · high drain" },
-  { label: "Trail", value: "trail", battery: "1 min · moderate" },
-  { label: "Idle", value: "idle", battery: "5 min · low" },
-  { label: "Parked", value: "parked", battery: "15 min · minimal" },
+/**
+ * The single tracking screen.
+ *
+ * It used to take two screens and a web page to get from "installed" to
+ * "sharing my position": claim under Settings, pick an event there, then come
+ * here for the rate and START. A rider could do every step correctly and still
+ * not appear on the map, because starting a personal ride first required going
+ * to a third screen to make a trip.
+ *
+ * So this screen asks three questions in order and hides the ones already
+ * answered: is this phone linked, what is this ride for, and how often.
+ */
+
+const TIER_OPTIONS: { label: string; value: Tier; detail: string }[] = [
+  { label: "Race", value: "race", detail: "30 sec" },
+  { label: "Trail", value: "trail", detail: "1 min" },
+  { label: "Idle", value: "idle", detail: "5 min" },
+  { label: "Parked", value: "parked", detail: "15 min" },
 ];
+
+/** null = personal ride */
+type Destination = { kind: "event"; event: BeaconEvent } | { kind: "personal" };
 
 function formatAge(ms: number | null): string {
   if (ms == null) return "not yet";
@@ -46,20 +54,26 @@ function formatAge(ms: number | null): string {
 }
 
 export default function TrackScreen() {
+  const [loading, setLoading] = useState(true);
+  const [beacon, setBeacon] = useState<BeaconState | null>(null);
+  const [code, setCode] = useState<string | null>(null);
+  const [events, setEvents] = useState<BeaconEvent[]>([]);
+  const [destination, setDestination] = useState<Destination | null>(null);
+
   const [tracking, setTracking] = useState(false);
   const [tier, setTier] = useState<Tier>("trail");
-  const [activeTrip, setActiveTrip] = useState<{ id: string; name: string } | null>(null);
   const [queued, setQueued] = useState(0);
-  const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [error, setError] = useState("");
-  const [beacon, setBeacon] = useState<BeaconState | null>(null);
-  const [stalled, setStalled] = useState(false);
   const [lastFixAgeMs, setLastFixAgeMs] = useState<number | null>(null);
-  const [showBattery, setShowBattery] = useState(false);
+  const [stalled, setStalled] = useState(false);
   const [failedStep, setFailedStep] = useState<string | null>(null);
-  const [participantId, setParticipantId] = useState<string | null>(null);
+
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  const [showBattery, setShowBattery] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   const refreshStatus = useCallback(async () => {
     const s = await getBeaconStatus();
@@ -70,254 +84,298 @@ export default function TrackScreen() {
     if (s.active) setTier(s.tier);
   }, []);
 
-  const refreshBeacon = useCallback(async () => {
+  const loadBeacon = useCallback(async () => {
     try {
+      const registered = await registerDevice();
+      setCode(registered ?? (await getCachedClaimCode()));
+
       const s = await fetchBeaconState();
       setBeacon(s);
-      if (s.ok && s.claimed && s.active_event_id) {
-        // beacon_state reports which event is selected but not the roster row
-        // it maps to; the events list carries that.
+      if (s.ok && s.claim_code) setCode(s.claim_code);
+
+      if (s.claimed) {
         const evs = await fetchBeaconEvents();
-        const match = evs.find((e) => e.event_id === s.active_event_id);
-        setParticipantId(match?.participant_id ?? null);
-      } else {
-        setParticipantId(null);
+        setEvents(evs);
+        const active = s.active_event_id
+          ? evs.find((e) => e.event_id === s.active_event_id)
+          : undefined;
+        setDestination(active ? { kind: "event", event: active } : { kind: "personal" });
       }
     } catch {
-      // Offline is fine — a previously started session keeps running.
+      // Offline is survivable — a running session keeps running.
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchActiveTrip();
-      refreshStatus();
-      refreshBeacon();
+      let alive = true;
+      (async () => {
+        await Promise.all([refreshStatus(), loadBeacon()]);
+        if (alive) setLoading(false);
+      })();
+
       if (needsBatteryGuidance()) hasAcknowledged().then((ack) => setShowBattery(!ack));
       Promise.all([getFailedStartStep(), getFailedTaskStep()]).then(([a, b]) =>
         setFailedStep(a ? `start: ${a}` : b ? `tracking: ${b}` : null)
       );
-      // While this screen is open, keep the queue counter honest.
+
       pollRef.current = setInterval(refreshStatus, 5000);
       return () => {
+        alive = false;
         if (pollRef.current) clearInterval(pollRef.current);
       };
-    }, [refreshStatus, refreshBeacon])
+    }, [refreshStatus, loadBeacon])
   );
 
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  async function fetchActiveTrip() {
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  async function copyCode() {
+    if (!code) return;
+    await Clipboard.setStringAsync(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function chooseEvent(ev: BeaconEvent) {
+    setBusy(true); setError("");
+    const r = await setBeaconEvent(ev.event_id);
+    if (!r.ok) {
+      setError(
+        r.error === "not_an_entrant"
+          ? "You're not on that event's roster yet — ask the organizer to add you."
+          : r.error ?? "Could not select that event."
+      );
+    } else {
+      setDestination({ kind: "event", event: ev });
+    }
+    await loadBeacon();
+    setBusy(false);
+  }
+
+  async function choosePersonal() {
+    setBusy(true); setError("");
+    const r = await setBeaconEvent(null);
+    if (!r.ok) setError(r.error ?? "Could not switch to a personal ride.");
+    else setDestination({ kind: "personal" });
+    await loadBeacon();
+    setBusy(false);
+  }
+
+  /**
+   * A personal ride needs a trip to write into. Reuse an active one if there is
+   * one, otherwise make it here — the old app made the rider go to another tab
+   * to do this, which is where the first field test stopped.
+   */
+  async function ensurePersonalTrip(): Promise<string> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase
+    if (!user) throw new Error("Sign in to record a personal ride.");
+
+    const { data: existing } = await supabase
       .from("trips")
-      .select("id, name")
+      .select("id")
       .eq("user_id", user.id)
       .eq("status", "active")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    setActiveTrip(data ?? null);
-  }
+    if (existing?.id) return existing.id as string;
 
-  const eventMode = !!(beacon?.claimed && beacon.active_event_id && participantId);
+    const name = new Date().toLocaleDateString(undefined, {
+      weekday: "short", month: "short", day: "numeric",
+    });
+    const { data, error: err } = await supabase
+      .from("trips")
+      .insert({ user_id: user.id, name: `Ride — ${name}`, status: "active", is_public: false })
+      .select("id")
+      .single();
+    if (err) throw new Error(err.message);
+    return data!.id as string;
+  }
 
   async function handleStart() {
     setError("");
-
-    // An event selected on the beacon screen wins: that is the rider saying
-    // "put me on the map", and it is the whole reason the app exists.
-    if (eventMode) {
-      try {
+    if (!destination) { setError("Pick what this ride is for first."); return; }
+    setBusy(true);
+    try {
+      if (destination.kind === "event") {
         await startBeacon(
           {
             mode: "event",
-            eventId: beacon!.active_event_id!,
-            participantId: participantId!,
-            eventName: beacon!.active_event_name ?? undefined,
+            eventId: destination.event.event_id,
+            participantId: destination.event.participant_id,
+            eventName: destination.event.name,
           },
-          tier === "trail" ? "race" : tier
+          tier
         );
-        await refreshStatus();
-      } catch (err: any) {
-        setError(err?.message ?? "Could not start tracking.");
+      } else {
+        const tripId = await ensurePersonalTrip();
+        await startBeacon({ mode: "trip", tripId }, tier);
       }
-      return;
-    }
-
-    if (!activeTrip) {
-      setError(
-        beacon?.claimed
-          ? "Pick an event under Settings → Use This Phone as a Beacon, or start a trip from the Trips tab."
-          : "No active trip. Start a trip from the Trips tab, or link this phone under Settings → Use This Phone as a Beacon."
-      );
-      return;
-    }
-    try {
-      await startBeacon({ mode: "trip", tripId: activeTrip.id }, tier);
       await refreshStatus();
-    } catch (err: any) {
-      setError(err?.message ?? "Could not start tracking.");
+      setFailedStep(null);
+    } catch (e: any) {
+      setError(e?.message ?? "Could not start tracking.");
     }
+    setBusy(false);
   }
 
   async function handleStop() {
-    try {
-      await stopBeacon();
-    } catch (err: any) {
-      setError(err?.message ?? "Could not stop tracking.");
-    }
+    setBusy(true);
+    try { await stopBeacon(); } catch (e: any) { setError(e?.message ?? "Could not stop."); }
     await refreshStatus();
-  }
-
-  async function handleResume() {
-    setError("");
-    try {
-      await resumeBeacon();
-      await refreshStatus();
-    } catch (err: any) {
-      setError(err?.message ?? "Could not resume tracking.");
-    }
+    setBusy(false);
   }
 
   async function handleSync() {
-    setSyncing(true);
+    setBusy(true);
     try {
       const r = await syncNow();
       setQueued(r.remaining);
-      if (r.sent > 0) setLastSync(new Date());
-      if (r.skipped === "offline") setError("No connection — points are safe in the queue.");
-      else setError("");
-    } finally {
-      setSyncing(false);
-    }
+      setError(r.skipped === "offline" ? "No connection — points are safe on the phone." : "");
+    } finally { setBusy(false); }
   }
 
-  return (
-    <ScrollView className="flex-1 bg-surface-dark">
-      <View className="px-6 pt-6 pb-10">
+  // ── Render ─────────────────────────────────────────────────────────────────
 
-        {/* Last Start attempt never finished — almost certainly a native crash */}
-        {failedStep && !tracking && (
-          <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
-            <Text className="text-red-300 font-bold text-sm mb-1">
-              Last start attempt didn't finish
-            </Text>
-            <Text className="text-on-dark-soft text-xs leading-5 mb-1">
-              It stopped at: <Text className="text-white font-bold">{failedStep}</Text>
-            </Text>
-            <Text className="text-on-dark-soft text-xs leading-5 mb-3">
-              Send that line to support — it says exactly which step failed.
-            </Text>
+  if (loading) {
+    return (
+      <View className="flex-1 bg-surface-dark items-center justify-center">
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  const claimed = !!beacon?.claimed;
+
+  // ── 1. Not linked yet: nothing else matters ────────────────────────────────
+  if (!claimed) {
+    return (
+      <ScrollView className="flex-1 bg-surface-dark" contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+        <Text className="text-white text-xl font-bold mb-2">Link this phone</Text>
+        <Text className="text-on-dark-soft text-sm mb-6 leading-5">
+          Go to waypointtracking.com/claim on any device, sign in, and enter this code.
+          You only do this once.
+        </Text>
+
+        <View className="bg-surface-dark-elevated rounded-xl p-6 items-center mb-4">
+          <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">Your code</Text>
+          <Text className="text-white text-4xl font-bold tracking-[8px] mb-5">{code ?? "······"}</Text>
+
+          {code ? (
+            <View className="bg-white p-3 rounded-lg mb-4">
+              <QRCode value={claimUrlFor(code)} size={150} />
+            </View>
+          ) : null}
+
+          <View className="flex-row gap-2">
+            <TouchableOpacity className="bg-primary rounded-lg px-5 py-3" onPress={copyCode} disabled={!code}>
+              <Text className="text-on-primary font-bold text-sm">{copied ? "Copied" : "Copy code"}</Text>
+            </TouchableOpacity>
             <TouchableOpacity
-              className="bg-surface-dark-elevated rounded-lg px-4 py-2 self-start"
-              onPress={async () => {
-                await clearFailedStartStep();
-                setFailedStep(null);
-              }}
+              className="bg-surface-dark rounded-lg px-5 py-3"
+              onPress={() => code && Share.share({ message: claimUrlFor(code) })}
+              disabled={!code}
             >
-              <Text className="text-on-dark font-bold text-sm">Dismiss</Text>
+              <Text className="text-on-dark font-bold text-sm">Share link</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {/* Tracking died without telling us — the OEM battery-killer signature */}
-        {stalled && (
-          <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
-            <Text className="text-red-300 font-bold text-sm mb-1">Tracking stopped</Text>
-            <Text className="text-on-dark-soft text-xs leading-5 mb-3">
-              {tracking
-                ? `No position fix for ${formatAge(lastFixAgeMs)}. Your phone may have put Waypoint to sleep.`
-                : "Your session is still set but the phone is no longer tracking. This is usually battery optimization shutting the app down."}
-            </Text>
-            <View className="flex-row gap-2">
-              <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={handleResume}>
-                <Text className="text-on-primary font-bold text-sm">Resume tracking</Text>
-              </TouchableOpacity>
-              {needsBatteryGuidance() && (
-                <TouchableOpacity
-                  className="bg-surface-dark-elevated rounded-lg px-4 py-2"
-                  onPress={openBatterySettings}
-                >
-                  <Text className="text-on-dark font-bold text-sm">Fix battery settings</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* One-time Android setup nudge, before it matters in the desert */}
-        {showBattery && !stalled && (
-          <View className="bg-surface-dark-elevated border border-amber-500/30 rounded-xl p-4 mb-5">
-            <Text className="text-amber-300 font-bold text-sm mb-1">{BATTERY_GUIDANCE_TITLE}</Text>
-            <Text className="text-on-dark-soft text-xs leading-5 mb-3">{BATTERY_GUIDANCE_BODY}</Text>
-            <View className="flex-row gap-2">
-              <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={openBatterySettings}>
-                <Text className="text-on-primary font-bold text-sm">Open settings</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-surface-dark rounded-lg px-4 py-2"
-                onPress={async () => { await acknowledge(); setShowBattery(false); }}
-              >
-                <Text className="text-on-dark-soft font-bold text-sm">Done</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Where this session's points are going */}
-        <View className="bg-surface-dark-elevated rounded-xl p-4 mb-5">
-          <Text className="text-on-dark-soft text-xs uppercase font-bold mb-1">Tracking for</Text>
-          {eventMode ? (
-            <>
-              <Text className="text-white text-base font-semibold">
-                {beacon?.active_event_name ?? "Selected event"}
-              </Text>
-              <Text className="text-on-dark-soft text-xs mt-1">
-                You'll appear on the organizer's live map
-              </Text>
-            </>
-          ) : activeTrip ? (
-            <>
-              <Text className="text-white text-base font-semibold">{activeTrip.name}</Text>
-              <Text className="text-on-dark-soft text-xs mt-1">Personal trip — private to you</Text>
-            </>
-          ) : (
-            <Text className="text-on-dark-soft text-sm">
-              Nothing selected — pick an event under Settings, or start a trip from the Trips tab
-            </Text>
-          )}
         </View>
 
-        {/* Tracking status */}
-        <View className={`rounded-xl p-5 mb-5 items-center ${tracking ? "bg-primary/20" : "bg-surface-dark-elevated"}`}>
-          <View className={`w-3 h-3 rounded-full mb-3 ${tracking ? "bg-emerald-400" : "bg-slate-600"}`} />
-          <Text className={`text-lg font-bold mb-1 ${tracking ? "text-emerald-400" : "text-on-dark-soft"}`}>
-            {tracking ? "Tracking Active" : "Not Tracking"}
+        <TouchableOpacity
+          className="rounded-xl py-4 items-center bg-surface-dark-elevated"
+          onPress={async () => { setLoading(true); await loadBeacon(); setLoading(false); }}
+        >
+          <Text className="text-on-dark font-bold text-sm">I've claimed it — check again</Text>
+        </TouchableOpacity>
+
+        {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
+      </ScrollView>
+    );
+  }
+
+  // ── 2 + 3. Linked: destination, rate, start ────────────────────────────────
+  return (
+    <ScrollView className="flex-1 bg-surface-dark" contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+
+      {/* Recovery: last attempt never finished */}
+      {failedStep && !tracking && (
+        <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
+          <Text className="text-red-300 font-bold text-sm mb-1">Last attempt didn't finish</Text>
+          <Text className="text-on-dark-soft text-xs leading-5 mb-3">
+            It stopped at <Text className="text-white font-bold">{failedStep}</Text>. Send that to support.
           </Text>
-          {tracking && (
-            <Text className="text-emerald-300 text-xs mt-1">
-              Recording in the background · {TIER_OPTIONS.find((t) => t.value === tier)?.label}
-            </Text>
-          )}
-          {tracking && (
-            <Text className="text-on-dark-soft text-xs mt-1">
-              Last fix {formatAge(lastFixAgeMs)}
-            </Text>
-          )}
-          {lastSync && (
-            <Text className="text-on-dark-soft text-xs mt-1">
-              Last upload {lastSync.toLocaleTimeString()}
-            </Text>
-          )}
+          <TouchableOpacity
+            className="bg-surface-dark-elevated rounded-lg px-4 py-2 self-start"
+            onPress={async () => { await clearFailedStartStep(); setFailedStep(null); }}
+          >
+            <Text className="text-on-dark font-bold text-sm">Dismiss</Text>
+          </TouchableOpacity>
         </View>
+      )}
 
-        {/* Offline queue — the thing that tells a rider nothing was lost */}
+      {/* Tracking stopped without saying so */}
+      {stalled && (
+        <View className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-5">
+          <Text className="text-red-300 font-bold text-sm mb-1">Tracking stopped</Text>
+          <Text className="text-on-dark-soft text-xs leading-5 mb-3">
+            {tracking
+              ? `No fix for ${formatAge(lastFixAgeMs)}. Your phone may have put Waypoint to sleep.`
+              : "The session is still set but the phone isn't tracking."}
+          </Text>
+          <View className="flex-row gap-2">
+            <TouchableOpacity
+              className="bg-primary rounded-lg px-4 py-2"
+              onPress={async () => { try { await resumeBeacon(); await refreshStatus(); } catch (e: any) { setError(e?.message ?? ""); } }}
+            >
+              <Text className="text-on-primary font-bold text-sm">Resume</Text>
+            </TouchableOpacity>
+            {needsBatteryGuidance() && (
+              <TouchableOpacity className="bg-surface-dark-elevated rounded-lg px-4 py-2" onPress={openBatterySettings}>
+                <Text className="text-on-dark font-bold text-sm">Battery settings</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* One-time Android nudge */}
+      {showBattery && !stalled && (
+        <View className="bg-surface-dark-elevated border border-amber-500/30 rounded-xl p-4 mb-5">
+          <Text className="text-amber-300 font-bold text-sm mb-1">{BATTERY_GUIDANCE_TITLE}</Text>
+          <Text className="text-on-dark-soft text-xs leading-5 mb-3">{BATTERY_GUIDANCE_BODY}</Text>
+          <View className="flex-row gap-2">
+            <TouchableOpacity className="bg-primary rounded-lg px-4 py-2" onPress={openBatterySettings}>
+              <Text className="text-on-primary font-bold text-sm">Open settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="bg-surface-dark rounded-lg px-4 py-2"
+              onPress={async () => { await acknowledge(); setShowBattery(false); }}
+            >
+              <Text className="text-on-dark-soft font-bold text-sm">Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Live status, only while running */}
+      {tracking && (
+        <View className="bg-primary/20 rounded-xl p-5 mb-5 items-center">
+          <View className="w-3 h-3 rounded-full mb-3 bg-primary" />
+          <Text className="text-primary text-lg font-bold mb-1">Tracking</Text>
+          <Text className="text-on-dark text-sm text-center">
+            {destination?.kind === "event"
+              ? `You're on the map for ${destination.event.name}`
+              : "Recording a personal ride"}
+          </Text>
+          <Text className="text-on-dark-soft text-xs mt-2">Last fix {formatAge(lastFixAgeMs)}</Text>
+        </View>
+      )}
+
+      {/* Queue — proof nothing was lost */}
+      {(queued > 0 || tracking) && (
         <View className="bg-surface-dark-elevated rounded-xl p-4 mb-5 flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="text-on-dark-soft text-xs uppercase font-bold mb-1">Waiting to upload</Text>
@@ -333,60 +391,104 @@ export default function TrackScreen() {
           <TouchableOpacity
             className={`rounded-lg px-4 py-2 ${queued > 0 ? "bg-primary" : "bg-surface-dark"}`}
             onPress={handleSync}
-            disabled={syncing || queued === 0}
+            disabled={busy || queued === 0}
           >
-            <Text className={`font-bold text-sm ${queued > 0 ? "text-on-primary" : "text-on-dark-soft"}`}>
-              {syncing ? "Syncing…" : "Sync"}
-            </Text>
+            <Text className={`font-bold text-sm ${queued > 0 ? "text-on-primary" : "text-on-dark-soft"}`}>Sync</Text>
           </TouchableOpacity>
         </View>
+      )}
 
-        {/* Cadence selector */}
-        {!tracking && (
-          <View className="mb-5">
-            <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">Update Rate</Text>
-            <View className="flex-row gap-2 flex-wrap">
-              {TIER_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  onPress={() => setTier(opt.value)}
-                  className={`flex-1 rounded-xl p-3 items-center min-w-16 ${tier === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
-                >
-                  <Text className={`font-bold text-sm ${tier === opt.value ? "text-on-primary" : "text-on-dark"}`}>
-                    {opt.label}
-                  </Text>
-                  <Text className={`text-xs mt-0.5 ${tier === opt.value ? "text-emerald-100" : "text-on-dark-soft"}`}>
-                    {opt.battery}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text className="text-on-dark-soft text-xs mt-3">
-              Waypoint slows the rate on its own when you stop moving, and speeds it back up when you ride.
+      {/* ── What is this ride for? ── */}
+      {!tracking && (
+        <>
+          <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3">What is this ride for?</Text>
+
+          {events.map((ev) => {
+            const active = destination?.kind === "event" && destination.event.event_id === ev.event_id;
+            return (
+              <TouchableOpacity
+                key={ev.event_id}
+                className={`rounded-xl p-4 mb-2 ${active ? "bg-primary" : "bg-surface-dark-elevated"}`}
+                onPress={() => chooseEvent(ev)}
+                disabled={busy}
+              >
+                <Text className={`font-semibold ${active ? "text-on-primary" : "text-on-dark"}`} numberOfLines={2}>
+                  {ev.name}
+                </Text>
+                <Text className={`text-xs mt-0.5 ${active ? "text-on-primary" : "text-on-dark-soft"}`}>
+                  {ev.rider_number ? `#${ev.rider_number} · ` : ""}
+                  {ev.status ?? "scheduled"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <TouchableOpacity
+            className={`rounded-xl p-4 mb-2 ${destination?.kind === "personal" ? "bg-primary" : "bg-surface-dark-elevated"}`}
+            onPress={choosePersonal}
+            disabled={busy}
+          >
+            <Text className={`font-semibold ${destination?.kind === "personal" ? "text-on-primary" : "text-on-dark"}`}>
+              Personal ride
             </Text>
+            <Text className={`text-xs mt-0.5 ${destination?.kind === "personal" ? "text-on-primary" : "text-on-dark-soft"}`}>
+              Private history — not on any event map
+            </Text>
+          </TouchableOpacity>
+
+          {events.length === 0 && (
+            <Text className="text-on-dark-soft text-xs mt-1 mb-1 leading-5">
+              You're not on an event roster right now. Once an organizer adds you, the event appears here.
+            </Text>
+          )}
+
+          {/* ── How often? ── */}
+          <Text className="text-on-dark-soft text-xs uppercase font-bold mb-3 mt-6">How often?</Text>
+          <View className="flex-row gap-2 flex-wrap">
+            {TIER_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => setTier(opt.value)}
+                className={`flex-1 rounded-xl p-3 items-center min-w-16 ${tier === opt.value ? "bg-primary" : "bg-surface-dark-elevated"}`}
+              >
+                <Text className={`font-bold text-sm ${tier === opt.value ? "text-on-primary" : "text-on-dark"}`}>
+                  {opt.label}
+                </Text>
+                <Text className={`text-xs mt-0.5 ${tier === opt.value ? "text-on-primary" : "text-on-dark-soft"}`}>
+                  {opt.detail}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
-
-        {/* Error */}
-        {error ? <Text className="text-red-400 text-sm mb-4">{error}</Text> : null}
-
-        {/* Main button */}
-        <TouchableOpacity
-          className={`rounded-xl py-5 items-center ${tracking ? "bg-red-500/80" : "bg-primary"}`}
-          onPress={tracking ? handleStop : handleStart}
-        >
-          <Text className="text-on-primary font-bold text-lg">
-            {tracking ? "Stop Tracking" : "Start Tracking"}
+          <Text className="text-on-dark-soft text-xs mt-3 leading-5">
+            Waypoint slows down on its own when you stop moving, and speeds back up when you ride.
           </Text>
-        </TouchableOpacity>
+        </>
+      )}
 
-        {/* Web notice */}
-        {Platform.OS === "web" && (
-          <Text className="text-on-dark-soft text-xs text-center mt-4">
-            GPS accuracy is limited in browser. Install the app for full background tracking.
-          </Text>
-        )}
-      </View>
+      {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
+
+      {/* ── Start / Stop ── */}
+      <TouchableOpacity
+        className={`rounded-xl py-5 items-center mt-6 ${tracking ? "bg-red-500/80" : "bg-primary"}`}
+        onPress={tracking ? handleStop : handleStart}
+        disabled={busy}
+      >
+        <Text className={`font-bold text-lg ${tracking ? "text-white" : "text-on-primary"}`}>
+          {busy ? "…" : tracking ? "Stop Tracking" : "Start Tracking"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Linked account, quietly at the bottom */}
+      <Text className="text-muted-soft text-xs text-center mt-6">
+        Linked to {beacon?.owner_name?.trim() || "your Waypoint account"} · {code}
+      </Text>
+
+      {Platform.OS === "web" && (
+        <Text className="text-on-dark-soft text-xs text-center mt-3">
+          GPS is limited in a browser. Install the app for background tracking.
+        </Text>
+      )}
     </ScrollView>
   );
 }
