@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, Modal, Share, Platform, TextInput } from "react-native";
 import { supabase } from "../lib/supabase";
+import { theme } from "../lib/theme";
 
 const WEB_BASE = "https://waypoint-web-two.vercel.app";
 
@@ -73,28 +74,28 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: "#fff", padding: 24, paddingTop: 32 }}>
+      <View style={{ flex: 1, backgroundColor: theme.surface, padding: 24, paddingTop: 32 }}>
 
         {/* Header */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#262626" }}>Share Trip</Text>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: theme.ink }}>Share Trip</Text>
           <TouchableOpacity onPress={onClose}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6b6b6b", letterSpacing: 0.5, textTransform: "uppercase" }}>Close</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: theme.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Close</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: 14, fontWeight: "700", color: "#262626", marginBottom: 4 }}>{trip.name}</Text>
-        <View style={{ height: 1, backgroundColor: "#e6e6e6", marginBottom: 20 }} />
+        <Text style={{ fontSize: 14, fontWeight: "700", color: theme.ink, marginBottom: 4 }}>{trip.name}</Text>
+        <View style={{ height: 1, backgroundColor: theme.hairline, marginBottom: 20 }} />
 
         {!isPublic ? (
           /* Sharing disabled */
           <View>
-            <Text style={{ fontSize: 13, color: "#6b6b6b", fontWeight: "300", marginBottom: 20, lineHeight: 20 }}>
+            <Text style={{ fontSize: 13, color: theme.muted, fontWeight: "300", marginBottom: 20, lineHeight: 20 }}>
               Sharing is off. Enable it to generate a public link anyone can open to follow your trip live.
             </Text>
 
             {/* Expiry picker */}
-            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 8 }}>Link Expires</Text>
+            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", marginBottom: 8 }}>Link Expires</Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
               {EXPIRY_OPTIONS.map((opt) => (
                 <TouchableOpacity
@@ -102,11 +103,11 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
                   onPress={() => setExpiryHours(opt.hours ?? null)}
                   style={{
                     flex: 1, padding: 10, alignItems: "center", borderWidth: 1,
-                    borderColor: expiryHours === (opt.hours ?? null) ? "#1c69d4" : "#e6e6e6",
-                    backgroundColor: expiryHours === (opt.hours ?? null) ? "#e8f0fb" : "#fff",
+                    borderColor: expiryHours === (opt.hours ?? null) ? theme.action : theme.hairline,
+                    backgroundColor: expiryHours === (opt.hours ?? null) ? theme.surfaceHi : theme.surface,
                   }}
                 >
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: expiryHours === (opt.hours ?? null) ? "#1c69d4" : "#6b6b6b" }}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: expiryHours === (opt.hours ?? null) ? theme.action : theme.muted }}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -114,11 +115,11 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
             </View>
 
             {/* Optional password */}
-            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 8 }}>
+            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", marginBottom: 8 }}>
               Password <Text style={{ fontWeight: "300", textTransform: "none", letterSpacing: 0 }}>(optional)</Text>
             </Text>
             <TextInput
-              style={{ borderWidth: 1, borderColor: "#e6e6e6", padding: 12, fontSize: 14, color: "#262626", marginBottom: 20 }}
+              style={{ borderWidth: 1, borderColor: theme.hairline, padding: 12, fontSize: 14, color: theme.ink, marginBottom: 20 }}
               placeholder="Leave blank for no password"
               placeholderTextColor="#c0c0c0"
               value={sharePassword}
@@ -128,11 +129,11 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
             />
 
             <TouchableOpacity
-              style={{ backgroundColor: "#1c69d4", padding: 16, alignItems: "center" }}
+              style={{ backgroundColor: theme.action, padding: 16, alignItems: "center" }}
               onPress={enableSharing}
               disabled={making}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>
+              <Text style={{ color: theme.actionInk, fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>
                 {making ? "Generating Link..." : "Enable Sharing"}
               </Text>
             </TouchableOpacity>
@@ -142,16 +143,16 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
           <View style={{ gap: 12 }}>
             {/* Share URL */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 6 }}>Share Link</Text>
-              <View style={{ flexDirection: "row", borderWidth: 1, borderColor: "#e6e6e6" }}>
-                <Text style={{ flex: 1, padding: 12, fontSize: 12, color: "#3c3c3c", fontWeight: "300" }} numberOfLines={1}>
+              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", marginBottom: 6 }}>Share Link</Text>
+              <View style={{ flexDirection: "row", borderWidth: 1, borderColor: theme.hairline }}>
+                <Text style={{ flex: 1, padding: 12, fontSize: 12, color: theme.body, fontWeight: "300" }} numberOfLines={1}>
                   {shareUrl}
                 </Text>
                 <TouchableOpacity
-                  style={{ backgroundColor: copied ? "#22c55e" : "#1c69d4", paddingHorizontal: 16, justifyContent: "center" }}
+                  style={{ backgroundColor: copied ? "#22c55e" : theme.action, paddingHorizontal: 16, justifyContent: "center" }}
                   onPress={copyLink}
                 >
-                  <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700", letterSpacing: 0.5 }}>
+                  <Text style={{ color: theme.actionInk, fontSize: 11, fontWeight: "700", letterSpacing: 0.5 }}>
                     {copied ? "COPIED" : "COPY"}
                   </Text>
                 </TouchableOpacity>
@@ -161,32 +162,32 @@ export default function ShareSheet({ trip, visible, onClose }: ShareSheetProps) 
             {/* Share natively */}
             {Platform.OS !== "web" && (
               <TouchableOpacity
-                style={{ borderWidth: 1, borderColor: "#1c69d4", padding: 14, alignItems: "center" }}
+                style={{ borderWidth: 1, borderColor: theme.action, padding: 14, alignItems: "center" }}
                 onPress={nativeShare}
               >
-                <Text style={{ color: "#1c69d4", fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>Share via...</Text>
+                <Text style={{ color: theme.action, fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>Share via...</Text>
               </TouchableOpacity>
             )}
 
             {/* Google Earth / GPX */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: "#9a9a9a", textTransform: "uppercase", marginBottom: 6, marginTop: 8 }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: theme.muted, textTransform: "uppercase", marginBottom: 6, marginTop: 8 }}>
                 Export for Google Earth & GPS Tools
               </Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <TouchableOpacity
-                  style={{ flex: 1, borderWidth: 1, borderColor: "#e6e6e6", padding: 12, alignItems: "center" }}
+                  style={{ flex: 1, borderWidth: 1, borderColor: theme.hairline, padding: 12, alignItems: "center" }}
                   onPress={() => Platform.OS === "web" && kmlUrl && window.open(kmlUrl, "_blank")}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#262626", letterSpacing: 0.5 }}>KML</Text>
-                  <Text style={{ fontSize: 10, color: "#9a9a9a", fontWeight: "300", marginTop: 2 }}>Google Earth</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: theme.ink, letterSpacing: 0.5 }}>KML</Text>
+                  <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "300", marginTop: 2 }}>Google Earth</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={{ flex: 1, borderWidth: 1, borderColor: "#e6e6e6", padding: 12, alignItems: "center" }}
+                  style={{ flex: 1, borderWidth: 1, borderColor: theme.hairline, padding: 12, alignItems: "center" }}
                   onPress={() => Platform.OS === "web" && gpxUrl && window.open(gpxUrl, "_blank")}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#262626", letterSpacing: 0.5 }}>GPX</Text>
-                  <Text style={{ fontSize: 10, color: "#9a9a9a", fontWeight: "300", marginTop: 2 }}>Garmin / Gaia</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: theme.ink, letterSpacing: 0.5 }}>GPX</Text>
+                  <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "300", marginTop: 2 }}>Garmin / Gaia</Text>
                 </TouchableOpacity>
               </View>
             </View>

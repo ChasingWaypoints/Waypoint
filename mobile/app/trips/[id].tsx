@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useNavigation, router } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
 
 const WEB_BASE = "https://app.chasingwaypoints.com";
 
@@ -192,8 +193,8 @@ export default function TripEditScreen() {
               }}
             >
               {ending
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>End Trip</Text>
+                ? <ActivityIndicator color={theme.surface} />
+                : <Text style={{ color: theme.surface, fontWeight: "800", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>End Trip</Text>
               }
             </TouchableOpacity>
           </View>
@@ -211,7 +212,7 @@ export default function TripEditScreen() {
               onChangeText={setName}
               onBlur={save}
               placeholder="e.g. Sacramento to Tahoe"
-              placeholderTextColor="#9a9a9a"
+              placeholderTextColor={theme.muted}
               returnKeyType="done"
               onSubmitEditing={save}
             />
@@ -225,7 +226,7 @@ export default function TripEditScreen() {
               onChangeText={setDesc}
               onBlur={save}
               placeholder="Route notes, conditions, highlights…"
-              placeholderTextColor="#9a9a9a"
+              placeholderTextColor={theme.muted}
               multiline
               numberOfLines={3}
               returnKeyType="done"
@@ -242,7 +243,7 @@ export default function TripEditScreen() {
             style={{ opacity: saving ? 0.6 : 1 }}
           >
             {saving
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color={theme.surface} />
               : <Text className="text-on-dark font-bold text-sm tracking-wider uppercase">Save Changes</Text>
             }
           </TouchableOpacity>
@@ -282,9 +283,9 @@ export default function TripEditScreen() {
                     key={String(opt.hours)}
                     onPress={() => setExpiryHours(opt.hours ?? null)}
                     className="flex-1 py-2.5 items-center border border-hairline"
-                    style={{ borderColor: expiryHours === (opt.hours ?? null) ? "#FAA634" : "#e6e6e6", backgroundColor: expiryHours === (opt.hours ?? null) ? "#FFF7EC" : "#fff" }}
+                    style={{ borderColor: expiryHours === (opt.hours ?? null) ? "#FAA634" : theme.hairline, backgroundColor: expiryHours === (opt.hours ?? null) ? "#FFF7EC" : theme.surface }}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: expiryHours === (opt.hours ?? null) ? "#FAA634" : "#6b6b6b" }}>
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: expiryHours === (opt.hours ?? null) ? "#FAA634" : theme.muted }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -298,7 +299,7 @@ export default function TripEditScreen() {
                 style={{ opacity: enablingShare ? 0.6 : 1 }}
               >
                 {enablingShare
-                  ? <ActivityIndicator color="#fff" />
+                  ? <ActivityIndicator color={theme.surface} />
                   : <Text className="text-on-primary font-bold text-xs tracking-widest uppercase">Enable Sharing</Text>
                 }
               </TouchableOpacity>
@@ -314,7 +315,7 @@ export default function TripEditScreen() {
                   onPress={copyLink}
                   style={{ backgroundColor: copied ? "#22c55e" : "#FAA634", paddingHorizontal: 14, justifyContent: "center" }}
                 >
-                  <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700", letterSpacing: 0.5 }}>
+                  <Text style={{ color: theme.surface, fontSize: 11, fontWeight: "700", letterSpacing: 0.5 }}>
                     {copied ? "COPIED" : "COPY"}
                   </Text>
                 </TouchableOpacity>

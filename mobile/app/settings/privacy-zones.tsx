@@ -5,6 +5,8 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface PrivacyZone {
   id: string;
@@ -24,6 +26,8 @@ const RADIUS_OPTIONS = [
 ];
 
 export default function PrivacyZonesScreen() {
+  // Bottom bar must clear the system navigation buttons.
+  const insets = useSafeAreaInsets();
   const [zones, setZones] = useState<PrivacyZone[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -119,23 +123,23 @@ export default function PrivacyZonesScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f7f7f7" }}>
+    <View style={{ flex: 1, backgroundColor: theme.canvas }}>
       <ScrollView contentContainerStyle={{ paddingVertical: 20, paddingHorizontal: 24 }}>
 
         {/* Explainer */}
-        <View style={{ backgroundColor: "#e8f0fb", padding: 16, marginBottom: 20, borderLeftWidth: 3, borderLeftColor: "#1c69d4" }}>
-          <Text style={{ fontSize: 13, color: "#1a2129", fontWeight: "600", marginBottom: 4 }}>How privacy zones work</Text>
-          <Text style={{ fontSize: 12, color: "#3c3c3c", fontWeight: "300", lineHeight: 18 }}>
+        <View style={{ backgroundColor: theme.surfaceHi, padding: 16, marginBottom: 20, borderLeftWidth: 3, borderLeftColor: theme.action }}>
+          <Text style={{ fontSize: 13, color: theme.ink, fontWeight: "600", marginBottom: 4 }}>How privacy zones work</Text>
+          <Text style={{ fontSize: 12, color: theme.body, fontWeight: "300", lineHeight: 18 }}>
             GPS points recorded inside a privacy zone are automatically removed from shared links. Your home, camp, or any place you want kept private.
           </Text>
         </View>
 
         {loading ? (
-          <ActivityIndicator color="#1c69d4" />
+          <ActivityIndicator color={theme.action} />
         ) : zones.length === 0 ? (
-          <View style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#e6e6e6", padding: 32, alignItems: "center" }}>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: "#262626", marginBottom: 6 }}>No privacy zones</Text>
-            <Text style={{ fontSize: 13, color: "#6b6b6b", fontWeight: "300", textAlign: "center" }}>
+          <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.hairline, padding: 32, alignItems: "center" }}>
+            <Text style={{ fontSize: 15, fontWeight: "700", color: theme.ink, marginBottom: 6 }}>No privacy zones</Text>
+            <Text style={{ fontSize: 13, color: theme.muted, fontWeight: "300", textAlign: "center" }}>
               Add a zone to mask your home or camp from public share links.
             </Text>
           </View>
@@ -143,11 +147,11 @@ export default function PrivacyZonesScreen() {
           zones.map((zone) => (
             <View
               key={zone.id}
-              style={{ backgroundColor: "#fff", borderWidth: 1, borderColor: "#e6e6e6", marginBottom: 10, flexDirection: "row", alignItems: "center", padding: 16 }}
+              style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.hairline, marginBottom: 10, flexDirection: "row", alignItems: "center", padding: 16 }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#262626", marginBottom: 2 }}>🔒 {zone.name}</Text>
-                <Text style={{ fontSize: 11, color: "#9a9a9a", fontWeight: "300" }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: theme.ink, marginBottom: 2 }}>🔒 {zone.name}</Text>
+                <Text style={{ fontSize: 11, color: theme.muted, fontWeight: "300" }}>
                   {zone.lat.toFixed(4)}, {zone.lng.toFixed(4)} · {zone.radius_m >= 1000 ? `${zone.radius_m / 1000} km` : `${zone.radius_m} m`} radius
                 </Text>
               </View>
@@ -160,22 +164,22 @@ export default function PrivacyZonesScreen() {
       </ScrollView>
 
       {/* Add Zone FAB */}
-      <View style={{ padding: 24, paddingTop: 12, backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#e6e6e6" }}>
+      <View style={{ padding: 24, paddingTop: 12, backgroundColor: theme.surface, borderTopWidth: 1, borderTopColor: theme.hairline , paddingBottom: 24 + insets.bottom }}>
         <TouchableOpacity
-          style={{ backgroundColor: "#1c69d4", padding: 16, alignItems: "center" }}
+          style={{ backgroundColor: theme.action, padding: 16, alignItems: "center" }}
           onPress={openModal}
         >
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>+ Add Privacy Zone</Text>
+          <Text style={{ color: theme.actionInk, fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>+ Add Privacy Zone</Text>
         </TouchableOpacity>
       </View>
 
       {/* Add Zone Modal */}
       <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet">
-        <ScrollView style={{ flex: 1, backgroundColor: "#fff" }} contentContainerStyle={{ padding: 24, paddingTop: 32 }}>
+        <ScrollView style={{ flex: 1, backgroundColor: theme.surface }} contentContainerStyle={{ padding: 24, paddingTop: 32 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: "#1a2129" }}>New Privacy Zone</Text>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: theme.ink }}>New Privacy Zone</Text>
             <TouchableOpacity onPress={() => setShowModal(false)}>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#6b6b6b", letterSpacing: 0.5, textTransform: "uppercase" }}>Cancel</Text>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: theme.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Cancel</Text>
             </TouchableOpacity>
           </View>
 
@@ -184,7 +188,7 @@ export default function PrivacyZonesScreen() {
           <TextInput
             style={inputStyle}
             placeholder="e.g. Home, Camp, Work"
-            placeholderTextColor="#9a9a9a"
+            placeholderTextColor={theme.muted}
             value={zoneName}
             onChangeText={setZoneName}
             autoFocus
@@ -193,13 +197,13 @@ export default function PrivacyZonesScreen() {
           {/* Location */}
           <Text style={[labelStyle, { marginTop: 20 }]}>Location</Text>
           <TouchableOpacity
-            style={{ borderWidth: 1, borderColor: "#1c69d4", padding: 12, alignItems: "center", marginBottom: 10 }}
+            style={{ borderWidth: 1, borderColor: theme.action, padding: 12, alignItems: "center", marginBottom: 10 }}
             onPress={useCurrentLocation}
             disabled={locating}
           >
             {locating
-              ? <ActivityIndicator color="#1c69d4" size="small" />
-              : <Text style={{ color: "#1c69d4", fontWeight: "700", fontSize: 12, letterSpacing: 0.5, textTransform: "uppercase" }}>📍 Use Current Location</Text>
+              ? <ActivityIndicator color={theme.action} size="small" />
+              : <Text style={{ color: theme.action, fontWeight: "700", fontSize: 12, letterSpacing: 0.5, textTransform: "uppercase" }}>📍 Use Current Location</Text>
             }
           </TouchableOpacity>
 
@@ -209,7 +213,7 @@ export default function PrivacyZonesScreen() {
               <TextInput
                 style={inputStyle}
                 placeholder="37.7749"
-                placeholderTextColor="#9a9a9a"
+                placeholderTextColor={theme.muted}
                 value={lat}
                 onChangeText={setLat}
                 keyboardType="numeric"
@@ -220,7 +224,7 @@ export default function PrivacyZonesScreen() {
               <TextInput
                 style={inputStyle}
                 placeholder="-122.4194"
-                placeholderTextColor="#9a9a9a"
+                placeholderTextColor={theme.muted}
                 value={lng}
                 onChangeText={setLng}
                 keyboardType="numeric"
@@ -237,11 +241,11 @@ export default function PrivacyZonesScreen() {
                 onPress={() => setRadiusM(opt.value)}
                 style={{
                   paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1,
-                  borderColor: radiusM === opt.value ? "#1c69d4" : "#e6e6e6",
-                  backgroundColor: radiusM === opt.value ? "#e8f0fb" : "#fff",
+                  borderColor: radiusM === opt.value ? theme.action : theme.hairline,
+                  backgroundColor: radiusM === opt.value ? theme.surfaceHi : theme.surface,
                 }}
               >
-                <Text style={{ fontSize: 12, fontWeight: "700", color: radiusM === opt.value ? "#1c69d4" : "#6b6b6b" }}>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: radiusM === opt.value ? theme.action : theme.muted }}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -253,13 +257,13 @@ export default function PrivacyZonesScreen() {
           ) : null}
 
           <TouchableOpacity
-            style={{ backgroundColor: "#1c69d4", padding: 16, alignItems: "center", marginTop: 28 }}
+            style={{ backgroundColor: theme.action, padding: 16, alignItems: "center", marginTop: 28 }}
             onPress={saveZone}
             disabled={saving}
           >
             {saving
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>Save Zone</Text>
+              ? <ActivityIndicator color={theme.actionInk} />
+              : <Text style={{ color: theme.actionInk, fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>Save Zone</Text>
             }
           </TouchableOpacity>
         </ScrollView>
@@ -272,17 +276,17 @@ const labelStyle = {
   fontSize: 10 as const,
   fontWeight: "700" as const,
   letterSpacing: 1.5,
-  color: "#9a9a9a",
+  color: theme.muted,
   textTransform: "uppercase" as const,
   marginBottom: 8,
 };
 
 const inputStyle = {
   borderWidth: 1,
-  borderColor: "#e6e6e6",
+  borderColor: theme.hairline,
   padding: 12,
   fontSize: 15,
-  color: "#262626",
+  color: theme.ink,
   fontWeight: "300" as const,
   borderRadius: 0,
 };

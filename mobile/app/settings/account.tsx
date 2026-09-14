@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
 
 export default function AccountScreen() {
   const [email, setEmail] = useState("");
@@ -51,7 +52,7 @@ export default function AccountScreen() {
   if (loading) {
     return (
       <View className="flex-1 bg-surface-soft items-center justify-center">
-        <ActivityIndicator color="#1c69d4" />
+        <ActivityIndicator color={theme.action} />
       </View>
     );
   }
@@ -72,7 +73,7 @@ export default function AccountScreen() {
               value={displayName}
               onChangeText={setDisplayName}
               placeholder="Your name"
-              placeholderTextColor="#9a9a9a"
+              placeholderTextColor={theme.muted}
               returnKeyType="done"
               onSubmitEditing={handleSaveName}
             />

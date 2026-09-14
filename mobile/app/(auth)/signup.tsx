@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
@@ -74,7 +75,7 @@ export default function SignUpScreen() {
                 <TextInput
                   className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
                   placeholder="Victor Orellana"
-                  placeholderTextColor="#9a9a9a"
+                  placeholderTextColor={theme.muted}
                   value={name}
                   onChangeText={setName}
                   autoComplete="name"
@@ -86,7 +87,7 @@ export default function SignUpScreen() {
                 <TextInput
                   className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
                   placeholder="you@example.com"
-                  placeholderTextColor="#9a9a9a"
+                  placeholderTextColor={theme.muted}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -100,7 +101,7 @@ export default function SignUpScreen() {
                 <TextInput
                   className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
                   placeholder="Min. 6 characters"
-                  placeholderTextColor="#9a9a9a"
+                  placeholderTextColor={theme.muted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -119,7 +120,7 @@ export default function SignUpScreen() {
                 style={{ borderRadius: 0 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={theme.actionInk} />
                 ) : (
                   <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Create Account</Text>
                 )}

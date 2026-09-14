@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
 
 interface Device {
   id: string;
@@ -55,7 +56,7 @@ export default function DevicesScreen() {
         </Text>
 
         {loading ? (
-          <ActivityIndicator color="#1c69d4" style={{ marginTop: 20 }} />
+          <ActivityIndicator color={theme.action} style={{ marginTop: 20 }} />
         ) : devices.length === 0 ? (
           <View className="mx-6 border border-hairline bg-canvas p-6 items-center">
             <Text className="text-ink font-bold text-sm mb-1">No devices connected</Text>

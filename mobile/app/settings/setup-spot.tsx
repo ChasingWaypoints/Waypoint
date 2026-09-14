@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { theme } from "../../lib/theme";
 
 const STEPS = [
   { num: 1, text: "Sign in at findmespot.com and go to My Account." },
@@ -134,14 +135,14 @@ export default function SetupSpotScreen() {
                   onPress={() => setPollInterval(opt.value)}
                   style={{
                     flex: 1, padding: 10, borderWidth: 1, borderRadius: 0, alignItems: "center",
-                    backgroundColor: pollInterval === opt.value ? "#1c69d4" : "#fff",
-                    borderColor: pollInterval === opt.value ? "#1c69d4" : "#e6e6e6",
+                    backgroundColor: pollInterval === opt.value ? theme.action : theme.actionInk,
+                    borderColor: pollInterval === opt.value ? theme.action : theme.hairline,
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: pollInterval === opt.value ? "#fff" : "#262626" }}>
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: pollInterval === opt.value ? theme.actionInk : theme.ink }}>
                     {opt.label}
                   </Text>
-                  <Text style={{ fontSize: 10, fontWeight: "300", color: pollInterval === opt.value ? "#cce0ff" : "#9a9a9a", marginTop: 2 }}>
+                  <Text style={{ fontSize: 10, fontWeight: "300", color: pollInterval === opt.value ? "#cce0ff" : theme.muted, marginTop: 2 }}>
                     {opt.note}
                   </Text>
                 </TouchableOpacity>
@@ -157,7 +158,7 @@ export default function SetupSpotScreen() {
             <TextInput
               className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
               placeholder="e.g. 0ZrtAbCdEfGhIjKl"
-              placeholderTextColor="#9a9a9a"
+              placeholderTextColor={theme.muted}
               value={feedId}
               onChangeText={setFeedId}
               autoCapitalize="none"
@@ -173,7 +174,7 @@ export default function SetupSpotScreen() {
             <TextInput
               className="bg-canvas text-ink border border-hairline px-4 py-3.5 text-base font-light"
               placeholder="Only if you set one in SPOT"
-              placeholderTextColor="#9a9a9a"
+              placeholderTextColor={theme.muted}
               value={feedPassword}
               onChangeText={setFeedPassword}
               secureTextEntry
@@ -192,7 +193,7 @@ export default function SetupSpotScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.surface} />
             ) : (
               <Text className="text-on-primary font-bold text-sm tracking-wider uppercase">Validate & Connect</Text>
             )}
