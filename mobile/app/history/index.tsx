@@ -101,7 +101,7 @@ export default function HistoryScreen() {
           return (
             <TouchableOpacity
               className="bg-surface-dark-elevated rounded-xl p-4 mb-2 flex-row items-center"
-              onPress={() => router.push(`/trips/${item.id}`)}
+              onPress={() => router.push({ pathname: "/(tabs)", params: { tripId: item.id } })}
             >
               <View className="flex-1 pr-3">
                 <Text className="text-white text-base font-semibold" numberOfLines={1}>
