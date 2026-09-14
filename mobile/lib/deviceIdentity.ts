@@ -152,6 +152,93 @@ export async function setBeaconEvent(eventId: string | null) {
   return data as { ok: boolean; error?: string; participant_id?: string };
 }
 
+export type RosterPreview = {
+  ok: boolean;
+  error?: string;
+  event_id?: string;
+  event_name?: string;
+  masked_name?: string;
+  rider_number?: string | null;
+  rider_class?: string | null;
+};
+
+/**
+ * Roster claim. A CSV import links a roster row to a Waypoint account only when
+ * the file carries a Waypoint ID, which race registration almost never
+ * produces — so most entrants are imported unlinked and never see their event.
+ * The rider closes that gap with the two things they already have: the event
+ * code and their own rider number.
+ *
+ * Preview first, always. It returns one masked name and nothing else, so the
+ * rider confirms it is them before anything is written.
+ */
+export async function previewRosterClaim(
+  joinCode: string,
+  riderNumber: string,
+): Promise<RosterPreview> {
+  const token = await getDeviceToken();
+  const { data, error } = await supabase.rpc("beacon_preview_roster_claim", {
+    p_token: token,
+    p_join_code: joinCode,
+    p_rider_number: riderNumber,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as RosterPreview) ?? { ok: false, error: "empty_response" };
+}
+
+export async function claimRosterRow(
+  joinCode: string,
+  riderNumber: string,
+): Promise<{ ok: boolean; error?: string; event_id?: string; event_name?: string }> {
+  const token = await getDeviceToken();
+  const { data, error } = await supabase.rpc("beacon_claim_roster", {
+    p_token: token,
+    p_join_code: joinCode,
+    p_rider_number: riderNumber,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as any) ?? { ok: false, error: "empty_response" };
+}
+
+/** "Not you?" — puts the roster row back exactly as the organizer imported it. */
+export async function releaseRosterRow(
+  eventId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const token = await getDeviceToken();
+  const { data, error } = await supabase.rpc("beacon_release_roster", {
+    p_token: token,
+    p_event_id: eventId,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as any) ?? { ok: false, error: "empty_response" };
+}
+
+/** Plain-language for every error string the three RPCs above can return. */
+export function rosterClaimMessage(error: string | undefined, eventName?: string): string {
+  switch (error) {
+    case "unknown_event":
+      return "No event with that code. Check it against what the organizer sent you.";
+    case "no_match":
+      return eventName
+        ? `No unclaimed entry with that number in ${eventName}. Check your rider number, or ask the organizer — it may already be linked to another account.`
+        : "No unclaimed entry with that rider number. Check the number, or ask the organizer.";
+    case "already_linked":
+      return eventName
+        ? `You're already on the roster for ${eventName}.`
+        : "You're already on that roster.";
+    case "too_many_attempts":
+      return "Too many tries. Wait fifteen minutes, then check the code and number with the organizer.";
+    case "not_claimed":
+      return "Link this phone to your Waypoint account first.";
+    case "unknown_device":
+      return "This phone isn't recognised. Reopen the app, then try again.";
+    case "not_linked":
+      return "You're not on that roster.";
+    default:
+      return error ? `Couldn't do that: ${error}` : "Something went wrong. Try again.";
+  }
+}
+
 /** Settings → delete device data. The server row is orphaned, not deleted. */
 export async function forgetDevice(): Promise<void> {
   try {

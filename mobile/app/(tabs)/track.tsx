@@ -13,9 +13,10 @@ import {
 } from "../../lib/backgroundTracking";
 import {
   registerDevice, fetchBeaconState, fetchBeaconEvents, setBeaconEvent,
-  claimUrlFor, getCachedClaimCode,
+  claimUrlFor, getCachedClaimCode, releaseRosterRow, rosterClaimMessage,
   type BeaconState, type BeaconEvent,
 } from "../../lib/deviceIdentity";
+import RosterClaim from "../../components/RosterClaim";
 import {
   needsBatteryGuidance, hasAcknowledged, acknowledge, openBatterySettings,
   BATTERY_GUIDANCE_TITLE, BATTERY_GUIDANCE_BODY,
@@ -158,6 +159,20 @@ export default function TrackScreen() {
     setBusy(true); setError("");
     const r = await setBeaconEvent(null);
     if (!r.ok) setError(r.error ?? "Could not switch to a personal ride.");
+    else setDestination({ kind: "personal" });
+    await loadBeacon();
+    setBusy(false);
+  }
+
+  /**
+   * "Not you?" — releases the roster row this account claimed, so a wrong
+   * rider number is a ten-second fix rather than a call to the organizer from
+   * the start line. The row goes back exactly as it was imported.
+   */
+  async function unlinkEvent(ev: BeaconEvent) {
+    setBusy(true); setError("");
+    const r = await releaseRosterRow(ev.event_id);
+    if (!r.ok) setError(rosterClaimMessage(r.error));
     else setDestination({ kind: "personal" });
     await loadBeacon();
     setBusy(false);
@@ -419,6 +434,16 @@ export default function TrackScreen() {
                   {ev.rider_number ? `#${ev.rider_number} · ` : ""}
                   {ev.status ?? "scheduled"}
                 </Text>
+
+                {active && (
+                  <TouchableOpacity
+                    className="mt-3 self-start rounded-lg bg-surface-dark px-3 py-2"
+                    onPress={() => unlinkEvent(ev)}
+                    disabled={busy}
+                  >
+                    <Text className="text-on-dark-soft text-xs font-bold">Not you? Unlink</Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -436,9 +461,16 @@ export default function TrackScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* The gap this closes: a CSV import links a roster row to an account
+              only when the file carries a Waypoint ID, which registration
+              rarely produces. Without this the event never appears above, and
+              nothing on screen says why. */}
+          <RosterClaim onLinked={loadBeacon} />
+
           {events.length === 0 && (
             <Text className="text-on-dark-soft text-xs mt-1 mb-1 leading-5">
-              You're not on an event roster right now. Once an organizer adds you, the event appears here.
+              Entered in an event but don't see it? Use the event code above. Otherwise it appears
+              here as soon as the organizer adds you.
             </Text>
           )}
 
