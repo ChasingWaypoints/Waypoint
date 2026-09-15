@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Share, Platform,
 } from "react-native";
 import { useFocusEffect, router } from "expo-router";
+import * as Location from "expo-location";
 import QRCode from "react-native-qrcode-svg";
 import * as Clipboard from "expo-clipboard";
 import { supabase } from "../../lib/supabase";
@@ -17,6 +18,7 @@ import {
   type BeaconState, type BeaconEvent,
 } from "../../lib/deviceIdentity";
 import RosterClaim from "../../components/RosterClaim";
+import LocationDisclosure from "../../components/LocationDisclosure";
 import {
   needsBatteryGuidance, hasAcknowledged, acknowledge, openBatterySettings,
   BATTERY_GUIDANCE_TITLE, BATTERY_GUIDANCE_BODY,
@@ -72,6 +74,7 @@ export default function TrackScreen() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [showBattery, setShowBattery] = useState(false);
+  const [showDisclosure, setShowDisclosure] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -210,9 +213,29 @@ export default function TrackScreen() {
     return data!.id as string;
   }
 
+  /**
+   * Play requires the prominent disclosure to come BEFORE the OS runtime
+   * prompt, so the gate is here rather than inside startBeacon: check whether
+   * background permission is already granted, and if not, explain first.
+   */
   async function handleStart() {
     setError("");
     if (!destination) { setError("Pick what this ride is for first."); return; }
+    try {
+      const { status } = await Location.getBackgroundPermissionsAsync();
+      if (status !== "granted") { setShowDisclosure(true); return; }
+    } catch {
+      // If we can't read the permission state, show the disclosure anyway —
+      // the wrong way to fail is straight into a system prompt.
+      setShowDisclosure(true);
+      return;
+    }
+    await beginTracking(destination);
+  }
+
+  // Takes the destination rather than reading state, so the null check that
+  // guards it stays in one place.
+  async function beginTracking(destination: Destination) {
     setBusy(true);
     try {
       if (destination.kind === "event") {
@@ -306,7 +329,19 @@ export default function TrackScreen() {
           <Text className="text-on-dark font-bold text-sm">I've claimed it — check again</Text>
         </TouchableOpacity>
 
-        {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
+        <LocationDisclosure
+        visible={showDisclosure}
+        onAccept={() => {
+          setShowDisclosure(false);
+          if (destination) beginTracking(destination);
+        }}
+        onDecline={() => {
+          setShowDisclosure(false);
+          setError("Tracking needs background location to keep working with the screen off.");
+        }}
+      />
+
+      {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
       </ScrollView>
     );
   }
