@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView,
   Dimensions, Animated, NativeSyntheticEvent, NativeScrollEvent,
@@ -48,6 +48,13 @@ export default function OnboardingScreen() {
     setCurrentIndex(idx);
     scrollX.setValue(x);
   }
+
+  // Mark it seen the moment it appears, not when the rider reaches the last
+  // slide. Someone who swipes once and kills the app has still seen the intro;
+  // showing it again on the next launch is the bug, not the safeguard.
+  useEffect(() => {
+    AsyncStorage.setItem(ONBOARDING_KEY, "true").catch(() => {});
+  }, []);
 
   async function finish() {
     await AsyncStorage.setItem(ONBOARDING_KEY, "true");

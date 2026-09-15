@@ -17,6 +17,8 @@ import { ONBOARDING_KEY } from "./(auth)/onboarding";
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
+  /** null until we've read storage. Never route on a guess. */
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   // Before anything else: if the last background run died, stop tracking so the
@@ -26,14 +28,28 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Resolve the session AND the onboarding flag before routing anywhere.
+    // Reading them in sequence is what made the intro carousel come back on
+    // every launch: the storage read landed first, the decision was made while
+    // session was still null, and onboarding won the race before the restored
+    // session could bump it.
+    Promise.all([
+      supabase.auth.getSession(),
+      AsyncStorage.getItem(ONBOARDING_KEY),
+    ]).then(([{ data: { session } }, done]) => {
       setSession(session);
+      // Having a session at all means this rider is long past the intro.
+      setOnboarded(done === "true" || !!session);
       setInitialized(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
+        // Signing in retires the intro for good, so signing out later drops
+        // the rider at the login screen rather than back through the slides.
+        setOnboarded(true);
+        AsyncStorage.setItem(ONBOARDING_KEY, "true").catch(() => {});
         router.replace("/(tabs)");
       } else {
         router.replace("/(auth)/login");
@@ -44,20 +60,14 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!initialized) return;
+    if (!initialized || onboarded === null) return;
     if (session) {
       router.replace("/(tabs)");
       return;
     }
-    // Show onboarding on first launch, login screen on subsequent launches
-    AsyncStorage.getItem(ONBOARDING_KEY).then((done) => {
-      if (done) {
-        router.replace("/(auth)/login");
-      } else {
-        router.replace("/(auth)/onboarding");
-      }
-    });
-  }, [initialized, session]);
+    // The slides are a once-ever thing, not a greeting.
+    router.replace(onboarded ? "/(auth)/login" : "/(auth)/onboarding");
+  }, [initialized, session, onboarded]);
 
   return (
     // Without this provider useSafeAreaInsets() returns zeros, which is how the

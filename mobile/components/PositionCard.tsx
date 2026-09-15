@@ -56,45 +56,51 @@ export default function PositionCard({
 
   return (
     <View className="bg-surface-dark-elevated border border-hairline rounded-xl p-4">
-      <View className="flex-row items-start justify-between mb-3">
+      <View className="flex-row items-start justify-between mb-4">
         <View className="flex-1 pr-3">
           <Text className="text-white text-base font-bold" numberOfLines={1}>
             {info.title ?? "Your position"}
           </Text>
-          <Text className="text-on-dark-soft text-xs mt-0.5">
+          <Text className="text-on-dark-soft text-xs mt-1 leading-4">
             {age(info.ageMs)}
             {facts.length ? ` · ${facts.join(" · ")}` : ""}
           </Text>
         </View>
-        <TouchableOpacity onPress={onClose} className="px-3 py-1">
-          <Text className="text-on-dark-soft text-lg font-bold">×</Text>
+        <TouchableOpacity onPress={onClose} className="px-3 py-1 -mt-1">
+          <Text className="text-on-dark-soft text-xl font-bold">×</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Each format is its own padded tile. They used to be bare rows split by
+          hairlines, which left the coordinates jammed against the divider with
+          no inset — hard to read at arm's length on a bike. */}
       {ORDER.map((fmt) => (
         <TouchableOpacity
           key={fmt}
           onPress={() => copy(fmt)}
-          className="flex-row items-center justify-between border-t border-hairline py-3"
+          activeOpacity={0.7}
+          className="bg-surface-dark rounded-lg px-4 py-3 mb-2"
         >
-          <View className="flex-1 pr-3">
-            <Text className="text-on-dark-soft text-xs uppercase font-bold tracking-wider mb-1">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-on-dark-soft text-xs uppercase font-bold tracking-wider">
               {COORD_FORMAT_LABELS[fmt]}
             </Text>
-            <Text className="text-white text-sm" numberOfLines={1}>
-              {formatCoord(fmt, info.lat, info.lng)}
-            </Text>
+            <View className={`rounded-md px-3 py-1.5 ${copied === fmt ? "bg-primary" : "bg-surface-dark-elevated"}`}>
+              <Text className={`text-xs font-bold ${copied === fmt ? "text-on-primary" : "text-on-dark"}`}>
+                {copied === fmt ? "Copied" : "Copy"}
+              </Text>
+            </View>
           </View>
-          <View className={`rounded-lg px-3 py-2 ${copied === fmt ? "bg-primary" : "bg-surface-dark"}`}>
-            <Text className={`text-xs font-bold ${copied === fmt ? "text-on-primary" : "text-on-dark"}`}>
-              {copied === fmt ? "Copied" : "Copy"}
-            </Text>
-          </View>
+          {/* Wraps rather than truncates: a UTM or DMS string read to a crew
+              over the radio is useless with the end cut off. */}
+          <Text className="text-white text-base leading-6" selectable>
+            {formatCoord(fmt, info.lat, info.lng)}
+          </Text>
         </TouchableOpacity>
       ))}
 
       <TouchableOpacity
-        className="bg-primary rounded-lg py-3 items-center mt-3"
+        className="bg-primary rounded-lg py-3.5 items-center mt-2"
         onPress={() => Linking.openURL(googleMapsUrl(info.lat, info.lng))}
       >
         <Text className="text-on-primary font-bold text-sm">Open in Google Maps</Text>
