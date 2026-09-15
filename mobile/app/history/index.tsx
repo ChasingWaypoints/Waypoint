@@ -1,9 +1,20 @@
 import { useCallback, useState } from "react";
 import {
-  View, Text, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl,
+  View, Text, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Linking,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { getEntitlements, FREE_HISTORY_DAYS } from "../../lib/entitlements";
+import PlanUpsell from "../../components/PlanUpsell";
+
+/**
+ * Sharing lives on the web and always has: the trip page generates the share
+ * token, and /share/<token>/story is the animated recap. The app had the whole
+ * thing built at app/trips/[id].tsx and nothing linking to it, so a rider could
+ * record a ride and never find the way to share it. This is that door.
+ */
+const TRIP_WEB_URL = (id: string) =>
+  `https://waypointtracking.com/dashboard/trips/${id}`;
 
 /**
  * Past rides. Replaces the old Trips tab, which also owned trip *creation* —
@@ -45,11 +56,20 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [paid, setPaid] = useState<boolean | null>(null);
+  /** Rides older than the free window, hidden but known to exist. */
+  const [hiddenCount, setHiddenCount] = useState(0);
 
   const load = useCallback(async () => {
     setError("");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setTrips([]); setLoading(false); return; }
+
+    // The web caps free accounts at 30 days (web/app/api/trips). The phone
+    // talked to Supabase directly and applied no cap at all, so the paywall
+    // leaked: a free rider saw everything here that $15 is meant to unlock.
+    const ent = await getEntitlements();
+    setPaid(ent.paid);
 
     const { data, error: err } = await supabase
       .from("trips")
@@ -59,8 +79,25 @@ export default function HistoryScreen() {
       .order("created_at", { ascending: false })
       .limit(100);
 
-    if (err) setError(err.message);
-    else setTrips((data as Trip[]) ?? []);
+    if (err) {
+      setError(err.message);
+      setLoading(false);
+      return;
+    }
+
+    const all = (data as Trip[]) ?? [];
+    if (ent.paid) {
+      setTrips(all);
+      setHiddenCount(0);
+    } else {
+      const cutoff = Date.now() - FREE_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+      const visible = all.filter((t) => {
+        const at = new Date(t.started_at ?? t.created_at).getTime();
+        return Number.isNaN(at) || at >= cutoff;
+      });
+      setTrips(visible);
+      setHiddenCount(all.length - visible.length);
+    }
     setLoading(false);
   }, []);
 
@@ -95,6 +132,17 @@ export default function HistoryScreen() {
             </Text>
           </View>
         }
+        ListFooterComponent={
+          paid === false && hiddenCount > 0 ? (
+            <View className="mt-4">
+              <PlanUpsell
+                title={`${hiddenCount} older ride${hiddenCount === 1 ? "" : "s"} not shown`}
+                body={`Free keeps your last ${FREE_HISTORY_DAYS} days. Individual keeps everything you have ever ridden.`}
+                compact
+              />
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => {
           const dur = duration(item);
           const live = item.status === "active";
@@ -112,10 +160,21 @@ export default function HistoryScreen() {
                   {dur ? ` · ${dur}` : ""}
                 </Text>
               </View>
-              {live && (
+              {live ? (
                 <View className="bg-primary rounded-full px-3 py-1">
                   <Text className="text-on-primary text-xs font-bold tracking-wider">LIVE</Text>
                 </View>
+              ) : (
+                <TouchableOpacity
+                  className="bg-surface-dark rounded-lg px-3 py-2"
+                  onPress={(e) => {
+                    // Don't also open the map behind the sheet.
+                    e.stopPropagation?.();
+                    Linking.openURL(TRIP_WEB_URL(item.id));
+                  }}
+                >
+                  <Text className="text-on-dark text-xs font-bold">Share</Text>
+                </TouchableOpacity>
               )}
             </TouchableOpacity>
           );

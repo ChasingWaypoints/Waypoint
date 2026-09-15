@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, Linking } from "react-
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import Constants from "expo-constants";
+import { clearEntitlements } from "../../lib/entitlements";
 
 // The canonical domain, not the Vercel preview URL this used to point at.
 // Account deletion runs through here and reviewers do exercise it.
@@ -21,6 +22,8 @@ function SettingsRow({ label, onPress, danger }: { label: string; onPress: () =>
 
 export default function SettingsScreen() {
   async function handleSignOut() {
+    // Otherwise the next account inherits this one's cached plan.
+    clearEntitlements();
     await supabase.auth.signOut();
   }
 
@@ -67,7 +70,10 @@ export default function SettingsScreen() {
         <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mt-6 mb-2">Privacy</Text>
         <View className="border-t border-hairline">
           <SettingsRow label="Privacy Zones" onPress={() => router.push("/settings/privacy-zones")} />
-          <SettingsRow label="Export My Data" onPress={() => {}} />
+          <SettingsRow
+            label="Export Rides (GPX / KML)"
+            onPress={() => Linking.openURL(`${WEB_BASE}/dashboard`)}
+          />
         </View>
 
         {/* Legal — Play requires the privacy policy be reachable inside the app,

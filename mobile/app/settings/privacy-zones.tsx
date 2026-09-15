@@ -5,16 +5,21 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import { supabase } from "../../lib/supabase";
+import { getEntitlements } from "../../lib/entitlements";
+import PlanUpsell from "../../components/PlanUpsell";
 import { theme } from "../../lib/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface PrivacyZone {
   id: string;
   name: string;
-  lat: number;
-  lng: number;
-  radius_m: number;
+  center_lat: number;
+  center_lng: number;
+  radius_miles: number;
 }
+
+/** The table stores miles; the UI has always spoken metres. Convert at the edge. */
+const M_PER_MILE = 1609.344;
 
 const RADIUS_OPTIONS = [
   { label: "100m", value: 100 },
@@ -30,6 +35,8 @@ export default function PrivacyZonesScreen() {
   const insets = useSafeAreaInsets();
   const [zones, setZones] = useState<PrivacyZone[]>([]);
   const [loading, setLoading] = useState(true);
+  // Existing zones keep working on a free plan; only creating a new one is gated.
+  const [paid, setPaid] = useState<boolean | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   // Form state
@@ -41,14 +48,17 @@ export default function PrivacyZonesScreen() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
-  useEffect(() => { loadZones(); }, []);
+  useEffect(() => {
+    loadZones();
+    getEntitlements().then((e) => setPaid(e.paid));
+  }, []);
 
   async function loadZones() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data } = await supabase
       .from("privacy_zones")
-      .select("id, name, lat, lng, radius_m")
+      .select("id, name, center_lat, center_lng, radius_miles")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (data) setZones(data);
@@ -97,11 +107,27 @@ export default function PrivacyZonesScreen() {
 
     const { data, error } = await supabase
       .from("privacy_zones")
-      .insert({ user_id: user.id, name: zoneName.trim(), lat: parsedLat, lng: parsedLng, radius_m: radiusM })
-      .select("id, name, lat, lng, radius_m")
+      .insert({
+        user_id: user.id,
+        name: zoneName.trim(),
+        center_lat: parsedLat,
+        center_lng: parsedLng,
+        radius_miles: radiusM / M_PER_MILE,
+      })
+      .select("id, name, center_lat, center_lng, radius_miles")
       .single();
 
-    if (error) { setFormError(error.message); }
+    if (error) {
+      // Migration 034 gates zone creation to a paid plan via RLS. Postgres says
+      // "new row violates row-level security policy", which means nothing to a
+      // rider — turn it into the upsell it actually is.
+      const rls = /row-level security|violates row-level/i.test(error.message);
+      setFormError(
+        rls
+          ? "Privacy zones are part of the Individual plan. Upgrade at waypointtracking.com/pricing to add one."
+          : error.message
+      );
+    }
     else if (data) {
       setZones((prev) => [...prev, data]);
       setShowModal(false);
@@ -134,6 +160,16 @@ export default function PrivacyZonesScreen() {
           </Text>
         </View>
 
+        {paid === false && (
+          <View style={{ marginBottom: 20 }}>
+            <PlanUpsell
+              title="Add a privacy zone"
+              body="Zones that hide your home or camp from shared links are part of the Individual plan. Any zones you already have keep working."
+              compact
+            />
+          </View>
+        )}
+
         {loading ? (
           <ActivityIndicator color={theme.action} />
         ) : zones.length === 0 ? (
@@ -152,7 +188,11 @@ export default function PrivacyZonesScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: "700", color: theme.ink, marginBottom: 2 }}>🔒 {zone.name}</Text>
                 <Text style={{ fontSize: 11, color: theme.muted, fontWeight: "300" }}>
-                  {zone.lat.toFixed(4)}, {zone.lng.toFixed(4)} · {zone.radius_m >= 1000 ? `${zone.radius_m / 1000} km` : `${zone.radius_m} m`} radius
+                  {zone.center_lat.toFixed(4)}, {zone.center_lng.toFixed(4)} ·{" "}
+                  {(() => {
+                    const m = Math.round(zone.radius_miles * M_PER_MILE);
+                    return m >= 1000 ? `${(m / 1000).toFixed(m % 1000 ? 1 : 0)} km` : `${m} m`;
+                  })()}{" "}radius
                 </Text>
               </View>
               <TouchableOpacity onPress={() => deleteZone(zone.id)} style={{ padding: 8 }}>
@@ -166,10 +206,19 @@ export default function PrivacyZonesScreen() {
       {/* Add Zone FAB */}
       <View style={{ padding: 24, paddingTop: 12, backgroundColor: theme.surface, borderTopWidth: 1, borderTopColor: theme.hairline , paddingBottom: 24 + insets.bottom }}>
         <TouchableOpacity
-          style={{ backgroundColor: theme.action, padding: 16, alignItems: "center" }}
+          style={{
+            backgroundColor: paid === false ? theme.surfaceHi : theme.action,
+            padding: 16, alignItems: "center",
+          }}
           onPress={openModal}
+          disabled={paid === false}
         >
-          <Text style={{ color: theme.actionInk, fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" }}>+ Add Privacy Zone</Text>
+          <Text style={{
+            color: paid === false ? theme.muted : theme.actionInk,
+            fontWeight: "700", fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase",
+          }}>
+            {paid === false ? "Individual plan required" : "+ Add Privacy Zone"}
+          </Text>
         </TouchableOpacity>
       </View>
 
