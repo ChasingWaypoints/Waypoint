@@ -26,9 +26,7 @@
       },
       "ios": {
         "ascApiKeyPath": "../.secrets/asc-api-key.p8",
-        "ascApiKeyId": "REPLACE_KEY_ID",
-        "ascApiKeyIssuerId": "REPLACE_ISSUER_ID",
-        "appleTeamId": "REPLACE_TEAM_ID"
+        "_comment": "Key ID, Issuer ID and Team ID come from .secrets/ids.env via EXPO_ASC_* env vars \u2014 see scripts/with-apple-env.sh. Never commit them here; this repo is public."
       }
     }
   }
