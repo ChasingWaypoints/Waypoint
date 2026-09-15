@@ -18,6 +18,18 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "../.secrets/play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      },
+      "ios": {
+        "ascApiKeyPath": "../.secrets/asc-api-key.p8",
+        "ascApiKeyId": "REPLACE_KEY_ID",
+        "ascApiKeyIssuerId": "REPLACE_ISSUER_ID",
+        "appleTeamId": "REPLACE_TEAM_ID"
+      }
+    }
   }
 }
