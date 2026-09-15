@@ -3,6 +3,10 @@
 # .secrets/ folder. The repo is public: no key material, no account
 # identifiers, nothing Apple-specific belongs in a tracked file.
 #
+# eas.json therefore holds only ascApiKeyPath — it rejects unknown keys, so
+# this is where the explanation lives. Key ID, Issuer ID and Team ID are read
+# from .secrets/ids.env and exported as the EXPO_ASC_* variables EAS looks for.
+#
 #   ./scripts/with-apple-env.sh build --platform ios --profile production
 #   ./scripts/with-apple-env.sh submit --platform ios --profile production
 set -euo pipefail
