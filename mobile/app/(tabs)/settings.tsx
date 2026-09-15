@@ -1,9 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import Constants from "expo-constants";
 
-const WEB_BASE = "https://waypoint-web-two.vercel.app";
+// The canonical domain, not the Vercel preview URL this used to point at.
+// Account deletion runs through here and reviewers do exercise it.
+const WEB_BASE = "https://waypointtracking.com";
 
 function SettingsRow({ label, onPress, danger }: { label: string; onPress: () => void; danger?: boolean }) {
   return (
@@ -66,6 +68,15 @@ export default function SettingsScreen() {
         <View className="border-t border-hairline">
           <SettingsRow label="Privacy Zones" onPress={() => router.push("/settings/privacy-zones")} />
           <SettingsRow label="Export My Data" onPress={() => {}} />
+        </View>
+
+        {/* Legal — Play requires the privacy policy be reachable inside the app,
+            not only on the store listing, for any app using background
+            location. It was reachable in neither place from here. */}
+        <Text className="text-muted text-xs font-bold uppercase tracking-widest px-6 mt-6 mb-2">Legal</Text>
+        <View className="border-t border-hairline">
+          <SettingsRow label="Privacy Policy" onPress={() => Linking.openURL(`${WEB_BASE}/privacy`)} />
+          <SettingsRow label="Terms & Conditions" onPress={() => Linking.openURL(`${WEB_BASE}/terms`)} />
         </View>
 
         {/* Account section */}
