@@ -140,10 +140,14 @@ export async function POST(request: NextRequest) {
     const { data: consumed } = await db.rpc("consume_org_entrant", { p_event_id: event.id });
     if (consumed !== true) {
       const limit = event.paid ? (event.seats_paid ?? 40) : 10;
+      // Riders only. Creating an event auto-adds the organizer as a
+      // participant, and counting that row made "10 riders free" mean nine
+      // riders plus the organizer. Mirrors event_rider_count() in migration 041.
       const { count } = await db
         .from("event_participants")
         .select("id", { count: "exact", head: true })
-        .eq("event_id", event.id);
+        .eq("event_id", event.id)
+        .neq("role", "organizer");
       if ((count ?? 0) >= limit) {
         const msg = event.paid
           ? `This event is full (${limit} seats). Ask the organizer to add more seats.`

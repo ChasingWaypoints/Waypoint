@@ -93,6 +93,40 @@ export async function POST(
     return NextResponse.json({ error: result.error.message }, { status: 400 });
   }
 
+  // Capacity. This endpoint had no cap check at all — it existed but nothing
+  // called it, so the hole was invisible until the dashboard grew an "add one
+  // rider" form. Without this an organizer could add riders one at a time past
+  // a free event's 10 and never be asked to upgrade. Riders only, matching
+  // event_rider_count() in migration 041 and the CSV importer.
+  const { data: ev } = await guard.supabase!
+    .from("events")
+    .select("paid, comped, seats_paid")
+    .eq("id", id)
+    .single();
+
+  if (ev && !ev.comped) {
+    const { data: consumed } = await guard.supabase!.rpc("consume_org_entrant", { p_event_id: id });
+    if (consumed !== true) {
+      const limit = ev.paid ? (ev.seats_paid ?? 40) : 10;
+      const { count } = await guard.supabase!
+        .from("event_participants")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", id)
+        .neq("role", "organizer");
+      if ((count ?? 0) >= limit) {
+        return NextResponse.json(
+          {
+            error: ev.paid
+              ? `This event is full (${limit} seats). Add more seats to keep going.`
+              : "This ride has reached its 10-rider limit. Upgrade it to a paid event to add more.",
+            code: "cap_reached",
+          },
+          { status: 402 }
+        );
+      }
+    }
+  }
+
   // Link to a Waypoint account if the organizer supplied a code.
   let linkedUserId: string | null = null;
   const code = waypointCodeFromRow(body);

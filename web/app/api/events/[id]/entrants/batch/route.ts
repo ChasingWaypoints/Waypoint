@@ -59,7 +59,7 @@ async function readCapacity(
   if (!ev) return { comped: false, limit: 10, existing: 0, poolRemaining: 0 };
   if (ev.comped) return { comped: true, limit: Infinity, existing: 0, poolRemaining: 0 };
   const { count } = await supabase
-    .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", eventId);
+    .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", eventId).neq("role", "organizer");
   const limit = ev.paid ? (ev.seats_paid ?? 40) : 10;
   const { data: sub } = await supabase
     .from("org_subscriptions")
@@ -266,7 +266,7 @@ export async function POST(
       .from("events").select("comped, paid, seats_paid").eq("id", id).single();
     if (ev && !ev.comped) {
       const { count: existing } = await guard.supabase!
-        .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", id);
+        .from("event_participants").select("id", { count: "exact", head: true }).eq("event_id", id).neq("role", "organizer");
       const limit = ev.paid ? (ev.seats_paid ?? 40) : 10;
       const { data: hasOrg } = await guard.supabase!
         .rpc("user_has_org", { p_user_id: guard.user!.id });
