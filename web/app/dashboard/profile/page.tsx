@@ -157,6 +157,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<RiderProfile>(BLANK_PROFILE);
   const [savedProfile, setSavedProfile] = useState<RiderProfile>(BLANK_PROFILE);
   const [waypointId, setWaypointId] = useState("");
+  const [profileError, setProfileError] = useState("");
   const [wpCopied, setWpCopied] = useState(false);
   const [iceToken, setIceToken] = useState("");
   const [iceCopied, setIceCopied] = useState(false);
@@ -207,11 +208,19 @@ export default function ProfilePage() {
 
   // ── Profile actions ──────────────────────────────────────────────
   async function loadProfile(uid: string) {
-    const { data } = await supabase
+    // This used to destructure only { data } and do nothing on error, so a
+    // failing read looked identical to an empty profile — the Waypoint ID just
+    // rendered as a dash and nothing said why. Surface it instead.
+    const { data, error } = await supabase
       .from("profiles")
       .select(PROFILE_KEYS.join(",") + ",waypoint_id,ice_token")
       .eq("id", uid)
       .single();
+    if (error) {
+      console.error("[profile] load failed:", error.code, error.message, error.details);
+      setProfileError(error.message);
+      return;
+    }
     if (data) {
       const rec = data as unknown as Record<string, unknown>;
       const p = { ...BLANK_PROFILE };
@@ -423,10 +432,15 @@ export default function ProfilePage() {
               <p style={{ fontSize: text.md, color: "#7E93A0", margin: 0, padding: "11px 0" }}>{userEmail}</p>
             </Field>
 
+            {profileError && (
+              <p style={{ color: "#FF6B6B", fontSize: text.sm, margin: "0 0 12px" }}>
+                Couldn&rsquo;t load your profile: {profileError}
+              </p>
+            )}
             <Field label="Waypoint ID">
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <code style={{ flex: 1, font: "700 18px ui-monospace, SFMono-Regular, monospace", letterSpacing: 3, color: "#CCFF00", background: "#0A0A0A", border: "1px solid #1E3B4C", padding: "10px 14px", userSelect: "all" }}>
-                  {waypointId || "—"}
+                  {waypointId || (profileError ? "unavailable" : "—")}
                 </code>
                 <button
                   onClick={copyWaypointId}
