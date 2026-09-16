@@ -39,6 +39,20 @@ const STATUS_STYLE: Record<Entrant["status"], { color: string; label: string }> 
   no_fix: { color: theme.noFix, label: "No fix yet" },
 };
 
+/**
+ * The roster columns an organizer owns and can correct in place.
+ *
+ * `key` is what the PATCH body wants (it maps through CSV_COLUMNS server-side,
+ * so it matches the spreadsheet importer's vocabulary); `column` is the row
+ * field to repaint optimistically.
+ */
+type EditableField = "number" | "name" | "class";
+const EDITABLE: Record<EditableField, { column: keyof Entrant; label: string; width: number; placeholder: string }> = {
+  number: { column: "rider_number", label: "Number", width: 64, placeholder: "#" },
+  name:   { column: "display_name", label: "Name",   width: 160, placeholder: "Rider name" },
+  class:  { column: "rider_class",  label: "Class",  width: 92, placeholder: "Class" },
+};
+
 export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { eventId: string; paid?: boolean; comped?: boolean; seatsPaid?: number | null }) {
   const [entrants, setEntrants] = useState<Entrant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,9 +62,9 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [replace, setReplace] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [editClassId, setEditClassId] = useState<string | null>(null);
-  const [classDraft, setClassDraft] = useState("");
-  const [savingClass, setSavingClass] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; field: EditableField } | null>(null);
+  const [draft, setDraft] = useState("");
+  const [savingCell, setSavingCell] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
@@ -177,30 +191,93 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
     await load();
   }
 
-  // Inline class edit — organizers fix a class on the fly (mistakes, or a
-  // rider switches class last-minute). PATCH merges onto the current row.
-  async function saveClass(id: string) {
-    const value = classDraft.trim();
-    const current = entrants.find((e) => e.id === id)?.rider_class ?? "";
-    setEditClassId(null);
-    if (value === (current ?? "")) return; // no-op
-    setSavingClass(true);
+  // Inline roster edit — an organizer types a name wrong, a rider switches
+  // class, a number changes at sign-on. The PATCH endpoint has always merged a
+  // partial edit onto the current row; the table only ever exposed class, so a
+  // typo in a name meant removing the rider and adding them again. Any of the
+  // three columns an organizer actually owns is now editable in place.
+  //
+  // A joined rider's name is theirs, not the organizer's, so editing it here
+  // changes only what this event's roster shows — it does not touch their
+  // Waypoint account.
+  async function saveField(id: string, field: EditableField) {
+    const value = draft.trim();
+    const row = entrants.find((e) => e.id === id);
+    setEditing(null);
+    if (!row) return;
+
+    const current = (row[EDITABLE[field].column] as string | null) ?? "";
+    if (value === current) return; // no-op
+
+    // rowToEntrant rejects a nameless row, and a roster entry with no name is
+    // useless on a map. Snap back rather than showing a server error.
+    if (field === "name" && !value) {
+      setError("A rider needs a name.");
+      return;
+    }
+
+    setSavingCell(true);
     try {
       const res = await authFetch(`/api/events/${eventId}/entrants/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ class: value }),
+        body: JSON.stringify({ [field]: value }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setError(d.error ?? "Could not update the class");
+        setError(d.error ?? `Could not update the ${EDITABLE[field].label.toLowerCase()}`);
         return;
       }
       setError(null);
-      setEntrants((prev) => prev.map((e) => (e.id === id ? { ...e, rider_class: value || null } : e)));
+      setEntrants((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, [EDITABLE[field].column]: value || null } : e))
+      );
     } finally {
-      setSavingClass(false);
+      setSavingCell(false);
     }
+  }
+
+  // One editable cell. Click to edit, Enter or blur to save, Escape to cancel.
+  function cell(e: Entrant, field: EditableField) {
+    const spec = EDITABLE[field];
+    const value = (e[spec.column] as string | null) ?? "";
+    const active = editing?.id === e.id && editing.field === field;
+
+    if (active) {
+      return (
+        <input
+          autoFocus
+          value={draft}
+          disabled={savingCell}
+          onChange={(ev) => setDraft(ev.target.value)}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter") saveField(e.id, field);
+            if (ev.key === "Escape") setEditing(null);
+          }}
+          onBlur={() => saveField(e.id, field)}
+          placeholder={spec.placeholder}
+          style={{
+            width: spec.width, font: `13px ${font.sans}`, padding: "3px 6px",
+            background: theme.canvas, color: theme.ink,
+            border: `1px solid ${theme.accent}`, borderRadius: 4,
+          }}
+        />
+      );
+    }
+
+    return (
+      <button
+        onClick={() => { setEditing({ id: e.id, field }); setDraft(value); }}
+        title={`Click to edit ${spec.label.toLowerCase()}`}
+        style={{
+          background: "transparent", border: "none", cursor: "pointer",
+          color: "inherit", font: "inherit", padding: "2px 4px", borderRadius: 4,
+          textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3,
+        }}
+      >
+        {value || "—"}
+      </button>
+    );
   }
 
   const reporting = entrants.filter((e) => e.status === "live").length;
@@ -467,6 +544,9 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
+          <div style={{ color: theme.muted, fontSize: text.sm, marginBottom: 6 }}>
+            Number, name and class are editable — click one to change it.
+          </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: text.base }}>
             <thead>
               <tr style={{ textAlign: "left", color: theme.muted, borderBottom: `2px solid ${theme.hairline}` }}>
@@ -485,33 +565,9 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
                 const s = STATUS_STYLE[e.status];
                 return (
                   <tr key={e.id} style={{ borderBottom: `1px solid ${theme.hairlineSoft}` }}>
-                    <td style={td}>{e.rider_number ?? "—"}</td>
-                    <td style={{ ...td, fontWeight: 600, color: theme.ink }}>{e.display_name}</td>
-                    <td style={td}>
-                      {editClassId === e.id ? (
-                        <input
-                          autoFocus
-                          value={classDraft}
-                          disabled={savingClass}
-                          onChange={(ev) => setClassDraft(ev.target.value)}
-                          onKeyDown={(ev) => {
-                            if (ev.key === "Enter") saveClass(e.id);
-                            if (ev.key === "Escape") setEditClassId(null);
-                          }}
-                          onBlur={() => saveClass(e.id)}
-                          placeholder="Class"
-                          style={{ width: 92, font: `13px ${font.sans}`, padding: "3px 6px", background: theme.canvas, color: theme.ink, border: `1px solid ${theme.accent}`, borderRadius: 4 }}
-                        />
-                      ) : (
-                        <button
-                          onClick={() => { setEditClassId(e.id); setClassDraft(e.rider_class ?? ""); }}
-                          title="Click to edit class"
-                          style={{ background: "transparent", border: "none", color: theme.body, cursor: "pointer", font: `13px ${font.sans}`, padding: "2px 4px", borderRadius: 4, textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}
-                        >
-                          {e.rider_class ?? "—"}
-                        </button>
-                      )}
-                    </td>
+                    <td style={td}>{cell(e, "number")}</td>
+                    <td style={{ ...td, fontWeight: 600, color: theme.ink }}>{cell(e, "name")}</td>
+                    <td style={td}>{cell(e, "class")}</td>
                     <td style={td}>{e.device_type ?? "—"}</td>
                     <td style={td}>
                       <span style={{ color: s.color }}>&#9679;</span> {s.label}
