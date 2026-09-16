@@ -15,5 +15,10 @@ Claude outputs/
 # Session scratch — a source tarball I stage to the sandbox for EAS builds,
 # and the one-shot SQL runners I hand over in chat. Neither is source.
 .mobile-stage.tgz
+
+# Everything Claude hands over in chat goes here — SQL runners, build
+# tarballs, one-off scripts. The real migrations live in web/supabase/
+# migrations; these are copies that exist only so they can be uploaded.
+.handoff/
 RUN_IN_SUPABASE_*.sql
 REPAIR_*.sql
