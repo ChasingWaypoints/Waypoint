@@ -16,3 +16,4 @@ Claude outputs/
 # and the one-shot SQL runners I hand over in chat. Neither is source.
 .mobile-stage.tgz
 RUN_IN_SUPABASE_*.sql
+REPAIR_*.sql
