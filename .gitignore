@@ -7,3 +7,7 @@
 
 # Device logs captured for debugging
 crash*.log
+
+# Files delivered into the chat by Cowork — artifacts of a working session,
+# not source. The real store assets live in mobile/store/.
+Claude outputs/
