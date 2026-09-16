@@ -17,7 +17,7 @@ import {
   claimUrlFor, getCachedClaimCode, releaseRosterRow, rosterClaimMessage,
   type BeaconState, type BeaconEvent,
 } from "../../lib/deviceIdentity";
-import RosterClaim from "../../components/RosterClaim";
+import JoinEvent from "../../components/JoinEvent";
 import LocationDisclosure from "../../components/LocationDisclosure";
 import {
   needsBatteryGuidance, hasAcknowledged, acknowledge, openBatterySettings,
@@ -496,16 +496,15 @@ export default function TrackScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* The gap this closes: a CSV import links a roster row to an account
-              only when the file carries a Waypoint ID, which registration
-              rarely produces. Without this the event never appears above, and
-              nothing on screen says why. */}
-          <RosterClaim onLinked={loadBeacon} />
+          {/* Two gaps in one box: the phone had no join-by-code at all after
+              the three-tab simplification deleted that screen, and a CSV
+              import only links a roster row when the file carries a Waypoint
+              ID. The server sorts out which case the rider is in. */}
+          <JoinEvent onJoined={loadBeacon} />
 
           {events.length === 0 && (
             <Text className="text-on-dark-soft text-xs mt-1 mb-1 leading-5">
-              Entered in an event but don't see it? Use the event code above. Otherwise it appears
-              here as soon as the organizer adds you.
+              Riding someone's event? Enter their code above and you'll show up on their map.
             </Text>
           )}
 

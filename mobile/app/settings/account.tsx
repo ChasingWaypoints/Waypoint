@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { supabase } from "../../lib/supabase";
 import { theme } from "../../lib/theme";
 
@@ -11,6 +12,14 @@ export default function AccountScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  /**
+   * The Waypoint ID is how an organizer links a rider to a roster row, and the
+   * app never showed it — so a rider had no way to hand it over. null means we
+   * could not read it, which is different from "you don't have one": every
+   * profile gets one from a trigger on insert.
+   */
+  const [waypointId, setWaypointId] = useState<string | null>(null);
+  const [idCopied, setIdCopied] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -21,10 +30,25 @@ export default function AccountScreen() {
       setDisplayName(name);
       setOriginalName(name);
       setMemberSince(new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }));
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("waypoint_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      setWaypointId((prof?.waypoint_id as string | undefined) ?? null);
+
       setLoading(false);
     }
     load();
   }, []);
+
+  async function copyWaypointId() {
+    if (!waypointId) return;
+    await Clipboard.setStringAsync(waypointId);
+    setIdCopied(true);
+    setTimeout(() => setIdCopied(false), 1800);
+  }
 
   async function handleSaveName() {
     if (displayName.trim() === originalName.trim()) return;
@@ -78,9 +102,40 @@ export default function AccountScreen() {
               onSubmitEditing={handleSaveName}
             />
           </View>
-          <View className="bg-canvas px-6 py-4">
+          <View className="bg-canvas px-6 py-4 border-b border-hairline">
             <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-1">Email</Text>
             <Text className="text-ink font-light text-base">{email}</Text>
+          </View>
+          <View className="bg-canvas px-6 py-4">
+            <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-1">Waypoint ID</Text>
+            {waypointId ? (
+              <View className="flex-row items-center justify-between">
+                <Text
+                  className="text-primary text-lg font-bold"
+                  style={{ letterSpacing: 3, fontFamily: "monospace" }}
+                  selectable
+                >
+                  {waypointId}
+                </Text>
+                <TouchableOpacity
+                  className={`rounded-lg px-4 py-2 ${idCopied ? "bg-primary" : "bg-surface-dark-elevated"}`}
+                  onPress={copyWaypointId}
+                >
+                  <Text className={`text-xs font-bold ${idCopied ? "text-on-primary" : "text-on-dark"}`}>
+                    {idCopied ? "Copied" : "Copy"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* A dash tells a rider nothing. Say what it is and what to do. */
+              <Text className="text-muted font-light text-sm leading-5">
+                Couldn't load your ID. Check it at waypointtracking.com under Profile — give it to an
+                organizer and they can add you to an event roster.
+              </Text>
+            )}
+            <Text className="text-muted-soft text-xs mt-2 leading-4">
+              Give this to an event organizer to be added to their roster.
+            </Text>
           </View>
         </View>
 

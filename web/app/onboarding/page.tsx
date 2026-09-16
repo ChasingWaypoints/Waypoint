@@ -50,7 +50,7 @@ export default function OnboardingPage() {
 
         {path === null && (
           <div style={{ display: "grid", gap: 12 }}>
-            <ChoiceCard title="I'm tracking myself" body="Share your live location on a map for family and friends — from a satellite beacon (cellular tracking coming soon)." onClick={() => choose("self")} />
+            <ChoiceCard title="I'm tracking myself" body="Share your live location on a map for family and friends — from your phone, or a satellite beacon." onClick={() => choose("self")} />
             <ChoiceCard title="I'm organizing an event" body="Put every entrant's beacon on one live map, load a roster, and share it with your community." onClick={() => choose("organize")} />
           </div>
         )}
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
         {path === "self" && (
           <div style={{ display: "grid", gap: 12 }}>
             <StepCard n={1} title="Add a device" body="Link a Garmin inReach, SPOT, or ZOLEO so Waypoint can pull your position." href="/dashboard/profile" cta="Add a device" />
-            <StepCard n={2} title="Or track over cellular" body="No beacon? RallyTrak and RallyTrak Nav — our companion phone apps — track you over cellular and feed straight into Waypoint." soon />
+            <StepCard n={2} title="Or track with your phone" body="No beacon? The Waypoint app turns your phone into one — it records with the screen off and keeps going through dead zones, uploading when signal returns." href="/dashboard/profile" cta="Link your phone" />
             <FinishRow onFinish={finish} />
           </div>
         )}

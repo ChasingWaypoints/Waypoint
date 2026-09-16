@@ -52,6 +52,11 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
   const [classDraft, setClassDraft] = useState("");
   const [savingClass, setSavingClass] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [newName, setNewName] = useState("");
+  const [newNumber, setNewNumber] = useState("");
+  const [newClass, setNewClass] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -73,6 +78,40 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
     const t = setInterval(load, 60_000);
     return () => clearInterval(t);
   }, [load]);
+
+  // ── Add one rider ────────────────────────────────────────────
+  // The single-entrant endpoint has existed since the roster work and nothing
+  // ever called it, so the only way onto a roster was to build a spreadsheet.
+  // For a free group ride — up to 10 mates — that is the whole job, and a CSV
+  // is an absurd thing to ask someone for.
+  async function addOne(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setAdding(true);
+    setError(null);
+    setImportMsg(null);
+    try {
+      const res = await authFetch(`/api/events/${eventId}/entrants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          number: newNumber.trim() || undefined,
+          class: newClass.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Could not add that rider");
+        return;
+      }
+      setNewName(""); setNewNumber(""); setNewClass("");
+      setImportMsg(`Added ${data.entrant?.display_name ?? "rider"}. Send them the join code so they appear on the map.`);
+      await load();
+    } finally {
+      setAdding(false);
+    }
+  }
 
   // ── Validate before importing ────────────────────────────────
   async function handleFile(file: File) {
@@ -209,6 +248,52 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
             </div>
           );
         })()}
+        {/* Add one rider — the common case, and the only one a group ride needs. */}
+        <form onSubmit={addOne} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 14 }}>
+          <div style={{ flex: "2 1 200px", minWidth: 0 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>Rider name</label>
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Jane Doe"
+              disabled={adding}
+              style={{ width: "100%", padding: "10px 12px", background: theme.canvas, border: `1px solid ${theme.hairline}`, color: theme.ink, fontSize: text.base, borderRadius: 4 }}
+            />
+          </div>
+          <div style={{ flex: "0 1 110px", minWidth: 0 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>Number</label>
+            <input
+              value={newNumber}
+              onChange={(e) => setNewNumber(e.target.value)}
+              placeholder="42"
+              disabled={adding}
+              style={{ width: "100%", padding: "10px 12px", background: theme.canvas, border: `1px solid ${theme.hairline}`, color: theme.ink, fontSize: text.base, borderRadius: 4 }}
+            />
+          </div>
+          <div style={{ flex: "0 1 130px", minWidth: 0 }}>
+            <label style={{ display: "block", fontSize: text.xs, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: theme.muted, marginBottom: 4 }}>Class</label>
+            <input
+              value={newClass}
+              onChange={(e) => setNewClass(e.target.value)}
+              placeholder="Optional"
+              disabled={adding}
+              style={{ width: "100%", padding: "10px 12px", background: theme.canvas, border: `1px solid ${theme.hairline}`, color: theme.ink, fontSize: text.base, borderRadius: 4 }}
+            />
+          </div>
+          <button type="submit" disabled={adding || !newName.trim()} style={{ ...btnPrimary, opacity: adding || !newName.trim() ? 0.5 : 1, padding: "11px 20px" }}>
+            {adding ? "Adding…" : "Add rider"}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => setShowImport((v) => !v)}
+          style={{ ...btnGhost, fontSize: text.xs, padding: "7px 14px", marginBottom: showImport ? 12 : 0 }}
+        >
+          {showImport ? "Hide bulk import" : "Import many from a spreadsheet"}
+        </button>
+
+        {showImport && (<>
         <p style={{ margin: "0 0 12px", color: theme.muted, fontSize: text.base }}>
           Upload a <strong>CSV or Excel (.xlsx)</strong> file with columns{" "}
           <code>name, number, class, device, feed</code>. The feed is each entrant&rsquo;s
@@ -237,6 +322,7 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
             Download template
           </a>
         </div>
+        </>)}
 
         {dryRun && (
           <div
@@ -376,7 +462,8 @@ export default function EntrantManager({ eventId, paid, comped, seatsPaid }: { e
         <div style={{ color: theme.muted }}>Loading roster…</div>
       ) : entrants.length === 0 ? (
         <div style={{ color: theme.muted, padding: "20px 0" }}>
-          No entrants yet. Upload a roster CSV above to get started.
+          No riders yet. Add one above, then send them the join code — they enter it in the
+          Waypoint app and appear on your map.
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>

@@ -239,6 +239,70 @@ export function rosterClaimMessage(error: string | undefined, eventName?: string
   }
 }
 
+export type JoinResult = {
+  ok: boolean;
+  error?: string;
+  event_id?: string;
+  event_name?: string;
+  participant_id?: string;
+  /** Which of the three things happened, for the message we show. */
+  joined?: boolean;
+  claimed?: boolean;
+  already_joined?: boolean;
+  limit?: number;
+};
+
+/**
+ * One code box, three outcomes, decided server-side.
+ *
+ * The rider should not have to know whether an organizer imported them onto a
+ * roster or not — they have a code, and possibly a number. beacon_join_event
+ * claims a waiting roster row if the number matches one, says so if they are
+ * already in, and otherwise joins them outright under the same capacity rules
+ * the web enforces.
+ */
+export async function joinEventByCode(
+  joinCode: string,
+  riderNumber?: string,
+  displayName?: string,
+): Promise<JoinResult> {
+  const token = await getDeviceToken();
+  const { data, error } = await supabase.rpc("beacon_join_event", {
+    p_token: token,
+    p_join_code: joinCode,
+    p_rider_number: riderNumber?.trim() || null,
+    p_display_name: displayName?.trim() || null,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as JoinResult) ?? { ok: false, error: "empty_response" };
+}
+
+/** Plain language for everything beacon_join_event can answer. */
+export function joinMessage(r: JoinResult): string {
+  switch (r.error) {
+    case "unknown_event":
+      return "No event with that code. Check it against what the organizer sent you.";
+    case "needs_payment":
+      return `${r.event_name ?? "This event"} charges riders to enter. Finish joining at waypointtracking.com — it takes a card, which the app can't.`;
+    case "free_cap_reached":
+      return "This ride is full at 10 riders. Ask the organizer to upgrade it to a paid event.";
+    case "event_full":
+      return `This event is full (${r.limit ?? "all"} seats). Ask the organizer to add more.`;
+    case "suspended":
+      return "That event is unavailable right now. Check with the organizer.";
+    case "cancelled":
+      return "That event has been cancelled.";
+    case "too_many_attempts":
+      return "Too many tries. Wait fifteen minutes, then check the code with the organizer.";
+    case "not_claimed":
+      return "Link this phone to your Waypoint account first.";
+    case "unknown_device":
+      return "This phone isn't recognised. Reopen the app, then try again.";
+    default:
+      return r.error ? `Couldn't join: ${r.error}` : "Something went wrong. Try again.";
+  }
+}
+
 /** Settings → delete device data. The server row is orphaned, not deleted. */
 export async function forgetDevice(): Promise<void> {
   try {
