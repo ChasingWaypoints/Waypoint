@@ -11,3 +11,8 @@ crash*.log
 # Files delivered into the chat by Cowork — artifacts of a working session,
 # not source. The real store assets live in mobile/store/.
 Claude outputs/
+
+# Session scratch — a source tarball I stage to the sandbox for EAS builds,
+# and the one-shot SQL runners I hand over in chat. Neither is source.
+.mobile-stage.tgz
+RUN_IN_SUPABASE_*.sql
