@@ -139,11 +139,12 @@ begin
     end if;
   end if;
 
-  -- Display name: what they passed, else the profile, else something sane.
+  -- Display name: what they passed, else whatever the account already has.
+  -- See 039 — the name lives in auth metadata, not profiles, and reading only
+  -- profiles put every phone join on the roster as "Rider".
   v_name := nullif(btrim(coalesce(p_display_name, '')), '');
   if v_name is null then
-    select nullif(btrim(coalesce(first_name, '') || ' ' || coalesce(last_name, '')), '')
-      into v_name from public.profiles where id = v_beacon.user_id;
+    v_name := public.beacon_display_name(v_beacon.user_id);
   end if;
   v_name := coalesce(v_name, 'Rider');
 

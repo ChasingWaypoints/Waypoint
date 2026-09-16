@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Linking } from "react-native";
 import { theme } from "../lib/theme";
+import { supabase } from "../lib/supabase";
 import { joinEventByCode, joinMessage } from "../lib/deviceIdentity";
 
 /**
@@ -22,8 +23,26 @@ export default function JoinEvent({ onJoined }: { onJoined: () => Promise<void> 
   const [code, setCode] = useState("");
   const [riderNumber, setRiderNumber] = useState("");
   const [busy, setBusy] = useState(false);
+  /**
+   * The name the organizer will see on their roster. We prefill it from the
+   * account rather than asking — but if the account has no name we must ask,
+   * because the alternative is joining someone's ride as "Rider".
+   */
+  const [name, setName] = useState("");
+  const [needsName, setNeedsName] = useState(false);
   const [message, setMessage] = useState("");
   const [payUrl, setPayUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const known =
+        (user?.user_metadata?.full_name as string | undefined) ??
+        (user?.user_metadata?.name as string | undefined) ??
+        "";
+      setName(known.trim());
+      setNeedsName(!known.trim());
+    });
+  }, []);
 
   function reset() {
     setCode(""); setRiderNumber(""); setMessage(""); setPayUrl(null);
@@ -31,9 +50,10 @@ export default function JoinEvent({ onJoined }: { onJoined: () => Promise<void> 
 
   async function submit() {
     if (!code.trim()) { setMessage("Enter the event code."); return; }
+    if (!name.trim()) { setMessage("Enter the name the organizer should see."); return; }
     setBusy(true); setMessage(""); setPayUrl(null);
     try {
-      const r = await joinEventByCode(code, riderNumber);
+      const r = await joinEventByCode(code, riderNumber, name);
       if (r.ok) {
         await onJoined();
         setOpen(false);
@@ -70,6 +90,20 @@ export default function JoinEvent({ onJoined }: { onJoined: () => Promise<void> 
       <Text className="text-on-dark-soft text-xs mb-4 leading-5">
         The code the organizer sent you.
       </Text>
+
+      <Text className="text-on-dark-soft text-xs uppercase font-bold mb-2">
+        Your name {needsName ? "" : <Text className="text-muted-soft">— as the organizer will see it</Text>}
+      </Text>
+      <TextInput
+        className="bg-surface-dark text-white border border-white/10 rounded-lg px-4 py-3.5 text-base mb-4"
+        placeholder="Jane Doe"
+        placeholderTextColor={theme.muted}
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+        maxLength={60}
+        editable={!busy}
+      />
 
       <Text className="text-on-dark-soft text-xs uppercase font-bold mb-2">Event code</Text>
       <TextInput

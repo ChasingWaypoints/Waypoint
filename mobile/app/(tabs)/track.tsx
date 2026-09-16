@@ -329,18 +329,6 @@ export default function TrackScreen() {
           <Text className="text-on-dark font-bold text-sm">I've claimed it — check again</Text>
         </TouchableOpacity>
 
-        <LocationDisclosure
-        visible={showDisclosure}
-        onAccept={() => {
-          setShowDisclosure(false);
-          if (destination) beginTracking(destination);
-        }}
-        onDecline={() => {
-          setShowDisclosure(false);
-          setError("Tracking needs background location to keep working with the screen off.");
-        }}
-      />
-
       {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
       </ScrollView>
     );
@@ -533,6 +521,22 @@ export default function TrackScreen() {
       )}
 
       {error ? <Text className="text-red-400 text-sm mt-4">{error}</Text> : null}
+
+      {/* The disclosure Play requires before the OS prompt. It lived in the
+          unclaimed-phone early return by mistake, so on the real screen
+          setShowDisclosure(true) set state that nothing rendered — START did
+          nothing at all, silently, which is the worst way for this to fail. */}
+      <LocationDisclosure
+        visible={showDisclosure}
+        onAccept={() => {
+          setShowDisclosure(false);
+          if (destination) beginTracking(destination);
+        }}
+        onDecline={() => {
+          setShowDisclosure(false);
+          setError("Tracking needs background location to keep working with the screen off.");
+        }}
+      />
 
       {/* ── Start / Stop ── */}
       <TouchableOpacity
