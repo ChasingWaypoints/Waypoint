@@ -27,31 +27,89 @@ export default function SettingsScreen() {
     await supabase.auth.signOut();
   }
 
+  /**
+   * Deleting an organizer's account is not the same act as deleting a rider's.
+   *
+   * events.organizer_id cascades, so every event they created goes with the
+   * account — and with each event goes every rider's roster entry and event
+   * track points. Riders who were never asked lose their ride record. The old
+   * dialog said "your account, all trips, and track data", which is true for a
+   * rider and badly incomplete for an organizer.
+   *
+   * So: ask the server what this specific account owns, and say it. An
+   * organizer confirms twice; a rider still confirms once.
+   */
   async function handleDeleteAccount() {
-    Alert.alert(
-      "Delete Account",
-      "This permanently deletes your account, all trips, and track data. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Forever", style: "destructive",
-          onPress: async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
-            const res = await fetch(`${WEB_BASE}/api/account/delete`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-            });
-            if (res.ok) {
-              await supabase.auth.signOut();
-            } else {
-              const json = await res.json().catch(() => ({}));
-              Alert.alert("Error", json.error ?? "Could not delete account. Try again later.");
-            }
-          },
-        },
-      ]
-    );
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data: impact } = await supabase.rpc("account_deletion_impact");
+
+    const doDelete = async () => {
+      const res = await fetch(`${WEB_BASE}/api/account/delete`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        clearEntitlements();
+        await supabase.auth.signOut();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        Alert.alert("Error", json.error ?? "Could not delete account. Try again later.");
+      }
+    };
+
+    if (!impact?.is_organizer) {
+      Alert.alert(
+        "Delete Account",
+        "This permanently deletes your account, all trips, and track data. This cannot be undone.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Delete Forever", style: "destructive", onPress: doDelete },
+        ]
+      );
+      return;
+    }
+
+    const ev = impact.events as number;
+    const live = impact.events_not_ended as number;
+    const riders = impact.riders_affected as number;
+    const s1 = ev === 1 ? "" : "s";
+    const rPoss = riders === 1 ? "'s" : "s'";
+
+    const lines = [
+      `You organize ${ev} event${s1}.`,
+      "",
+      "Deleting your account also deletes:",
+      `  \u2022 All ${ev} of your event${s1}${live > 0 ? ` \u2014 ${live} not finished yet` : ""}`,
+      riders > 0
+        ? `  \u2022 ${riders} rider${rPoss} roster entries and tracks in those events`
+        : "  \u2022 Their rosters and tracking data",
+      "  \u2022 Your own trips and track data",
+      "",
+      riders > 0
+        ? "Those riders lose their record of those rides, and they are not being asked."
+        : "This cannot be undone.",
+    ].join("\n");
+
+    Alert.alert("Delete Account \u2014 read this first", lines, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Continue",
+        style: "destructive",
+        onPress: () =>
+          Alert.alert(
+            "Last chance",
+            `Permanently delete your account, ${ev} event${s1}` +
+              (riders > 0 ? ` and ${riders} rider${rPoss} data` : "") +
+              "? This cannot be undone.",
+            [
+              { text: "Keep My Account", style: "cancel" },
+              { text: "Delete Everything", style: "destructive", onPress: doDelete },
+            ]
+          ),
+      },
+    ]);
   }
 
   return (
