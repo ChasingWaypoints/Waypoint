@@ -12,6 +12,7 @@ import EventBranding from "../../../../components/EventBranding";
 import LiveEventMap from "../../../../components/LiveEventMap";
 import EntrantManager from "../../../../components/EntrantManager";
 import SosIncidentPanel from "../../../../components/SosIncidentPanel";
+import CommsAdmin from "../../../../components/CommsAdmin";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
@@ -904,6 +905,9 @@ export default function EventDetailPage() {
                 </button>
               </div>
             </div>
+
+            {/* Radio: staff/control codes + who joined */}
+            {session && <CommsAdmin eventId={id} accessToken={session.access_token} />}
 
             {/* Your GEP link */}
             <div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, use } from "react";
 import TrackingMap, { Entrant, StageLine } from "../../../components/TrackingMap";
 import { theme, font, text } from "../../../lib/theme";
+import CommsPanel from "../../../components/CommsPanel";
 
 /**
  * Command View — a full-screen, read-only, no-login live map for recovery,
@@ -70,7 +71,7 @@ export default function CommandViewPage({ params }: { params: Promise<{ token: s
             {data.event?.name ?? "Command View"}
           </div>
           <div style={{ font: `700 10px ${font.sans}`, letterSpacing: 1, textTransform: "uppercase", color: theme.danger }}>
-            Command View · read-only
+            Command View
           </div>
         </div>
         <span style={{ marginLeft: "auto", font: `11px ${font.sans}`, color: theme.muted }}>powered by Waypoint</span>
@@ -97,6 +98,7 @@ export default function CommandViewPage({ params }: { params: Promise<{ token: s
           commandMode
           focusEntrantId={sosFocus}
         />
+        <CommsPanel token={token} />
       </div>
     </div>
   );
