@@ -111,6 +111,10 @@ export default function RadioPage() {
             </div>
           </div>
           <CommsPanel token={saved.token} layout="page" onUnavailable={onUnavailable} />
+          <p style={{ fontSize: text.xs, color: theme.muted, lineHeight: 1.5, margin: "14px 0 0" }}>
+            Keep this page open with the screen on. A phone browser stops the radio when the screen
+            locks — for riding with the phone in a pocket, use the Waypoint app.
+          </p>
           <button onClick={leave} style={linkBtn}>Sign out of this radio</button>
         </>
       ) : (
