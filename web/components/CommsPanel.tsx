@@ -356,30 +356,55 @@ export default function CommsPanel({
     }, allCall ? 59_000 : 29_000);
   }, [status, join, allCall, talkChannel, token, flash, stopTalk]);
 
-  // Hold Space to talk (not while typing in a field).
+  // Hold Space to talk. Never while typing in a field, never with a modifier,
+  // and only after Space has been held for a beat, so a stray tap of the
+  // space bar can't key the radio.
   useEffect(() => {
     if (status !== "live") return;
+    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    let keyed = false;
     const typing = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       return !!el && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
     };
     const down = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || typing(e)) return;
+      if (e.code !== "Space" || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
-      startTalk();
+      if (e.repeat || holdTimer || keyed) return;
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        keyed = true;
+        startTalk();
+      }, 250);
     };
     const up = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || typing(e)) return;
-      e.preventDefault();
-      stopTalk();
+      if (e.code !== "Space") return;
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (keyed) { keyed = false; e.preventDefault(); stopTalk(); }
+    };
+    const blur = () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (keyed) { keyed = false; stopTalk(); }
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
     return () => {
+      if (holdTimer) clearTimeout(holdTimer);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
     };
   }, [status, startTalk, stopTalk]);
+
+  // While the talk button is held on a touch screen, stop iOS from turning the
+  // long-press into a text selection (which cancels the press mid-sentence).
+  useEffect(() => {
+    if (!talking) return;
+    const block = (e: Event) => e.preventDefault();
+    document.addEventListener("selectstart", block);
+    return () => document.removeEventListener("selectstart", block);
+  }, [talking]);
 
   const clearInstruction = async () => {
     if (!instruction) return;
@@ -521,15 +546,18 @@ export default function CommsPanel({
                   onContextMenu={(e) => e.preventDefault()}
                   disabled={status !== "live"}
                   style={{
-                    userSelect: "none", touchAction: "none",
+                    userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
+                    WebkitTapHighlightColor: "transparent", touchAction: "none",
                     background: talking ? theme.danger : allCall ? theme.warn : "#CCFF00",
                     color: talking ? "#fff" : theme.accentInk,
                     border: "none", borderRadius: 8, padding: isPage ? "34px 12px" : "16px 12px",
                     font: `800 ${text.md}px ${font.sans}`, cursor: "pointer",
                   }}
                 >
-                  {talking ? "ON AIR — release to stop" : `Hold to talk · ${target?.name ?? "—"}`}
-                  <div style={{ font: `500 ${text.xxs}px ${font.sans}`, opacity: 0.75, marginTop: 2 }}>
+                  <span style={{ pointerEvents: "none" }}>
+                    {talking ? "ON AIR — release to stop" : `Hold to talk · ${target?.name ?? "—"}`}
+                  </span>
+                  <div style={{ font: `500 ${text.xxs}px ${font.sans}`, opacity: 0.75, marginTop: 2, pointerEvents: "none" }}>
                     {talking ? "" : isPage ? "press and hold" : "or hold Space"}
                   </div>
                 </button>
