@@ -71,7 +71,17 @@ function ago(seconds: number) {
   return m < 60 ? `${m} min ago` : `${Math.floor(m / 60)} h ${m % 60} min ago`;
 }
 
-export default function CommsPanel({ token }: { token: string }) {
+export default function CommsPanel({
+  token,
+  layout = "overlay",
+  onUnavailable,
+}: {
+  token: string;
+  /** "overlay" floats over the Command View map; "page" fills /radio on a phone. */
+  layout?: "overlay" | "page";
+  /** Called when comms is off, the event ended, or this token was revoked. */
+  onUnavailable?: () => void;
+}) {
   const [join, setJoin] = useState<Join | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -125,14 +135,14 @@ export default function CommsPanel({ token }: { token: string }) {
     fetchJoin()
       .then((j) => {
         if (!alive) return;
-        if (j === "unavailable") { setUnavailable(true); return; }
+        if (j === "unavailable") { setUnavailable(true); onUnavailable?.(); return; }
         setJoin(j);
         const rc = j.channels.find((c) => c.can_talk && c.kind === "race_control");
         setTalkChannel(rc?.id ?? j.channels.find((c) => c.can_talk)?.id ?? null);
       })
       .catch(() => { if (alive) setError("Could not reach comms."); });
     return () => { alive = false; };
-  }, [fetchJoin]);
+  }, [fetchJoin, onUnavailable]);
 
   // Subscribe to exactly the channels being listened to; note who is talking.
   const refreshSubs = useCallback(() => {
@@ -197,7 +207,7 @@ export default function CommsPanel({ token }: { token: string }) {
     setStatus("connecting");
     try {
       const j = await fetchJoin();
-      if (j === "unavailable") { setUnavailable(true); setStatus("idle"); return; }
+      if (j === "unavailable") { setUnavailable(true); setStatus("idle"); onUnavailable?.(); return; }
       setJoin(j);
       joinRef.current = j;
       ctxRef.current ??= new AudioContext();
@@ -280,7 +290,7 @@ export default function CommsPanel({ token }: { token: string }) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(/permission|denied|NotAllowed/i.test(msg) ? "Microphone permission was blocked." : "Could not connect to the radio.");
     }
-  }, [fetchJoin, refreshSubs, loadInstruction, teardown, flash]);
+  }, [fetchJoin, refreshSubs, loadInstruction, teardown, flash, onUnavailable]);
 
   const stopTalk = useCallback(async () => {
     pressRef.current = false;
@@ -388,11 +398,14 @@ export default function CommsPanel({ token }: { token: string }) {
   const talkable = channels.filter((c) => c.can_talk);
   const target = allCall ? channels.find((c) => c.kind === "race_control") : channels.find((c) => c.id === talkChannel);
   const dot = status === "live" ? theme.live : status === "idle" ? theme.faint : theme.warn;
+  const isPage = layout === "page";
 
   return (
     <div
       style={{
-        position: "absolute", right: 12, bottom: 12, zIndex: 7, width: 300, maxWidth: "calc(100% - 24px)",
+        ...(isPage
+          ? { position: "relative", width: "100%" }
+          : { position: "absolute", right: 12, bottom: 12, zIndex: 7, width: 300, maxWidth: "calc(100% - 24px)" }),
         background: theme.surface, border: `1px solid ${theme.hairline}`, borderRadius: 8,
         boxShadow: "0 8px 28px rgba(0,0,0,.55)", font: `${text.base}px ${font.sans}`, color: theme.body,
       }}
@@ -405,12 +418,12 @@ export default function CommsPanel({ token }: { token: string }) {
         <span style={{ fontSize: text.xs, color: theme.muted }}>
           {status === "live" ? "live" : status === "reconnecting" ? "reconnecting…" : status === "connecting" ? "connecting…" : "off"}
         </span>
-        <button
+        {!isPage && <button
           onClick={() => setCollapsed((c) => !c)}
           style={{ marginLeft: "auto", background: "none", border: "none", color: theme.muted, cursor: "pointer", fontSize: text.xs }}
         >
           {collapsed ? "Show" : "Hide"}
-        </button>
+        </button>}
       </div>
 
       {!collapsed && (
@@ -511,13 +524,13 @@ export default function CommsPanel({ token }: { token: string }) {
                     userSelect: "none", touchAction: "none",
                     background: talking ? theme.danger : allCall ? theme.warn : "#CCFF00",
                     color: talking ? "#fff" : theme.accentInk,
-                    border: "none", borderRadius: 8, padding: "16px 12px",
+                    border: "none", borderRadius: 8, padding: isPage ? "34px 12px" : "16px 12px",
                     font: `800 ${text.md}px ${font.sans}`, cursor: "pointer",
                   }}
                 >
                   {talking ? "ON AIR — release to stop" : `Hold to talk · ${target?.name ?? "—"}`}
                   <div style={{ font: `500 ${text.xxs}px ${font.sans}`, opacity: 0.75, marginTop: 2 }}>
-                    {talking ? "" : "or hold Space"}
+                    {talking ? "" : isPage ? "press and hold" : "or hold Space"}
                   </div>
                 </button>
               ) : (

@@ -112,3 +112,12 @@ export async function muteSpeakers(
   );
   return muted;
 }
+
+/** Kick someone out of the room now (e.g. a revoked radio member). */
+export async function removeFromRoom(cfg: LiveKitConfig, room: string, identity: string): Promise<void> {
+  try {
+    await roomService(cfg).removeParticipant(room, identity);
+  } catch {
+    // Not connected right now: nothing to remove.
+  }
+}
