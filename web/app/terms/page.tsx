@@ -12,7 +12,7 @@ const MARKDOWN = `# Waypoint — Terms of Service
 **Effective date:** September 7, 2026
 **Operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media ("Waypoint,"
 "we," "us"), operator of the Waypoint live-tracking service at
-app.chasingwaypoints.com (the "Service").
+waypointtracking.com (the "Service").
 
 ---
 

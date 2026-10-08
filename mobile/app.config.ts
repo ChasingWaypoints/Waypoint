@@ -84,6 +84,17 @@ const baseConfig = ({ config }: { config: Record<string, unknown> }): Record<str
   plugins: [
     "expo-router",
     "expo-status-bar",
+    // Event radio (live push-to-talk over LiveKit). Communication audio so the
+    // helmet headset's mic is used; Android camera/overlay permissions the
+    // WebRTC plugin adds are blocked in app.json — the radio is audio only.
+    ["@livekit/react-native-expo-plugin", { android: { audioType: "communication" } }],
+    [
+      "@config-plugins/react-native-webrtc",
+      {
+        microphonePermission:
+          "Waypoint uses the microphone only while you hold the talk button on the event radio.",
+      },
+    ],
     "expo-web-browser",
     "expo-sqlite",
     "expo-secure-store",

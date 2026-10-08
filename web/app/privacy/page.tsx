@@ -11,7 +11,7 @@ const MARKDOWN = `# Waypoint — Privacy Policy
 
 **Effective date:** September 7, 2026
 **Controller / operator:** Waypoint Group Holdings LLC, DBA Chasing Waypoints Media
-("Waypoint," "we," "us"), operator of app.chasingwaypoints.com (the "Service").
+("Waypoint," "we," "us"), operator of waypointtracking.com (the "Service").
 This Policy explains what we collect, why, who sees it, and your choices. It works
 alongside our Terms of Service.
 

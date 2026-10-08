@@ -134,7 +134,7 @@ async function pollEntrant(
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { "User-Agent": "Waypoint/1.0 (+https://app.chasingwaypoints.com)" },
+      headers: { "User-Agent": "Waypoint/1.0 (+https://waypointtracking.com)" },
     });
 
     if (!res.ok) {

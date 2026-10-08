@@ -7,7 +7,7 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const supabase = getSupabaseClient();
-const WEB_BASE = "https://app.chasingwaypoints.com";
+const WEB_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://waypointtracking.com";
 
 const EXPIRY_OPTIONS = [
   { label: "Never",   hours: null },

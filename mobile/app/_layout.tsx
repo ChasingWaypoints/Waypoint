@@ -5,6 +5,8 @@ import "../lib/backgroundTracking";
 import { breakCrashLoopIfNeeded } from "../lib/backgroundTracking";
 // Sets the Mapbox access token exactly once, before any screen can mount a map.
 import "../lib/mapbox";
+// Registers LiveKit's WebRTC globals before anything can create a radio Room.
+import "../lib/radio";
 import { theme } from "../lib/theme";
 import { useEffect, useState } from "react";
 import { Stack, router } from "expo-router";

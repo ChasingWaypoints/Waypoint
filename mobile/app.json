@@ -16,8 +16,10 @@
         "NSLocationWhenInUseUsageDescription": "Waypoint uses your location to place you on your event's live map so organizers, your crew, and your emergency contacts can see where you are.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Waypoint shares your position with your event organizer and emergency contacts while you're riding, including when your phone is in your pocket or the screen is off. Tracking runs only while you have a session started, and you can stop it at any time.",
         "UIBackgroundModes": [
-          "location"
-        ]
+          "location",
+          "audio"
+        ],
+        "NSMicrophoneUsageDescription": "Waypoint uses the microphone only while you hold the talk button on the event radio."
       }
     },
     "android": {
@@ -30,7 +32,9 @@
       "package": "com.chasingwaypoints.waypoint",
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "permissions": [
         "ACCESS_FINE_LOCATION",
@@ -41,7 +45,10 @@
         "POST_NOTIFICATIONS",
         "ACCESS_NETWORK_STATE",
         "WAKE_LOCK",
-        "RECEIVE_BOOT_COMPLETED"
+        "RECEIVE_BOOT_COMPLETED",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "BLUETOOTH_CONNECT"
       ]
     },
     "web": {
