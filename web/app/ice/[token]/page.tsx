@@ -164,7 +164,7 @@ export default function ICEPage({ params }: { params: Promise<{ token: string }>
         )}
 
         <p style={{ textAlign: "center", color: C.muted, fontSize: text.xs, marginTop: 24, lineHeight: 1.6 }}>
-          Shared by the rider via Waypoint · chasingwaypoints.com<br />
+          Shared by the rider via Waypoint · waypointtracking.com<br />
           A division of RallyTrak
         </p>
       </div>
