@@ -2,13 +2,14 @@ import { Tabs } from "expo-router";
 import { Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "../../lib/theme";
+import { RadioProvider } from "../../lib/RadioContext";
 
 function TabIcon({ icon }: { icon: string }) {
   return <Text style={{ fontSize: 20 }}>{icon}</Text>;
 }
 
 /**
- * Three tabs, deliberately.
+ * Four tabs, deliberately (Radio joined in October 2026).
  *
  * The app used to carry five — Trips, Map, Track, Events, Settings — which was
  * two apps sharing a tab bar: a trip logger and a live tracker. Organizer work
@@ -22,6 +23,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
   return (
+    <RadioProvider>
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: theme.surface },
@@ -61,6 +63,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="radio"
+        options={{
+          title: "Radio",
+          tabBarLabel: "RADIO",
+          tabBarIcon: () => <TabIcon icon="📻" />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
@@ -69,5 +79,6 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+    </RadioProvider>
   );
 }
